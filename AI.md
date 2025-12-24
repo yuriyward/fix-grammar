@@ -4,7 +4,7 @@ This file provides guidance to AI agents working with this repository.
 
 ## Project Overview
 
-**Tech Stack:** Electron (Forge + Vite) • React 19 + TypeScript (strict) • TanStack Router • Tailwind CSS v4 + shadcn/ui • oRPC + Zod (typed IPC) • Biome • Vitest + Playwright
+**Tech Stack:** Electron (Forge + Vite) • React 19 + TypeScript (strict) • TanStack Router • Tailwind CSS v4 + coss.ui (Base UI, zinc theme) • oRPC + Zod (typed IPC) • Biome • Vitest + Playwright
 
 **Related Docs:**
 - [`docs/FILE-STRUCTURE.md`](docs/FILE-STRUCTURE.md) — Detailed directory structure documentation

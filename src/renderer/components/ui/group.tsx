@@ -33,6 +33,7 @@ function Group({
   children: React.ReactNode;
 } & React.ComponentProps<'div'>) {
   return (
+    // biome-ignore lint/a11y/useSemanticElements: Using div with role="group" for styling flexibility in coss.ui design system
     <div
       className={cn(groupVariants({ orientation }), className)}
       data-orientation={orientation}

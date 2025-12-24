@@ -1,16 +1,6 @@
 # coss ui
 
-> **Migration Status:** ✅ Complete (2024-12-24)
-> Migrated from shadcn/ui (Radix UI) to coss.ui (Base UI) with zinc color scheme.
-
-**Components migrated:**
-- Button (used in ErrorBoundary, ToggleTheme, NavigationMenu)
-- Toggle & ToggleGroup (used in LangToggle)
-- NavigationMenu → Custom nav component using Button + TanStack Router
-
-**Color scheme:** zinc (crisp, contrasted borders, enhanced visual depth)
-
-**coss ui** is a collection of beautifully designed, accessible, and composable components for your React apps. Built on top of [Base UI](https://base-ui.com/) and styled with [Tailwind CSS](https://tailwindcss.com/), it's designed for you to copy, paste, and own.
+**coss ui** is a collection of beautifully designed, accessible, and composable components for your React apps. Built on top of [Base UI](https://base-ui.com/) and styled with [Tailwind CSS](https://tailwindcss.com/), it’s designed for you to copy, paste, and own.
 
 ## Overview
 

@@ -99,6 +99,7 @@ function MenuCheckboxItem({
     >
       <MenuPrimitive.CheckboxItemIndicator className="col-start-1">
         <svg
+          aria-hidden="true"
           fill="none"
           height="24"
           stroke="currentColor"
@@ -137,6 +138,7 @@ function MenuRadioItem({
     >
       <MenuPrimitive.RadioItemIndicator className="col-start-1">
         <svg
+          aria-hidden="true"
           fill="none"
           height="24"
           stroke="currentColor"

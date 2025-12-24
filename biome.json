@@ -35,6 +35,9 @@
       "performance": {
         "recommended": true,
         "noBarrelFile": "error"
+      },
+      "a11y": {
+        "useSemanticElements": "off"
       }
     }
   },

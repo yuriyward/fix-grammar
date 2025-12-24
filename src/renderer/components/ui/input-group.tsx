@@ -50,6 +50,7 @@ function InputGroupAddon({
   ...props
 }: React.ComponentProps<'div'> & VariantProps<typeof inputGroupAddonVariants>) {
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: MouseDown handler is intentionally used to focus input when clicking addon
     <div
       className={cn(inputGroupAddonVariants({ align }), className)}
       data-align={align}

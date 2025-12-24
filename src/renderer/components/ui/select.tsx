@@ -120,6 +120,7 @@ function SelectItem({
     >
       <SelectPrimitive.ItemIndicator className="col-start-1">
         <svg
+          aria-hidden="true"
           fill="none"
           height="24"
           stroke="currentColor"

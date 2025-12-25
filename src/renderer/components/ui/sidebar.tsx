@@ -23,9 +23,9 @@ import {
 } from '@/renderer/components/ui/tooltip';
 import { useIsMobile } from '@/renderer/hooks/use-mobile';
 import { cn } from '@/renderer/lib/tailwind';
+import { LOCAL_STORAGE_KEYS } from '@/shared/contracts/ipc-channels';
 
-const SIDEBAR_COOKIE_NAME = 'sidebar_state';
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+const SIDEBAR_STORAGE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = '16rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '3rem';
@@ -70,10 +70,26 @@ function SidebarProvider({
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
-  const [_open, _setOpen] = React.useState(defaultOpen);
+  const [_open, _setOpen] = React.useState(() => {
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEYS.SIDEBAR);
+      if (stored) {
+        const data = JSON.parse(stored) as { value: boolean; expires: number };
+        if (Date.now() < data.expires) {
+          return data.value;
+        }
+        // Expired - cleanup
+        localStorage.removeItem(LOCAL_STORAGE_KEYS.SIDEBAR);
+      }
+    } catch {
+      // Invalid data - cleanup
+      localStorage.removeItem(LOCAL_STORAGE_KEYS.SIDEBAR);
+    }
+    return defaultOpen;
+  });
   const open = openProp ?? _open;
   const setOpen = React.useCallback(
-    async (value: boolean | ((value: boolean) => boolean)) => {
+    (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === 'function' ? value(open) : value;
       if (setOpenProp) {
         setOpenProp(openState);
@@ -81,13 +97,14 @@ function SidebarProvider({
         _setOpen(openState);
       }
 
-      // This sets the cookie to keep the sidebar state.
-      await cookieStore.set({
-        expires: Date.now() + SIDEBAR_COOKIE_MAX_AGE * 1000,
-        name: SIDEBAR_COOKIE_NAME,
-        path: '/',
-        value: String(openState),
-      });
+      // Store sidebar state in localStorage with expiration
+      localStorage.setItem(
+        LOCAL_STORAGE_KEYS.SIDEBAR,
+        JSON.stringify({
+          value: openState,
+          expires: Date.now() + SIDEBAR_STORAGE_MAX_AGE * 1000,
+        }),
+      );
     },
     [setOpenProp, open],
   );

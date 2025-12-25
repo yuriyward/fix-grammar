@@ -19,7 +19,7 @@ export default function LangToggle() {
 
   return (
     <ToggleGroup
-      type="single"
+      multiple={false}
       onValueChange={onValueChange}
       value={currentLang}
     >

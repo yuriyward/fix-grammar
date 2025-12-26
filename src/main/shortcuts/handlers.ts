@@ -18,6 +18,7 @@ import {
 import { getApiKey } from '@/main/storage/api-keys';
 import { saveEditContext } from '@/main/storage/context';
 import { store } from '@/main/storage/settings';
+import { trayManager } from '@/main/tray/tray-manager';
 import { windowManager } from '@/main/windows/window-manager';
 
 function showNotification(title: string, body?: string): void {
@@ -42,9 +43,15 @@ async function rewriteAndReplaceText(
 
   const role = store.get('ai.role');
   const model = store.get('ai.model');
-  const result = await rewriteText(originalText, role, apiKey, model);
-
-  const rewrittenText = await result.text;
+  trayManager.startBusy();
+  const rewrittenText = await (async () => {
+    try {
+      const result = await rewriteText(originalText, role, apiKey, model);
+      return await result.text;
+    } finally {
+      trayManager.stopBusy();
+    }
+  })();
 
   saveEditContext(randomUUID(), {
     originalText,
@@ -77,6 +84,7 @@ async function rewriteAndReplaceText(
  * text back in place. Uses temporary clipboard overrides and shows system notifications.
  */
 export async function handleFixSelection(): Promise<void> {
+  trayManager.startBusy('Grammar Copilot — Capturing selection…');
   try {
     // 1. Backup clipboard and capture selection
     backupClipboard();
@@ -103,6 +111,8 @@ export async function handleFixSelection(): Promise<void> {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     showNotification('Grammar Copilot Error', `Rewrite failed: ${message}`);
+  } finally {
+    trayManager.stopBusy();
   }
 }
 
@@ -114,6 +124,7 @@ export async function handleFixSelection(): Promise<void> {
  * shows system notifications.
  */
 export async function handleFixField(): Promise<void> {
+  trayManager.startBusy('Grammar Copilot — Capturing field…');
   try {
     backupClipboard();
     const originalText = await (async (): Promise<string> => {
@@ -142,6 +153,8 @@ export async function handleFixField(): Promise<void> {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     showNotification('Grammar Copilot Error', `Rewrite failed: ${message}`);
+  } finally {
+    trayManager.stopBusy();
   }
 }
 

@@ -8,7 +8,9 @@ import { useTranslation } from 'react-i18next';
 import { updateAppLanguage } from '@/actions/language';
 import { syncWithLocalTheme } from '@/actions/theme';
 import { ErrorBoundary } from '@/renderer/components/error-boundary';
+import { ToastProvider } from '@/renderer/components/ui/toast';
 import { router } from '@/renderer/lib/routes';
+import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
 import '@/renderer/lib/i18n';
 
 /**
@@ -22,10 +24,24 @@ export default function App() {
     updateAppLanguage(i18n);
   }, [i18n]);
 
+  useEffect(() => {
+    const onNavigate = (event: Event) => {
+      const to = (event as CustomEvent<string>).detail;
+      void router.navigate({ to });
+    };
+
+    window.addEventListener(IPC_CHANNELS.NAVIGATE, onNavigate);
+    return () => {
+      window.removeEventListener(IPC_CHANNELS.NAVIGATE, onNavigate);
+    };
+  }, []);
+
   return (
-    <ErrorBoundary>
-      <RouterProvider router={router} />
-    </ErrorBoundary>
+    <ToastProvider>
+      <ErrorBoundary>
+        <RouterProvider router={router} />
+      </ErrorBoundary>
+    </ToastProvider>
   );
 }
 

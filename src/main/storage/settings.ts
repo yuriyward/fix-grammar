@@ -21,10 +21,11 @@ export const store = new ElectronStore<AppSettings>({
   },
 });
 
-// Migration: Fix invalid model IDs from old versions
-const currentProvider = store.get('ai.provider');
-const currentModel = store.get('ai.model');
+export function initializeSettingsStore(): void {
+  const currentProvider = store.get('ai.provider');
+  const currentModel = store.get('ai.model');
 
-if (!isValidModel(currentProvider, currentModel)) {
-  store.set('ai.model', getDefaultModel(currentProvider));
+  if (!isValidModel(currentProvider, currentModel)) {
+    store.set('ai.model', getDefaultModel(currentProvider));
+  }
 }

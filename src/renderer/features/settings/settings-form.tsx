@@ -28,8 +28,10 @@ import {
   getDefaultModel,
   getModelsForProvider,
   getProviderName,
+  type AIModel,
+  type AIProvider,
 } from '@/shared/config/ai-models';
-import type { AIModel, AIProvider, RewriteRole } from '@/shared/types/settings';
+import type { RewriteRole } from '@/shared/types/ai';
 
 export default function SettingsForm() {
   const [provider, setProvider] = useState<AIProvider>('google');
@@ -39,7 +41,6 @@ export default function SettingsForm() {
   const [hasKey, setHasKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Hotkey settings
   const [fixSelection, setFixSelection] = useState('CommandOrControl+Shift+F');
   const [fixField, setFixField] = useState('CommandOrControl+Shift+G');
   const [togglePopup, setTogglePopup] = useState('CommandOrControl+Shift+P');
@@ -60,10 +61,18 @@ export default function SettingsForm() {
     }
   }, []);
 
-  // When provider changes, set the default model for that provider
   const handleProviderChange = (newProvider: AIProvider) => {
     setProvider(newProvider);
     setModel(getDefaultModel(newProvider));
+  };
+
+  const addSuccessToast = (title: string) => {
+    toastManager.add({ type: 'success', title });
+  };
+
+  const addErrorToast = (title: string, error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    toastManager.add({ type: 'error', title, description: message });
   };
 
   const checkApiKey = useCallback(async () => {
@@ -75,12 +84,10 @@ export default function SettingsForm() {
     }
   }, [provider]);
 
-  // Load settings on mount
   useEffect(() => {
     void loadSettings();
   }, [loadSettings]);
 
-  // Check for API key when provider changes
   useEffect(() => {
     void checkApiKey();
   }, [checkApiKey]);
@@ -93,17 +100,9 @@ export default function SettingsForm() {
       await saveApiKey(provider, apiKey);
       setApiKey('');
       setHasKey(true);
-      toastManager.add({
-        type: 'success',
-        title: 'API key saved',
-      });
+      addSuccessToast('API key saved');
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      toastManager.add({
-        type: 'error',
-        title: 'Failed to save API key',
-        description: message,
-      });
+      addErrorToast('Failed to save API key', error);
     } finally {
       setIsSaving(false);
     }
@@ -114,17 +113,9 @@ export default function SettingsForm() {
     try {
       await deleteApiKey(provider);
       setHasKey(false);
-      toastManager.add({
-        type: 'success',
-        title: 'API key deleted',
-      });
+      addSuccessToast('API key deleted');
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      toastManager.add({
-        type: 'error',
-        title: 'Failed to delete API key',
-        description: message,
-      });
+      addErrorToast('Failed to delete API key', error);
     } finally {
       setIsSaving(false);
     }
@@ -138,28 +129,49 @@ export default function SettingsForm() {
         hotkeys: { fixSelection, fixField, togglePopup, openSettings },
       });
 
-      // Reregister shortcuts with new hotkeys
       await reregisterShortcuts();
 
-      toastManager.add({
-        type: 'success',
-        title: 'Settings saved',
-      });
+      addSuccessToast('Settings saved');
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      toastManager.add({
-        type: 'error',
-        title: 'Failed to save settings',
-        description: message,
-      });
+      addErrorToast('Failed to save settings', error);
     } finally {
       setIsSaving(false);
     }
   };
 
+  const hotkeyFields = [
+    {
+      id: 'fixSelection',
+      label: 'Fix Selection',
+      value: fixSelection,
+      setValue: setFixSelection,
+      placeholder: 'CommandOrControl+Shift+F',
+    },
+    {
+      id: 'fixField',
+      label: 'Fix Field',
+      value: fixField,
+      setValue: setFixField,
+      placeholder: 'CommandOrControl+Shift+G',
+    },
+    {
+      id: 'togglePopup',
+      label: 'Toggle Popup',
+      value: togglePopup,
+      setValue: setTogglePopup,
+      placeholder: 'CommandOrControl+Shift+P',
+    },
+    {
+      id: 'openSettings',
+      label: 'Open Settings',
+      value: openSettings,
+      setValue: setOpenSettings,
+      placeholder: 'CommandOrControl+,',
+    },
+  ] as const;
+
   return (
     <div className="space-y-6">
-      {/* Appearance Section */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">Appearance</h2>
 
@@ -178,7 +190,6 @@ export default function SettingsForm() {
         </div>
       </div>
 
-      {/* AI Provider Section */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">AI Provider</h2>
 
@@ -266,52 +277,22 @@ export default function SettingsForm() {
         </div>
       </div>
 
-      {/* Hotkeys Section */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">Global Shortcuts</h2>
 
-        <div className="space-y-2">
-          <Label htmlFor="fixSelection">Fix Selection</Label>
-          <Input
-            id="fixSelection"
-            value={fixSelection}
-            onChange={(e) => setFixSelection(e.target.value)}
-            placeholder="CommandOrControl+Shift+F"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="fixField">Fix Field</Label>
-          <Input
-            id="fixField"
-            value={fixField}
-            onChange={(e) => setFixField(e.target.value)}
-            placeholder="CommandOrControl+Shift+G"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="togglePopup">Toggle Popup</Label>
-          <Input
-            id="togglePopup"
-            value={togglePopup}
-            onChange={(e) => setTogglePopup(e.target.value)}
-            placeholder="CommandOrControl+Shift+P"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="openSettings">Open Settings</Label>
-          <Input
-            id="openSettings"
-            value={openSettings}
-            onChange={(e) => setOpenSettings(e.target.value)}
-            placeholder="CommandOrControl+,"
-          />
-        </div>
+        {hotkeyFields.map((field) => (
+          <div key={field.id} className="space-y-2">
+            <Label htmlFor={field.id}>{field.label}</Label>
+            <Input
+              id={field.id}
+              value={field.value}
+              onChange={(e) => field.setValue(e.target.value)}
+              placeholder={field.placeholder}
+            />
+          </div>
+        ))}
       </div>
 
-      {/* Save Button */}
       <Button
         onClick={handleSaveSettings}
         disabled={isSaving}

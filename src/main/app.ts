@@ -5,6 +5,7 @@ import { app } from 'electron';
 import { ipcMain } from 'electron/main';
 import { UpdateSourceType, updateElectronApp } from 'update-electron-app';
 import { ipcContext } from '@/ipc/context';
+import { initializeSettingsStore } from '@/main/storage/settings';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
 import { shortcutManager } from './shortcuts/manager';
 import { trayManager } from './tray/tray-manager';
@@ -74,6 +75,9 @@ export function initializeApp() {
 
   app
     .whenReady()
+    .then(() => {
+      initializeSettingsStore();
+    })
     .then(initializeWindows)
     .then(setupORPC)
     .then(installExtensions)

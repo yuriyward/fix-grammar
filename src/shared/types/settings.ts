@@ -4,9 +4,6 @@
 import type { AIModel, AIProvider } from '@/shared/config/ai-models';
 import type { RewriteRole } from '@/shared/types/ai';
 
-export type { AIProvider, AIModel };
-export type { RewriteRole };
-
 export interface HotkeysSettings {
   fixSelection: string;
   fixField: string;

@@ -25,11 +25,11 @@ import {
 import { toastManager } from '@/renderer/components/ui/toast';
 import {
   AI_PROVIDERS,
+  type AIModel,
+  type AIProvider,
   getDefaultModel,
   getModelsForProvider,
   getProviderName,
-  type AIModel,
-  type AIProvider,
 } from '@/shared/config/ai-models';
 import type { RewriteRole } from '@/shared/types/ai';
 
@@ -38,6 +38,7 @@ export default function SettingsForm() {
   const [model, setModel] = useState<AIModel>(getDefaultModel('google'));
   const [role, setRole] = useState<RewriteRole>('grammar');
   const [apiKey, setApiKey] = useState('');
+  const [apiKeyPreview, setApiKeyPreview] = useState('');
   const [hasKey, setHasKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -45,6 +46,15 @@ export default function SettingsForm() {
   const [fixField, setFixField] = useState('CommandOrControl+Shift+G');
   const [togglePopup, setTogglePopup] = useState('CommandOrControl+Shift+P');
   const [openSettings, setOpenSettings] = useState('CommandOrControl+,');
+
+  const addSuccessToast = (title: string) => {
+    toastManager.add({ type: 'success', title });
+  };
+
+  const addErrorToast = (title: string, error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    toastManager.add({ type: 'error', title, description: message });
+  };
 
   const loadSettings = useCallback(async () => {
     try {
@@ -61,24 +71,11 @@ export default function SettingsForm() {
     }
   }, []);
 
-  const handleProviderChange = (newProvider: AIProvider) => {
-    setProvider(newProvider);
-    setModel(getDefaultModel(newProvider));
-  };
-
-  const addSuccessToast = (title: string) => {
-    toastManager.add({ type: 'success', title });
-  };
-
-  const addErrorToast = (title: string, error: unknown) => {
-    const message = error instanceof Error ? error.message : String(error);
-    toastManager.add({ type: 'error', title, description: message });
-  };
-
-  const checkApiKey = useCallback(async () => {
+  const loadApiKeyStatus = useCallback(async () => {
     try {
       const result = await hasApiKey(provider);
       setHasKey(result.hasKey);
+      setApiKeyPreview(result.preview ?? '');
     } catch (error) {
       console.error('Failed to check API key:', error);
     }
@@ -89,8 +86,13 @@ export default function SettingsForm() {
   }, [loadSettings]);
 
   useEffect(() => {
-    void checkApiKey();
-  }, [checkApiKey]);
+    void loadApiKeyStatus();
+  }, [loadApiKeyStatus]);
+
+  const handleProviderChange = (newProvider: AIProvider) => {
+    setProvider(newProvider);
+    setModel(getDefaultModel(newProvider));
+  };
 
   const handleSaveApiKey = async () => {
     if (!apiKey.trim()) return;
@@ -99,7 +101,7 @@ export default function SettingsForm() {
     try {
       await saveApiKey(provider, apiKey);
       setApiKey('');
-      setHasKey(true);
+      await loadApiKeyStatus();
       addSuccessToast('API key saved');
     } catch (error) {
       addErrorToast('Failed to save API key', error);
@@ -112,7 +114,7 @@ export default function SettingsForm() {
     setIsSaving(true);
     try {
       await deleteApiKey(provider);
-      setHasKey(false);
+      await loadApiKeyStatus();
       addSuccessToast('API key deleted');
     } catch (error) {
       addErrorToast('Failed to delete API key', error);
@@ -128,9 +130,7 @@ export default function SettingsForm() {
         ai: { provider, model, role },
         hotkeys: { fixSelection, fixField, togglePopup, openSettings },
       });
-
       await reregisterShortcuts();
-
       addSuccessToast('Settings saved');
     } catch (error) {
       addErrorToast('Failed to save settings', error);
@@ -139,6 +139,9 @@ export default function SettingsForm() {
     }
   };
 
+  const apiKeyPlaceholder = hasKey
+    ? apiKeyPreview || '******'
+    : 'Enter your API key';
   const hotkeyFields = [
     {
       id: 'fixSelection',
@@ -174,14 +177,12 @@ export default function SettingsForm() {
     <div className="space-y-6">
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">Appearance</h2>
-
         <div className="space-y-2">
           <Label>Theme</Label>
           <div className="flex items-center gap-2">
             <ToggleTheme />
           </div>
         </div>
-
         <div className="space-y-2">
           <Label>Language</Label>
           <div className="flex items-center gap-2">
@@ -192,7 +193,6 @@ export default function SettingsForm() {
 
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">AI Provider</h2>
-
         <div className="space-y-2">
           <Label htmlFor="provider">Provider</Label>
           <Select value={provider} onValueChange={handleProviderChange}>
@@ -255,7 +255,7 @@ export default function SettingsForm() {
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Enter your API key"
+              placeholder={apiKeyPlaceholder}
               disabled={isSaving}
             />
             <Button
@@ -279,7 +279,6 @@ export default function SettingsForm() {
 
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">Global Shortcuts</h2>
-
         {hotkeyFields.map((field) => (
           <div key={field.id} className="space-y-2">
             <Label htmlFor={field.id}>{field.label}</Label>

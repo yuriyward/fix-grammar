@@ -8,6 +8,78 @@ import { AI_PROVIDERS, isValidModel } from '@/shared/config/ai-models';
 
 const allowedProviderIds = new Set<string>(Object.keys(AI_PROVIDERS));
 
+const hotkeyModifiers = new Set<string>([
+  'commandorcontrol',
+  'cmdorctrl',
+  'command',
+  'cmd',
+  'control',
+  'ctrl',
+  'alt',
+  'option',
+  'altgr',
+  'shift',
+  'super',
+  'meta',
+]);
+
+const hotkeyNamedKeys = new Set<string>([
+  'plus',
+  'space',
+  'tab',
+  'backspace',
+  'delete',
+  'insert',
+  'return',
+  'enter',
+  'up',
+  'down',
+  'left',
+  'right',
+  'home',
+  'end',
+  'pageup',
+  'pagedown',
+  'escape',
+  'esc',
+  'volumeup',
+  'volumedown',
+  'volumemute',
+  'medianexttrack',
+  'mediaprevioustrack',
+  'mediastop',
+  'mediaplaypause',
+  'printscreen',
+]);
+
+function isValidHotkeyAccelerator(value: string): boolean {
+  const accelerator = value.trim();
+  if (accelerator.length === 0) return false;
+  if (/\s/u.test(accelerator)) return false;
+
+  const parts = accelerator.split('+');
+  if (parts.length < 2) return false;
+  if (parts.some((part) => part.length === 0)) return false;
+
+  for (const modifier of parts.slice(0, -1)) {
+    if (!hotkeyModifiers.has(modifier.toLowerCase())) return false;
+  }
+
+  const key = parts.at(-1);
+  if (!key) return false;
+
+  if (key.length === 1) return key !== '+';
+
+  const normalizedKey = key.toLowerCase();
+  if (hotkeyNamedKeys.has(normalizedKey)) return true;
+
+  return /^f(?:[1-9]|1\d|2[0-4])$/iu.test(key);
+}
+
+const hotkeyAcceleratorSchema = z
+  .string()
+  .refine(isValidHotkeyAccelerator, { message: 'Invalid hotkey accelerator' });
+
 export const aiProviderSchema: z.ZodType<AIProvider> = z
   .string()
   .refine((value): value is AIProvider => allowedProviderIds.has(value), {
@@ -27,10 +99,10 @@ export const aiModelSchema: z.ZodType<AIModel> = z
   });
 
 export const hotkeysSettingsSchema = z.object({
-  fixSelection: z.string(),
-  fixField: z.string(),
-  togglePopup: z.string(),
-  openSettings: z.string(),
+  fixSelection: hotkeyAcceleratorSchema,
+  fixField: hotkeyAcceleratorSchema,
+  togglePopup: hotkeyAcceleratorSchema,
+  openSettings: hotkeyAcceleratorSchema,
 });
 
 export const aiSettingsSchema = z.object({
@@ -59,10 +131,6 @@ export const appSettingsSchema = z.object({
 export const saveApiKeyInputSchema = z.object({
   provider: z.string(),
   key: z.string(),
-});
-
-export const getApiKeyInputSchema = z.object({
-  provider: z.string(),
 });
 
 export const hasApiKeyInputSchema = z.object({

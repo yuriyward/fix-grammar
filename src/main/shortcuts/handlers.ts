@@ -57,12 +57,14 @@ async function rewriteAndReplaceText(
     await options.beforePaste();
   }
 
-  backupClipboard();
+  const clipboardBeforePaste = readClipboard();
   try {
     writeClipboard(rewrittenText);
     await simulatePaste();
   } finally {
-    restoreClipboard();
+    if (readClipboard() === rewrittenText) {
+      writeClipboard(clipboardBeforePaste);
+    }
   }
 
   showNotification('Grammar Copilot', 'Text rewritten successfully');
@@ -134,7 +136,9 @@ export async function handleFixField(): Promise<void> {
     }
 
     // 3. Rewrite and replace field contents
-    await rewriteAndReplaceText(originalText, { beforePaste: simulateSelectAll });
+    await rewriteAndReplaceText(originalText, {
+      beforePaste: simulateSelectAll,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     showNotification('Grammar Copilot Error', `Rewrite failed: ${message}`);

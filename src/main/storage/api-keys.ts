@@ -42,3 +42,13 @@ export function deleteApiKey(provider: string): void {
 export function hasApiKey(provider: string): boolean {
   return store.has(`${API_KEY_PREFIX}.${provider}`);
 }
+
+export function getApiKeyPreview(provider: string): string | null {
+  const apiKey = getApiKey(provider);
+  if (!apiKey) return null;
+
+  const trimmed = apiKey.trim();
+  if (trimmed.length <= 7) return '******';
+
+  return `${trimmed.slice(0, 6)}******${trimmed.slice(-1)}`;
+}

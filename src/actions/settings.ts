@@ -21,15 +21,9 @@ export async function saveApiKey(
   return ipc.client.settings.saveApiKey({ provider, key });
 }
 
-export async function getApiKey(
-  provider: string,
-): Promise<{ key: string | null }> {
-  return ipc.client.settings.getApiKey({ provider });
-}
-
 export async function hasApiKey(
   provider: string,
-): Promise<{ hasKey: boolean }> {
+): Promise<{ hasKey: boolean; preview: string | null }> {
   return ipc.client.settings.hasApiKey({ provider });
 }
 

@@ -4,7 +4,7 @@
 import { os } from '@orpc/server';
 import {
   deleteApiKey,
-  getApiKey,
+  getApiKeyPreview,
   hasApiKey,
   saveApiKey,
 } from '@/main/storage/api-keys';
@@ -12,7 +12,6 @@ import { store } from '@/main/storage/settings';
 import {
   appSettingsSchema,
   deleteApiKeyInputSchema,
-  getApiKeyInputSchema,
   hasApiKeyInputSchema,
   saveApiKeyInputSchema,
 } from './schemas';
@@ -35,17 +34,14 @@ export const saveApiKeyHandler = os
     return { success: true };
   });
 
-export const getApiKeyHandler = os
-  .input(getApiKeyInputSchema)
-  .handler(({ input }) => {
-    const key = getApiKey(input.provider);
-    return { key };
-  });
-
 export const hasApiKeyHandler = os
   .input(hasApiKeyInputSchema)
   .handler(({ input }) => {
-    return { hasKey: hasApiKey(input.provider) };
+    const hasKey = hasApiKey(input.provider);
+    return {
+      hasKey,
+      preview: hasKey ? getApiKeyPreview(input.provider) : null,
+    };
   });
 
 export const deleteApiKeyHandler = os

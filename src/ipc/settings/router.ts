@@ -3,7 +3,6 @@
  */
 import {
   deleteApiKeyHandler,
-  getApiKeyHandler,
   getSettings,
   hasApiKeyHandler,
   saveApiKeyHandler,
@@ -14,7 +13,6 @@ export const settings = {
   getSettings,
   updateSettings,
   saveApiKey: saveApiKeyHandler,
-  getApiKey: getApiKeyHandler,
   hasApiKey: hasApiKeyHandler,
   deleteApiKey: deleteApiKeyHandler,
 };

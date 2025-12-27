@@ -188,7 +188,8 @@ routeTree.gen.ts # 6 exports
 **Purpose**: Automation IPC wrappers for renderer
 
 **Exports**:
-- `export captureText` - Automation IPC wrappers for renderer
+- `export calibrateDelays` - item implementation
+- `export captureText` - item implementation
 - `export replaceText` - item implementation
 
 ### actions/language.ts
@@ -203,7 +204,6 @@ routeTree.gen.ts # 6 exports
 
 **Exports**:
 - `export deleteApiKey` - item implementation
-- `export getApiKey` - item implementation
 - `export getSettings` - Settings IPC wrappers for renderer
 - `export hasApiKey` - item implementation
 - `export saveApiKey` - item implementation
@@ -283,6 +283,7 @@ routeTree.gen.ts # 6 exports
 **Purpose**: Automation IPC handlers
 
 **Exports**:
+- `export calibrateDelays` - item implementation
 - `export captureText` - item implementation
 - `export replaceText` - item implementation
 
@@ -296,6 +297,7 @@ routeTree.gen.ts # 6 exports
 **Purpose**: Zod schemas for automation IPC
 
 **Exports**:
+- `export calibrateDelaysInputSchema` - item implementation
 - `export captureModeSchema` - Zod schemas for automation IPC
 - `export captureTextInputSchema` - Zod schemas for automation IPC
 - `export replaceTextInputSchema` - item implementation
@@ -323,7 +325,6 @@ routeTree.gen.ts # 6 exports
 
 **Exports**:
 - `export deleteApiKeyHandler` - item implementation
-- `export getApiKeyHandler` - item implementation
 - `export getSettings` - item implementation
 - `export hasApiKeyHandler` - item implementation
 - `export saveApiKeyHandler` - item implementation
@@ -339,15 +340,14 @@ routeTree.gen.ts # 6 exports
 **Purpose**: Zod schemas for settings IPC
 
 **Exports**:
-- `export aiModelSchema` - Zod schemas for settings IPC
-- `export aiProviderSchema` - Zod schemas for settings IPC
+- `export aiModelSchema` - item implementation
+- `export aiProviderSchema` - item implementation
 - `export aiSettingsSchema` - item implementation
 - `export appSettingsSchema` - item implementation
+- `export automationSettingsSchema` - item implementation
 - `export deleteApiKeyInputSchema` - item implementation
-- `export getApiKeyInputSchema` - item implementation
 - `export hasApiKeyInputSchema` - item implementation
-- `export hotkeysSettingsSchema` - Zod schemas for settings IPC
-- `export rewriteRoleSchema` - Zod schemas for settings IPC
+- `export hotkeysSettingsSchema` - item implementation
 - `export saveApiKeyInputSchema` - item implementation
 
 ### ipc/shell/handlers.ts
@@ -439,7 +439,7 @@ routeTree.gen.ts # 6 exports
 **Purpose**: Google Gemini AI client
 
 **Exports**:
-- `export rewriteText` - Google Gemini AI client
+- `export rewriteText` - Streams a rewritten version of the given text using the c...
 
 ### main/ai/prompts.ts
 **Purpose**: Role-based prompt templates
@@ -460,14 +460,16 @@ routeTree.gen.ts # 6 exports
 - `export backupClipboard` - Clipboard backup/restore utilities
 - `export readClipboard` - item implementation
 - `export restoreClipboard` - item implementation
-- `export setClipboardTemporary` - item implementation
 - `export writeClipboard` - item implementation
 
 ### main/automation/keyboard.ts
 **Purpose**: nut-js wrapper for keyboard automation
 
 **Exports**:
-- `export simulateCopy` - nut-js wrapper for keyboard automation
+- `export pressCopyShortcut` - item implementation
+- `export pressPasteShortcut` - item implementation
+- `export pressSelectAllShortcut` - item implementation
+- `export simulateCopy` - item implementation
 - `export simulatePaste` - item implementation
 - `export simulateSelectAll` - item implementation
 
@@ -475,10 +477,10 @@ routeTree.gen.ts # 6 exports
 **Purpose**: Fix selection/field orchestration handlers
 
 **Exports**:
-- `export handleFixField` - item implementation
-- `export handleFixSelection` - item implementation
-- `export handleOpenSettings` - item implementation
-- `export handleTogglePopup` - item implementation
+- `export handleFixField` - Global shortcut handler that rewrites the entire active i...
+- `export handleFixSelection` - Global shortcut handler that rewrites the current selecti...
+- `export handleOpenSettings` - Global shortcut handler that opens the Settings page in t...
+- `export handleTogglePopup` - Global shortcut handler that opens (or focuses) the popup...
 
 ### main/shortcuts/manager.ts
 **Purpose**: Global shortcut registration manager
@@ -493,6 +495,7 @@ routeTree.gen.ts # 6 exports
 **Exports**:
 - `export deleteApiKey` - item implementation
 - `export getApiKey` - item implementation
+- `export getApiKeyPreview` - item implementation
 - `export hasApiKey` - item implementation
 - `export saveApiKey` - safeStorage wrapper for API key encryption
 
@@ -511,6 +514,7 @@ routeTree.gen.ts # 6 exports
 
 **Exports**:
 - `export store` - electron-store instance for persistent settings
+- `export initializeSettingsStore` - item implementation
 
 ### main/tray/tray-manager.ts
 **Purpose**: System tray lifecycle management
@@ -1269,6 +1273,7 @@ This is the single sou...
 
 **Exports**:
 - `export CaptureResult` - Automation types
+- `export AutomationCalibrationResult` - item implementation
 - `export CaptureMode` - Automation types
 
 ### shared/types/settings.ts
@@ -1277,10 +1282,8 @@ This is the single sou...
 **Exports**:
 - `export AISettings` - item implementation
 - `export AppSettings` - item implementation
+- `export AutomationSettings` - item implementation
 - `export HotkeysSettings` - Settings schema types
-- `export RewriteRole` - Settings schema types
-- `export AIModel` - Settings schema types
-- `export AIProvider` - Settings schema types
 
 ### shared/types/shortcuts.ts
 **Purpose**: Hotkey types

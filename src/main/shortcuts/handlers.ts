@@ -2,7 +2,7 @@
  * Fix selection/field orchestration handlers
  */
 import { randomUUID } from 'node:crypto';
-import { Notification } from 'electron';
+import { BrowserWindow, Notification } from 'electron';
 import { rewriteText } from '@/main/ai/client';
 import { parseAIError } from '@/main/ai/error-handler';
 import {
@@ -18,13 +18,43 @@ import {
 } from '@/main/automation/keyboard';
 import { getApiKey } from '@/main/storage/api-keys';
 import { saveEditContext } from '@/main/storage/context';
+import { addNotification } from '@/main/storage/notifications';
 import { store } from '@/main/storage/settings';
 import { trayManager } from '@/main/tray/tray-manager';
 import { windowManager } from '@/main/windows/window-manager';
+import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
+import type {
+  AppNotification,
+  AppNotificationPayload,
+} from '@/shared/types/notifications';
 
-function showNotification(title: string, body?: string): void {
-  const notification = new Notification({ title, body });
-  notification.show();
+function sendInAppNotification(notification: AppNotification): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (window.isDestroyed()) continue;
+    if (!window.isVisible()) continue;
+
+    const send = () => {
+      if (window.isDestroyed()) return;
+      window.webContents.send(IPC_CHANNELS.NOTIFY, notification);
+    };
+
+    if (window.webContents.isLoading()) {
+      window.webContents.once('did-finish-load', send);
+      continue;
+    }
+
+    send();
+  }
+}
+
+function showNotification(payload: AppNotificationPayload): void {
+  const stored = addNotification(payload);
+  const osNotification = new Notification({
+    title: stored.title,
+    body: stored.description,
+  });
+  osNotification.show();
+  sendInAppNotification(stored);
 }
 
 async function rewriteAndReplaceText(
@@ -35,10 +65,11 @@ async function rewriteAndReplaceText(
   const apiKey = getApiKey(provider);
 
   if (!apiKey) {
-    showNotification(
-      'Grammar Copilot',
-      `API key not found for provider: ${provider}`,
-    );
+    showNotification({
+      type: 'error',
+      title: 'Grammar Copilot',
+      description: `API key not found for provider: ${provider}`,
+    });
     return;
   }
 
@@ -52,7 +83,11 @@ async function rewriteAndReplaceText(
     rewrittenText = await result.text;
   } catch (error) {
     const errorDetails = parseAIError(error);
-    showNotification(errorDetails.title, errorDetails.message);
+    showNotification({
+      type: 'error',
+      title: errorDetails.title,
+      description: errorDetails.message,
+    });
     throw error; // Re-throw to prevent continuing with undefined rewrittenText
   } finally {
     trayManager.stopBusy();
@@ -79,7 +114,11 @@ async function rewriteAndReplaceText(
     }
   }
 
-  showNotification('Grammar Copilot', 'Text rewritten successfully');
+  showNotification({
+    type: 'success',
+    title: 'Grammar Copilot',
+    description: 'Text rewritten successfully',
+  });
 }
 
 /**
@@ -107,7 +146,11 @@ export async function handleFixSelection(): Promise<void> {
     })();
 
     if (!originalText.trim()) {
-      showNotification('Grammar Copilot', 'No text selected');
+      showNotification({
+        type: 'info',
+        title: 'Grammar Copilot',
+        description: 'No text selected',
+      });
       return;
     }
 
@@ -115,7 +158,11 @@ export async function handleFixSelection(): Promise<void> {
     await rewriteAndReplaceText(originalText);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    showNotification('Grammar Copilot Error', `Rewrite failed: ${message}`);
+    showNotification({
+      type: 'error',
+      title: 'Grammar Copilot Error',
+      description: `Rewrite failed: ${message}`,
+    });
   } finally {
     trayManager.stopBusy();
   }
@@ -147,7 +194,11 @@ export async function handleFixField(): Promise<void> {
     })();
 
     if (!originalText.trim()) {
-      showNotification('Grammar Copilot', 'No text in field');
+      showNotification({
+        type: 'info',
+        title: 'Grammar Copilot',
+        description: 'No text in field',
+      });
       return;
     }
 
@@ -157,7 +208,11 @@ export async function handleFixField(): Promise<void> {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    showNotification('Grammar Copilot Error', `Rewrite failed: ${message}`);
+    showNotification({
+      type: 'error',
+      title: 'Grammar Copilot Error',
+      description: `Rewrite failed: ${message}`,
+    });
   } finally {
     trayManager.stopBusy();
   }

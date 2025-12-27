@@ -3,6 +3,7 @@
  */
 import { ipcRenderer } from 'electron';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
+import type { AppNotification } from '@/shared/types/notifications';
 
 /**
  * Setup the preload bridge for IPC communication.
@@ -12,6 +13,14 @@ export function setupBridge() {
   ipcRenderer.on(IPC_CHANNELS.NAVIGATE, (_event, to: string) => {
     window.dispatchEvent(
       new CustomEvent<string>(IPC_CHANNELS.NAVIGATE, { detail: to }),
+    );
+  });
+
+  ipcRenderer.on(IPC_CHANNELS.NOTIFY, (_event, payload: AppNotification) => {
+    window.dispatchEvent(
+      new CustomEvent<AppNotification>(IPC_CHANNELS.NOTIFY, {
+        detail: payload,
+      }),
     );
   });
 

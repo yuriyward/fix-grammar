@@ -1,68 +1,46 @@
 /**
- * Home page route component
+ * Dashboard page route component
  */
-import { SiElectron, SiReact, SiVite } from '@icons-pack/react-simple-icons';
-import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useState, useTransition } from 'react';
-import { useTranslation } from 'react-i18next';
-import { getAppVersion } from '@/actions/app';
-import ExternalLink from '@/renderer/components/external-link';
-import LangToggle from '@/renderer/components/lang-toggle';
-import NavigationMenu from '@/renderer/components/navigation-menu';
-import ToggleTheme from '@/renderer/components/toggle-theme';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { Button } from '@/renderer/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/renderer/components/ui/card';
 
-/*
- * Update this page to modify your home page.
- * You can delete this file component to start from a blank page.
- */
-
-function HomePage() {
-  const iconSize = 48;
-
-  const [appVersion, setAppVersion] = useState('0.0.0');
-  const [, startGetAppVersion] = useTransition();
-  const { t } = useTranslation();
-
-  useEffect(
-    () => startGetAppVersion(() => getAppVersion().then(setAppVersion)),
-    [],
-  );
+function DashboardPage() {
+  const navigate = useNavigate();
 
   return (
-    <>
-      <NavigationMenu />
-      <div className="flex h-full flex-col">
-        <div className="flex flex-1 flex-col items-center justify-center gap-2">
-          <div className="inline-flex gap-2">
-            <SiReact size={iconSize} />
-            <SiVite size={iconSize} />
-            <SiElectron size={iconSize} />
-          </div>
-          <span>
-            <h1 className="font-mono text-4xl font-bold">{t('appName')}</h1>
-            <p
-              className="text-muted-foreground text-end text-sm uppercase"
-              data-testid="pageTitle"
-            >
-              {t('titleHomePage')}
+    <div className="flex h-full flex-col p-6">
+      <h1 className="mb-6 text-3xl font-bold">Grammar Copilot</h1>
+
+      <div className="flex-1 space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>App Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">Ready to rewrite</p>
+            <p className="mt-2 text-sm">
+              Use keyboard shortcuts to fix text anywhere on your system.
             </p>
-          </span>
-          <LangToggle />
-          <ToggleTheme />
-        </div>
-        <footer className="font-tomorrow text-muted-foreground flex justify-between text-[0.7rem] uppercase">
-          <ExternalLink href="https://littlebit.dev">
-            {t('madeBy')}
-          </ExternalLink>
-          <p>
-            {t('version')}: v{appVersion}
-          </p>
-        </footer>
+          </CardContent>
+        </Card>
+
+        <Button
+          onClick={() => navigate({ to: '/settings' })}
+          className="w-full"
+        >
+          Open Settings
+        </Button>
       </div>
-    </>
+    </div>
   );
 }
 
 export const Route = createFileRoute('/')({
-  component: HomePage,
+  component: DashboardPage,
 });

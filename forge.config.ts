@@ -3,15 +3,21 @@ import { MakerDeb } from '@electron-forge/maker-deb';
 import { MakerRpm } from '@electron-forge/maker-rpm';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
 import { MakerZIP } from '@electron-forge/maker-zip';
+import { AutoUnpackNativesPlugin } from '@electron-forge/plugin-auto-unpack-natives';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 import type { ForgeConfig } from '@electron-forge/shared-types';
 
 const config: ForgeConfig = {
   packagerConfig: {
-    asar: true,
+    asar: {
+      unpack: '**/@nut-tree-fork/**',
+    },
   },
-  rebuildConfig: {},
+  rebuildConfig: {
+    // Force rebuild of native modules
+    force: true,
+  },
   makers: [
     new MakerSquirrel({}),
     new MakerZIP({}, ['darwin']),
@@ -28,7 +34,7 @@ const config: ForgeConfig = {
       config: {
         repository: {
           owner: 'yuriyward',
-          name: 'electron-shadcn-ai',
+          name: 'fix-grammar',
         },
         draft: true,
         prerelease: false,
@@ -36,6 +42,7 @@ const config: ForgeConfig = {
     },
   ],
   plugins: [
+    new AutoUnpackNativesPlugin({}),
     new VitePlugin({
       build: [
         {

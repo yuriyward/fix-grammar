@@ -102,21 +102,41 @@ Always resolve any linting or type errors before completing a task.
 <!-- AUTO-GENERATED TREE START -->
 
 ```
-actions/ # 5 files
+actions/ # 9 files
+  ├─ ai.ts # AI IPC wrappers for renderer
   ├─ app.ts # App info IPC wrappers for renderer
+  ├─ automation.ts # Automation IPC wrappers for renderer
   ├─ language.ts # Language preference management for renderer
+  ├─ settings.ts # Settings IPC wrappers for renderer
   ├─ shell.ts # Shell operations IPC wrapper for renderer
+  ├─ shortcuts.ts # Shortcuts IPC wrappers for renderer
   ├─ theme.ts # Theme mode management for renderer
   └─ window.ts # Window control IPC wrappers for renderer
-ipc/ # 3 files, 4 directories
+ipc/ # 3 files, 8 directories
+  ├─ ai/ # 3 files
+  │ ├─ handlers.ts # AI IPC handlers
+  │ ├─ router.ts # AI domain router
+  │ └─ schemas.ts # Zod schemas for AI IPC
   ├─ app/ # 3 files
   │ ├─ handlers.ts # App info IPC handlers
   │ ├─ router.ts # App domain router
   │ └─ schemas.ts # Zod schemas for app IPC
+  ├─ automation/ # 3 files
+  │ ├─ handlers.ts # Automation IPC handlers
+  │ ├─ router.ts # Automation domain router
+  │ └─ schemas.ts # Zod schemas for automation IPC
+  ├─ settings/ # 3 files
+  │ ├─ handlers.ts # Settings IPC handlers
+  │ ├─ router.ts # Settings domain router
+  │ └─ schemas.ts # Zod schemas for settings IPC
   ├─ shell/ # 3 files
   │ ├─ handlers.ts # Shell operations IPC handlers
   │ ├─ router.ts # Shell domain router
   │ └─ schemas.ts # Zod schemas for shell IPC
+  ├─ shortcuts/ # 3 files
+  │ ├─ handlers.ts # Shortcuts IPC handlers
+  │ ├─ router.ts # Shortcuts domain router
+  │ └─ schemas.ts # Zod schemas for shortcuts IPC
   ├─ theme/ # 3 files
   │ ├─ handlers.ts # Theme mode IPC handlers
   │ ├─ router.ts # Theme domain router
@@ -125,28 +145,94 @@ ipc/ # 3 files, 4 directories
   │ ├─ handlers.ts # Window control IPC handlers
   │ ├─ router.ts # Window domain router
   │ └─ schemas.ts # Zod schemas for window IPC
-  ├─ context.ts # IPC context with main window reference
+  ├─ context.ts # IPC context with main window reference and window manager
   ├─ handler.ts # oRPC handler for main process
   └─ router.ts # Root oRPC router combining all domains
-main/ # 1 files, 1 directories
+main/ # 1 files, 6 directories
+  ├─ ai/ # 3 files
+  │ ├─ client.ts # Google Gemini AI client
+  │ ├─ error-handler.ts # AI error handling utilities
+  │ └─ prompts.ts # Role-based prompt templates
+  ├─ automation/ # 2 files
+  │ ├─ clipboard.ts # Clipboard backup/restore utilities
+  │ └─ keyboard.ts # nut-js wrapper for keyboard automation
+  ├─ shortcuts/ # 2 files
+  │ ├─ handlers.ts # Fix selection/field orchestration handlers
+  │ └─ manager.ts # Global shortcut registration manager
+  ├─ storage/ # 3 files
+  │ ├─ api-keys.ts # safeStorage wrapper for API key encryption
+  │ ├─ context.ts # In-memory edit context storage
+  │ └─ settings.ts # electron-store instance for persistent settings
+  ├─ tray/ # 1 file
+  │ └─ tray-manager.ts # System tray lifecycle management
   ├─ windows/ # 1 file
-  │ └─ main-window.ts # Main application window creation
+  │ └─ window-manager.ts # Centralized window lifecycle management
   └─ app.ts # Main process lifecycle and initialization
 preload/ # 1 file
   └─ bridge.ts # IPC bridge via contextBridge
-renderer/ # 1 files, 3 directories
-  ├─ components/ # 6 files, 1 directories
-  │ ├─ ui/ # 4 files
-  │ │ ├─ button.tsx # Button component with variants (shadcn/ui)
-  │ │ ├─ navigation-menu.tsx # Navigation menu primitives (shadcn/ui)
-  │ │ ├─ toggle-group.tsx # Toggle group component (shadcn/ui)
-  │ │ └─ toggle.tsx # Toggle component with variants (shadcn/ui)
+renderer/ # 1 files, 5 directories
+  ├─ components/ # 5 files, 1 directories
+  │ ├─ ui/ # 50 files
+  │ │ ├─ accordion.tsx # 5 exports
+  │ │ ├─ alert-dialog.tsx # 13 exports
+  │ │ ├─ alert.tsx # 4 exports
+  │ │ ├─ autocomplete.tsx # 15 exports
+  │ │ ├─ avatar.tsx # 3 exports
+  │ │ ├─ badge.tsx # 2 exports
+  │ │ ├─ breadcrumb.tsx # 7 exports
+  │ │ ├─ button.tsx # 2 exports
+  │ │ ├─ card.tsx # 8 exports
+  │ │ ├─ checkbox-group.tsx # 1 export
+  │ │ ├─ checkbox.tsx # 1 export
+  │ │ ├─ collapsible.tsx # 4 exports
+  │ │ ├─ combobox.tsx # 17 exports
+  │ │ ├─ command.tsx # 15 exports
+  │ │ ├─ dialog.tsx # 14 exports
+  │ │ ├─ empty.tsx # 6 exports
+  │ │ ├─ field.tsx # 6 exports
+  │ │ ├─ fieldset.tsx # 2 exports
+  │ │ ├─ form.tsx # 1 export
+  │ │ ├─ frame.tsx # 6 exports
+  │ │ ├─ group.tsx # 7 exports
+  │ │ ├─ input-group.tsx # 5 exports
+  │ │ ├─ input.tsx # 2 exports
+  │ │ ├─ kbd.tsx # 2 exports
+  │ │ ├─ label.tsx # 1 export
+  │ │ ├─ menu.tsx # 30 exports
+  │ │ ├─ meter.tsx # 5 exports
+  │ │ ├─ number-field.tsx # 6 exports
+  │ │ ├─ pagination.tsx # 7 exports
+  │ │ ├─ popover.tsx # 8 exports
+  │ │ ├─ preview-card.tsx # 6 exports
+  │ │ ├─ progress.tsx # 5 exports
+  │ │ ├─ radio-group.tsx # 3 exports
+  │ │ ├─ scroll-area.tsx # 2 exports
+  │ │ ├─ select.tsx # 9 exports
+  │ │ ├─ separator.tsx # 1 export
+  │ │ ├─ sheet.tsx # 13 exports
+  │ │ ├─ sidebar.tsx # 24 exports
+  │ │ ├─ skeleton.tsx # 1 export
+  │ │ ├─ slider.tsx # 2 exports
+  │ │ ├─ spinner.tsx # 1 export
+  │ │ ├─ switch.tsx # 1 export
+  │ │ ├─ table.tsx # 8 exports
+  │ │ ├─ tabs.tsx # 6 exports
+  │ │ ├─ textarea.tsx # 2 exports
+  │ │ ├─ toast.tsx # 5 exports
+  │ │ ├─ toggle-group.tsx # 4 exports
+  │ │ ├─ toggle.tsx # 2 exports
+  │ │ ├─ toolbar.tsx # 6 exports
+  │ │ └─ tooltip.tsx # 6 exports
   │ ├─ drag-window-region.tsx # Draggable title bar with window controls
   │ ├─ error-boundary.tsx # React error boundary with recovery UI
   │ ├─ external-link.tsx # External link button using shell API
   │ ├─ lang-toggle.tsx # Language selection toggle group
-  │ ├─ navigation-menu.tsx # Main app navigation menu component
   │ └─ toggle-theme.tsx # Theme toggle button component
+  ├─ features/ # 1 directory
+  │ └─ settings/ # 1 file
+  │   └─ settings-form.tsx # Settings form component
+  ├─ hooks/ # 1 file
+  │ └─ use-mobile.ts # 1 export
   ├─ layouts/ # 1 file
   │ └─ base-layout.tsx # Base layout with title bar region
   ├─ lib/ # 6 files
@@ -157,14 +243,21 @@ renderer/ # 1 files, 3 directories
   │ ├─ routes.ts # TanStack Router configuration
   │ └─ tailwind.ts # Tailwind CSS class merging utility
   └─ app.tsx # React application root and mounting
-routes/ # 2 files
+routes/ # 3 files
   ├─ __root.tsx # Root route with base layout wrapper
-  ├─ index.tsx # Home page route component
-  └─ second.tsx # Second page route component
-shared/ # 2 directories
+  ├─ index.tsx # Dashboard page route component
+  ├─ popup.tsx # Popup chat route component
+  └─ settings.tsx # Settings page route component
+shared/ # 3 directories
+  ├─ config/ # 1 file
+  │ └─ ai-models.ts # Centralized AI model configuration This is the single source of truth for all available models
   ├─ contracts/ # 1 file
   │ └─ ipc-channels.ts # IPC channel names and storage keys
-  └─ types/ # 1 file
+  └─ types/ # 5 files
+    ├─ ai.ts # AI types
+    ├─ automation.ts # Automation types
+    ├─ settings.ts # Settings schema types
+    ├─ shortcuts.ts # Hotkey types
     └─ theme.ts # Theme mode type definition
 tests/ # 1 directory
   └─ unit/ # 1 file

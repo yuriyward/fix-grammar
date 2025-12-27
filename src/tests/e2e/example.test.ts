@@ -39,14 +39,13 @@ test('renders the first page', async () => {
   const page: Page = await electronApp.firstWindow();
   const title = await page.waitForSelector('h1');
   const text = await title.textContent();
-  expect(text).toBe('electron-shadcn-ai');
+  expect(text).toBe('Grammar Copilot');
 });
 
-test('renders page name', async () => {
+test('renders app status card', async () => {
   const page: Page = await electronApp.firstWindow();
 
   await page.waitForSelector('h1');
-  const pageName = page.getByTestId('pageTitle');
-  const text = await pageName.textContent();
-  expect(text).toBe('Home Page');
+  const statusCard = page.locator('text=App Status');
+  await expect(statusCard).toBeVisible();
 });

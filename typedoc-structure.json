@@ -23,5 +23,8 @@
   ],
   "pretty": true,
   "includeHierarchySummary": true,
-  "categorizeByGroup": false
+  "categorizeByGroup": false,
+  "validation": {
+    "notExported": false
+  }
 }

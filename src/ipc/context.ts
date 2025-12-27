@@ -1,14 +1,20 @@
 /**
- * IPC context with main window reference
+ * IPC context with main window reference and window manager
  */
 import { ORPCError, os } from '@orpc/server';
 import type { BrowserWindow } from 'electron';
+import type { WindowManager } from '@/main/windows/window-manager';
 
 class IPCContext {
   public mainWindow: BrowserWindow | undefined;
+  public windowManager: WindowManager | undefined;
 
   public setMainWindow(window: BrowserWindow) {
     this.mainWindow = window;
+  }
+
+  public setWindowManager(manager: WindowManager) {
+    this.windowManager = manager;
   }
 
   /**

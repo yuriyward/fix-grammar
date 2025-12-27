@@ -1,5 +1,7 @@
-import { cn } from '@coss/ui/lib/utils';
 import { Loader2Icon } from 'lucide-react';
+import type * as React from 'react';
+
+import { cn } from '@/renderer/lib/tailwind';
 
 function Spinner({
   className,

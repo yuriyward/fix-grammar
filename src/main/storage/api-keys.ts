@@ -6,6 +6,10 @@ import { store } from './settings';
 
 const API_KEY_PREFIX = 'apiKeys';
 
+export function isEncryptionAvailable(): boolean {
+  return safeStorage.isEncryptionAvailable();
+}
+
 export function saveApiKey(provider: string, key: string): void {
   if (!safeStorage.isEncryptionAvailable()) {
     throw new Error('Encryption not available on this system');

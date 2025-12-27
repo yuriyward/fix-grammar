@@ -32,3 +32,8 @@ export async function deleteApiKey(
 ): Promise<{ success: boolean }> {
   return ipc.client.settings.deleteApiKey({ provider });
 }
+
+export async function isEncryptionAvailable(): Promise<boolean> {
+  const result = await ipc.client.settings.isEncryptionAvailable();
+  return result.available;
+}

@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { calibrateDelays } from '@/actions/automation';
 import {
+  isEncryptionAvailable as checkEncryptionAvailable,
   deleteApiKey,
   getSettings,
   hasApiKey,
@@ -13,6 +14,11 @@ import {
 import { reregisterShortcuts } from '@/actions/shortcuts';
 import LangToggle from '@/renderer/components/lang-toggle';
 import ToggleTheme from '@/renderer/components/toggle-theme';
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/renderer/components/ui/alert';
 import { Button } from '@/renderer/components/ui/button';
 import {
   Card,
@@ -53,6 +59,9 @@ export default function SettingsForm() {
   const [apiKeyPreview, setApiKeyPreview] = useState('');
   const [hasKey, setHasKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEncryptionAvailable, setIsEncryptionAvailable] = useState<
+    boolean | null
+  >(null);
 
   const [fixSelection, setFixSelection] = useState('CommandOrControl+Shift+F');
   const [fixField, setFixField] = useState('CommandOrControl+Shift+G');
@@ -108,11 +117,18 @@ export default function SettingsForm() {
 
   useEffect(() => {
     void loadSettings();
+    void (async () => {
+      try {
+        const available = await checkEncryptionAvailable();
+        setIsEncryptionAvailable(available);
+      } catch (error) {
+        console.error('Failed to check encryption availability:', error);
+        // Default to true if check fails to avoid blocking users unnecessarily,
+        // though typically this shouldn't fail if IPC is working.
+        setIsEncryptionAvailable(true);
+      }
+    })();
   }, [loadSettings]);
-
-  useEffect(() => {
-    void loadApiKeyStatus();
-  }, [loadApiKeyStatus]);
 
   const handleProviderChange = (newProvider: AIProvider) => {
     setProvider(newProvider);
@@ -320,12 +336,18 @@ export default function SettingsForm() {
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder={apiKeyPlaceholder}
-              disabled={isSaving}
+              placeholder={
+                isEncryptionAvailable === false
+                  ? 'Encryption unavailable'
+                  : apiKeyPlaceholder
+              }
+              disabled={isSaving || isEncryptionAvailable === false}
             />
             <Button
               onClick={handleSaveApiKey}
-              disabled={isSaving || !apiKey.trim()}
+              disabled={
+                isSaving || !apiKey.trim() || isEncryptionAvailable === false
+              }
             >
               Save Key
             </Button>
@@ -339,6 +361,15 @@ export default function SettingsForm() {
               </Button>
             )}
           </div>
+          {isEncryptionAvailable === false && (
+            <Alert variant="warning">
+              <AlertTitle>Encryption Unavailable</AlertTitle>
+              <AlertDescription>
+                System keychain integration is not available. API keys cannot be
+                securely saved.
+              </AlertDescription>
+            </Alert>
+          )}
         </div>
       </div>
 

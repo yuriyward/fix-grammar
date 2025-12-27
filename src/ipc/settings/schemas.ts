@@ -52,7 +52,7 @@ const hotkeyNamedKeys = new Set<string>([
   'printscreen',
 ]);
 
-function isValidHotkeyAccelerator(value: string): boolean {
+export function isValidHotkeyAccelerator(value: string): boolean {
   const accelerator = value.trim();
   if (accelerator.length === 0) return false;
   if (/\s/u.test(accelerator)) return false;
@@ -68,7 +68,12 @@ function isValidHotkeyAccelerator(value: string): boolean {
   const key = parts.at(-1);
   if (!key) return false;
 
-  if (key.length === 1) return key !== '+';
+  if (key.length === 1) {
+    if (key === '+') return false;
+    const codePoint = key.codePointAt(0);
+    if (!codePoint) return false;
+    return codePoint >= 0x21 && codePoint <= 0x7e;
+  }
 
   const normalizedKey = key.toLowerCase();
   if (hotkeyNamedKeys.has(normalizedKey)) return true;
@@ -76,9 +81,7 @@ function isValidHotkeyAccelerator(value: string): boolean {
   return /^f(?:[1-9]|1\d|2[0-4])$/iu.test(key);
 }
 
-const hotkeyAcceleratorSchema = z
-  .string()
-  .refine(isValidHotkeyAccelerator, { message: 'Invalid hotkey accelerator' });
+const hotkeyAcceleratorSchema = z.string();
 
 export const aiProviderSchema: z.ZodType<AIProvider> = z
   .string()
@@ -146,3 +149,5 @@ export const hasApiKeyInputSchema = z.object({
 export const deleteApiKeyInputSchema = z.object({
   provider: z.string(),
 });
+
+export const isEncryptionAvailableInputSchema = z.void();

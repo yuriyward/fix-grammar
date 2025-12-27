@@ -2,7 +2,7 @@
  * Fix selection/field orchestration handlers
  */
 import { randomUUID } from 'node:crypto';
-import { BrowserWindow, Notification } from 'electron';
+import { Notification } from 'electron';
 import { rewriteText } from '@/main/ai/client';
 import { parseAIError } from '@/main/ai/error-handler';
 import {
@@ -29,22 +29,7 @@ import type {
 } from '@/shared/types/notifications';
 
 function sendInAppNotification(notification: AppNotification): void {
-  for (const window of BrowserWindow.getAllWindows()) {
-    if (window.isDestroyed()) continue;
-    if (!window.isVisible()) continue;
-
-    const send = () => {
-      if (window.isDestroyed()) return;
-      window.webContents.send(IPC_CHANNELS.NOTIFY, notification);
-    };
-
-    if (window.webContents.isLoading()) {
-      window.webContents.once('did-finish-load', send);
-      continue;
-    }
-
-    send();
-  }
+  windowManager.broadcast(IPC_CHANNELS.NOTIFY, notification);
 }
 
 function showNotification(payload: AppNotificationPayload): void {

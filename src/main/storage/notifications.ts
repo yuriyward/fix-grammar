@@ -18,6 +18,46 @@ const notificationStore = new ElectronStore<NotificationStore>({
   },
 });
 
+function validateTitle(value: unknown): string | null {
+  return typeof value === 'string' ? value : null;
+}
+
+function validateType(
+  value: unknown,
+): 'success' | 'error' | 'info' | 'warning' {
+  return value === 'success' ||
+    value === 'error' ||
+    value === 'info' ||
+    value === 'warning'
+    ? value
+    : 'info';
+}
+
+function validateTimestamp(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+function validateReadAt(
+  value: unknown,
+  type: AppNotification['type'],
+  createdAt: number,
+): number | null {
+  const explicit =
+    value === null
+      ? null
+      : typeof value === 'number' && Number.isFinite(value)
+        ? value
+        : undefined;
+
+  if (explicit !== undefined) return explicit;
+
+  return type === 'error' || type === 'warning' ? null : createdAt;
+}
+
+function generateId(value: unknown): string {
+  return typeof value === 'string' && value.length > 0 ? value : randomUUID();
+}
+
 function normalizeNotification(
   input: unknown,
   fallbackCreatedAt: number,
@@ -25,54 +65,17 @@ function normalizeNotification(
   if (!input || typeof input !== 'object') return null;
   const record = input as Record<string, unknown>;
 
-  const title = typeof record.title === 'string' ? record.title : null;
+  const title = validateTitle(record.title);
   if (!title) return null;
 
-  const type = record.type;
-  const normalizedType =
-    type === 'success' ||
-    type === 'error' ||
-    type === 'info' ||
-    type === 'warning'
-      ? type
-      : 'info';
-
+  const type = validateType(record.type);
   const description =
     typeof record.description === 'string' ? record.description : undefined;
+  const createdAt = validateTimestamp(record.createdAt, fallbackCreatedAt);
+  const readAt = validateReadAt(record.readAt, type, createdAt);
+  const id = generateId(record.id);
 
-  const createdAt =
-    typeof record.createdAt === 'number' && Number.isFinite(record.createdAt)
-      ? record.createdAt
-      : fallbackCreatedAt;
-
-  const readAt = (() => {
-    const explicit =
-      record.readAt === null
-        ? null
-        : typeof record.readAt === 'number' && Number.isFinite(record.readAt)
-          ? record.readAt
-          : undefined;
-
-    if (explicit !== undefined) return explicit;
-
-    return normalizedType === 'error' || normalizedType === 'warning'
-      ? null
-      : createdAt;
-  })();
-
-  const id =
-    typeof record.id === 'string' && record.id.length > 0
-      ? record.id
-      : randomUUID();
-
-  return {
-    id,
-    type: normalizedType,
-    title,
-    description,
-    createdAt,
-    readAt,
-  };
+  return { id, type, title, description, createdAt, readAt };
 }
 
 function getAll(): AppNotification[] {

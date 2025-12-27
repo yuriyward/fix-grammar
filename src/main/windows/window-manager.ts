@@ -11,9 +11,36 @@ export class WindowManager {
   public mainWindow: BrowserWindow | null = null;
   private popupWindow: BrowserWindow | null = null;
 
-  private sendNavigate(targetWindow: BrowserWindow, to: string): void {
+  /**
+   * Broadcast a message to all visible, non-destroyed windows.
+   *
+   * This is the correct pattern for one-way main→renderer broadcasts (e.g., notifications,
+   * navigation commands). oRPC is designed for request/response and cannot push messages
+   * unprompted from main to renderer.
+   *
+   * Handles the edge case where webContents is still loading by deferring the send.
+   */
+  broadcast(channel: string, ...args: unknown[]): void {
+    for (const window of BrowserWindow.getAllWindows()) {
+      if (window.isDestroyed()) continue;
+      if (!window.isVisible()) continue;
+      this.sendToWindow(window, channel, ...args);
+    }
+  }
+
+  /**
+   * Send a message to a specific window, handling the loading state edge case.
+   */
+  private sendToWindow(
+    targetWindow: BrowserWindow,
+    channel: string,
+    ...args: unknown[]
+  ): void {
+    if (targetWindow.isDestroyed()) return;
+
     const send = () => {
-      targetWindow.webContents.send(IPC_CHANNELS.NAVIGATE, to);
+      if (targetWindow.isDestroyed()) return;
+      targetWindow.webContents.send(channel, ...args);
     };
 
     if (targetWindow.webContents.isLoading()) {
@@ -26,12 +53,12 @@ export class WindowManager {
 
   navigateMainWindow(to: string): void {
     if (!this.mainWindow) return;
-    this.sendNavigate(this.mainWindow, to);
+    this.sendToWindow(this.mainWindow, IPC_CHANNELS.NAVIGATE, to);
   }
 
   navigatePopupWindow(to: string): void {
     if (!this.popupWindow) return;
-    this.sendNavigate(this.popupWindow, to);
+    this.sendToWindow(this.popupWindow, IPC_CHANNELS.NAVIGATE, to);
   }
 
   createMainWindow(): BrowserWindow {

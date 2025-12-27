@@ -8,10 +8,10 @@ import { useTranslation } from 'react-i18next';
 import { updateAppLanguage } from '@/actions/language';
 import { syncWithLocalTheme } from '@/actions/theme';
 import { ErrorBoundary } from '@/renderer/components/error-boundary';
-import { ToastProvider, toastManager } from '@/renderer/components/ui/toast';
+import { ToastProvider } from '@/renderer/components/ui/toast';
+import { useNotificationListener } from '@/renderer/hooks/use-notification-listener';
 import { router } from '@/renderer/lib/routes';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
-import type { AppNotification } from '@/shared/types/notifications';
 import '@/renderer/lib/i18n';
 
 /**
@@ -19,6 +19,8 @@ import '@/renderer/lib/i18n';
  */
 export default function App() {
   const { i18n } = useTranslation();
+
+  useNotificationListener();
 
   useEffect(() => {
     syncWithLocalTheme();
@@ -34,22 +36,6 @@ export default function App() {
     window.addEventListener(IPC_CHANNELS.NAVIGATE, onNavigate);
     return () => {
       window.removeEventListener(IPC_CHANNELS.NAVIGATE, onNavigate);
-    };
-  }, []);
-
-  useEffect(() => {
-    const onNotify = (event: Event) => {
-      const notification = (event as CustomEvent<AppNotification>).detail;
-      toastManager.add({
-        type: notification.type,
-        title: notification.title,
-        description: notification.description,
-      });
-    };
-
-    window.addEventListener(IPC_CHANNELS.NOTIFY, onNotify);
-    return () => {
-      window.removeEventListener(IPC_CHANNELS.NOTIFY, onNotify);
     };
   }, []);
 

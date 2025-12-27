@@ -111,6 +111,11 @@ export const aiSettingsSchema = z.object({
   role: rewriteRoleSchema,
 });
 
+export const automationSettingsSchema = z.object({
+  clipboardSyncDelayMs: z.number().int().min(0).max(5_000),
+  selectionDelayMs: z.number().int().min(0).max(5_000),
+});
+
 const aiSettingsSchemaWithValidation = aiSettingsSchema.superRefine(
   ({ provider, model }, ctx) => {
     if (isValidModel(provider, model)) return;
@@ -126,6 +131,7 @@ const aiSettingsSchemaWithValidation = aiSettingsSchema.superRefine(
 export const appSettingsSchema = z.object({
   hotkeys: hotkeysSettingsSchema,
   ai: aiSettingsSchemaWithValidation,
+  automation: automationSettingsSchema,
 });
 
 export const saveApiKeyInputSchema = z.object({

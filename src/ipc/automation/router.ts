@@ -1,9 +1,10 @@
 /**
  * Automation domain router
  */
-import { captureText, replaceText } from './handlers';
+import { calibrateDelays, captureText, replaceText } from './handlers';
 
 export const automation = {
   captureText,
   replaceText,
+  calibrateDelays,
 };

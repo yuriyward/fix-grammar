@@ -12,3 +12,7 @@ export const captureTextInputSchema = z.object({
 export const replaceTextInputSchema = z.object({
   text: z.string(),
 });
+
+export const calibrateDelaysInputSchema = z.object({
+  expectedText: z.string().min(1).max(50_000),
+});

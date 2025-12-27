@@ -2,7 +2,11 @@
  * Automation IPC wrappers for renderer
  */
 import { ipc } from '@/renderer/lib/ipc-manager';
-import type { CaptureMode, CaptureResult } from '@/shared/types/automation';
+import type {
+  AutomationCalibrationResult,
+  CaptureMode,
+  CaptureResult,
+} from '@/shared/types/automation';
 
 export async function captureText(mode: CaptureMode): Promise<CaptureResult> {
   return ipc.client.automation.captureText({ mode });
@@ -10,4 +14,10 @@ export async function captureText(mode: CaptureMode): Promise<CaptureResult> {
 
 export async function replaceText(text: string): Promise<{ success: boolean }> {
   return ipc.client.automation.replaceText({ text });
+}
+
+export async function calibrateDelays(
+  expectedText: string,
+): Promise<AutomationCalibrationResult> {
+  return ipc.client.automation.calibrateDelays({ expectedText });
 }

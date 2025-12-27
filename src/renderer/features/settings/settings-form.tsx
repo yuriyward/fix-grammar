@@ -1,7 +1,8 @@
 /**
  * Settings form component
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { calibrateDelays } from '@/actions/automation';
 import {
   deleteApiKey,
   getSettings,
@@ -13,6 +14,14 @@ import { reregisterShortcuts } from '@/actions/shortcuts';
 import LangToggle from '@/renderer/components/lang-toggle';
 import ToggleTheme from '@/renderer/components/toggle-theme';
 import { Button } from '@/renderer/components/ui/button';
+import {
+  Card,
+  CardAction,
+  CardDescription,
+  CardHeader,
+  CardPanel,
+  CardTitle,
+} from '@/renderer/components/ui/card';
 import { Input } from '@/renderer/components/ui/input';
 import { Label } from '@/renderer/components/ui/label';
 import {
@@ -22,6 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/renderer/components/ui/select';
+import { Spinner } from '@/renderer/components/ui/spinner';
+import { Textarea } from '@/renderer/components/ui/textarea';
 import { toastManager } from '@/renderer/components/ui/toast';
 import {
   AI_PROVIDERS,
@@ -32,6 +43,7 @@ import {
   getProviderName,
 } from '@/shared/config/ai-models';
 import type { RewriteRole } from '@/shared/types/ai';
+import type { AutomationCalibrationResult } from '@/shared/types/automation';
 
 export default function SettingsForm() {
   const [provider, setProvider] = useState<AIProvider>('google');
@@ -46,6 +58,17 @@ export default function SettingsForm() {
   const [fixField, setFixField] = useState('CommandOrControl+Shift+G');
   const [togglePopup, setTogglePopup] = useState('CommandOrControl+Shift+P');
   const [openSettings, setOpenSettings] = useState('CommandOrControl+,');
+
+  const [clipboardSyncDelayMs, setClipboardSyncDelayMs] = useState(200);
+  const [selectionDelayMs, setSelectionDelayMs] = useState(100);
+  const [isCalibrating, setIsCalibrating] = useState(false);
+  const [calibration, setCalibration] =
+    useState<AutomationCalibrationResult | null>(null);
+
+  const [calibrationText, setCalibrationText] = useState(
+    'The quick brown fox jumps over the lazy dog. 1234567890',
+  );
+  const calibrationFieldRef = useRef<HTMLTextAreaElement | null>(null);
 
   const addSuccessToast = (title: string) => {
     toastManager.add({ type: 'success', title });
@@ -66,6 +89,8 @@ export default function SettingsForm() {
       setFixField(settings.hotkeys.fixField);
       setTogglePopup(settings.hotkeys.togglePopup);
       setOpenSettings(settings.hotkeys.openSettings);
+      setClipboardSyncDelayMs(settings.automation.clipboardSyncDelayMs);
+      setSelectionDelayMs(settings.automation.selectionDelayMs);
     } catch (error) {
       console.error('Failed to load settings:', error);
     }
@@ -129,6 +154,7 @@ export default function SettingsForm() {
       await updateSettings({
         ai: { provider, model, role },
         hotkeys: { fixSelection, fixField, togglePopup, openSettings },
+        automation: { clipboardSyncDelayMs, selectionDelayMs },
       });
       await reregisterShortcuts();
       addSuccessToast('Settings saved');
@@ -136,6 +162,45 @@ export default function SettingsForm() {
       addErrorToast('Failed to save settings', error);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleCalibrateAutomation = async () => {
+    if (isSaving || isCalibrating) return;
+
+    setIsCalibrating(true);
+    try {
+      calibrationFieldRef.current?.focus();
+      calibrationFieldRef.current?.select();
+
+      const result = await calibrateDelays(calibrationText);
+      setCalibration(result);
+
+      if (!result.success) {
+        addErrorToast('Calibration failed', result.reason);
+        return;
+      }
+
+      const nextClipboardSyncDelayMs = result.recommended.clipboardSyncDelayMs;
+      const nextSelectionDelayMs = result.recommended.selectionDelayMs;
+
+      setClipboardSyncDelayMs(nextClipboardSyncDelayMs);
+      setSelectionDelayMs(nextSelectionDelayMs);
+
+      const currentSettings = await getSettings();
+      await updateSettings({
+        ...currentSettings,
+        automation: {
+          clipboardSyncDelayMs: nextClipboardSyncDelayMs,
+          selectionDelayMs: nextSelectionDelayMs,
+        },
+      });
+
+      addSuccessToast('Automation calibrated and saved');
+    } catch (error) {
+      addErrorToast('Calibration failed', error);
+    } finally {
+      setIsCalibrating(false);
     }
   };
 
@@ -290,6 +355,94 @@ export default function SettingsForm() {
             />
           </div>
         ))}
+      </div>
+
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold">Automation</h2>
+        <Card>
+          <CardHeader>
+            <CardTitle>Calibration</CardTitle>
+            <CardDescription>
+              Recommended: click Calibrate to measure timing on your machine and
+              auto-save safe values.
+            </CardDescription>
+            <CardAction>
+              <Button
+                onClick={handleCalibrateAutomation}
+                disabled={isSaving || isCalibrating}
+              >
+                {isCalibrating ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Spinner className="size-4" />
+                    Calibrating…
+                  </span>
+                ) : (
+                  'Calibrate'
+                )}
+              </Button>
+            </CardAction>
+          </CardHeader>
+          <CardPanel className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="calibrationText">Calibration Text</Label>
+              <Textarea
+                id="calibrationText"
+                ref={calibrationFieldRef}
+                value={calibrationText}
+                onChange={(e) => setCalibrationText(e.target.value)}
+              />
+            </div>
+            {calibration?.success && (
+              <p className="text-sm text-muted-foreground">
+                Measured clipboard update: p95{' '}
+                {calibration.measuredClipboardMs.p95Ms}ms (max{' '}
+                {calibration.measuredClipboardMs.maxMs}ms,{' '}
+                {calibration.measuredClipboardMs.samplesMs.length} runs)
+              </p>
+            )}
+          </CardPanel>
+        </Card>
+
+        <div className="space-y-2">
+          <Label htmlFor="clipboardSyncDelayMs">
+            Clipboard Sync Delay (ms)
+          </Label>
+          <p className="text-sm text-muted-foreground">
+            Maximum time to wait after copy; usually returns sooner once the
+            clipboard updates.
+          </p>
+          <Input
+            id="clipboardSyncDelayMs"
+            type="number"
+            min={0}
+            max={5000}
+            step={25}
+            value={clipboardSyncDelayMs}
+            onChange={(e) => {
+              const next = e.target.valueAsNumber;
+              setClipboardSyncDelayMs(Number.isFinite(next) ? next : 0);
+            }}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="selectionDelayMs">Selection Delay (ms)</Label>
+          <p className="text-sm text-muted-foreground">
+            Fixed delay after Select All; increase if “Fix Field” sometimes
+            captures partial text.
+          </p>
+          <Input
+            id="selectionDelayMs"
+            type="number"
+            min={0}
+            max={5000}
+            step={25}
+            value={selectionDelayMs}
+            onChange={(e) => {
+              const next = e.target.valueAsNumber;
+              setSelectionDelayMs(Number.isFinite(next) ? next : 0);
+            }}
+          />
+        </div>
       </div>
 
       <Button

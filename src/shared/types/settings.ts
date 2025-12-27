@@ -17,7 +17,13 @@ export interface AISettings {
   role: RewriteRole;
 }
 
+export interface AutomationSettings {
+  clipboardSyncDelayMs: number;
+  selectionDelayMs: number;
+}
+
 export interface AppSettings {
   hotkeys: HotkeysSettings;
   ai: AISettings;
+  automation: AutomationSettings;
 }

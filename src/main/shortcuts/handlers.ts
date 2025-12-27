@@ -4,6 +4,7 @@
 import { randomUUID } from 'node:crypto';
 import { Notification } from 'electron';
 import { rewriteText } from '@/main/ai/client';
+import { parseAIError } from '@/main/ai/error-handler';
 import {
   backupClipboard,
   readClipboard,
@@ -44,14 +45,18 @@ async function rewriteAndReplaceText(
   const role = store.get('ai.role');
   const model = store.get('ai.model');
   trayManager.startBusy();
-  const rewrittenText = await (async () => {
-    try {
-      const result = await rewriteText(originalText, role, apiKey, model);
-      return await result.text;
-    } finally {
-      trayManager.stopBusy();
-    }
-  })();
+
+  let rewrittenText: string;
+  try {
+    const result = await rewriteText(originalText, role, apiKey, model);
+    rewrittenText = await result.text;
+  } catch (error) {
+    const errorDetails = parseAIError(error);
+    showNotification(errorDetails.title, errorDetails.message);
+    throw error; // Re-throw to prevent continuing with undefined rewrittenText
+  } finally {
+    trayManager.stopBusy();
+  }
 
   saveEditContext(randomUUID(), {
     originalText,

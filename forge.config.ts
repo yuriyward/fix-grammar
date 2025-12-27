@@ -34,7 +34,7 @@ const config: ForgeConfig = {
       config: {
         repository: {
           owner: 'yuriyward',
-          name: 'electron-shadcn-ai',
+          name: 'fix-grammar',
         },
         draft: true,
         prerelease: false,

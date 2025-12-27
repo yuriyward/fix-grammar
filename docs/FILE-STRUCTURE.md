@@ -51,8 +51,9 @@ ipc/ # 3 files, 8 directories
   ├─ handler.ts # oRPC handler for main process
   └─ router.ts # Root oRPC router combining all domains
 main/ # 1 files, 6 directories
-  ├─ ai/ # 2 files
+  ├─ ai/ # 3 files
   │ ├─ client.ts # Google Gemini AI client
+  │ ├─ error-handler.ts # AI error handling utilities
   │ └─ prompts.ts # Role-based prompt templates
   ├─ automation/ # 2 files
   │ ├─ clipboard.ts # Clipboard backup/restore utilities
@@ -66,8 +67,7 @@ main/ # 1 files, 6 directories
   │ └─ settings.ts # electron-store instance for persistent settings
   ├─ tray/ # 1 file
   │ └─ tray-manager.ts # System tray lifecycle management
-  ├─ windows/ # 2 files
-  │ ├─ main-window.ts # Main application window creation
+  ├─ windows/ # 1 file
   │ └─ window-manager.ts # Centralized window lifecycle management
   └─ app.ts # Main process lifecycle and initialization
 preload/ # 1 file
@@ -206,6 +206,7 @@ routeTree.gen.ts # 6 exports
 - `export deleteApiKey` - item implementation
 - `export getSettings` - Settings IPC wrappers for renderer
 - `export hasApiKey` - item implementation
+- `export isEncryptionAvailable` - item implementation
 - `export saveApiKey` - item implementation
 - `export updateSettings` - item implementation
 
@@ -327,6 +328,7 @@ routeTree.gen.ts # 6 exports
 - `export deleteApiKeyHandler` - item implementation
 - `export getSettings` - item implementation
 - `export hasApiKeyHandler` - item implementation
+- `export isEncryptionAvailableHandler` - item implementation
 - `export saveApiKeyHandler` - item implementation
 - `export updateSettings` - item implementation
 
@@ -348,7 +350,9 @@ routeTree.gen.ts # 6 exports
 - `export deleteApiKeyInputSchema` - item implementation
 - `export hasApiKeyInputSchema` - item implementation
 - `export hotkeysSettingsSchema` - item implementation
+- `export isEncryptionAvailableInputSchema` - item implementation
 - `export saveApiKeyInputSchema` - item implementation
+- `export isValidHotkeyAccelerator` - item implementation
 
 ### ipc/shell/handlers.ts
 **Purpose**: Shell operations IPC handlers
@@ -441,6 +445,13 @@ routeTree.gen.ts # 6 exports
 **Exports**:
 - `export rewriteText` - Streams a rewritten version of the given text using the c...
 
+### main/ai/error-handler.ts
+**Purpose**: AI error handling utilities
+
+**Exports**:
+- `export AIErrorDetails` - AI error handling utilities
+- `export parseAIError` - Analyzes an AI SDK error and returns user-friendly error ...
+
 ### main/ai/prompts.ts
 **Purpose**: Role-based prompt templates
 
@@ -497,7 +508,8 @@ routeTree.gen.ts # 6 exports
 - `export getApiKey` - item implementation
 - `export getApiKeyPreview` - item implementation
 - `export hasApiKey` - item implementation
-- `export saveApiKey` - safeStorage wrapper for API key encryption
+- `export isEncryptionAvailable` - safeStorage wrapper for API key encryption
+- `export saveApiKey` - item implementation
 
 ### main/storage/context.ts
 **Purpose**: In-memory edit context storage
@@ -522,12 +534,6 @@ routeTree.gen.ts # 6 exports
 **Exports**:
 - `export TrayManager` - System tray lifecycle management
 - `export trayManager` - item implementation
-
-### main/windows/main-window.ts
-**Purpose**: Main application window creation
-
-**Exports**:
-- `export createWindow` - Creates and configures the main application window
 
 ### main/windows/window-manager.ts
 **Purpose**: Centralized window lifecycle management

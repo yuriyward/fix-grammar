@@ -130,6 +130,10 @@ export default function SettingsForm() {
     })();
   }, [loadSettings]);
 
+  useEffect(() => {
+    void loadApiKeyStatus();
+  }, [loadApiKeyStatus]);
+
   const handleProviderChange = (newProvider: AIProvider) => {
     setProvider(newProvider);
     setModel(getDefaultModel(newProvider));

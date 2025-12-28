@@ -42,6 +42,23 @@ function showNotification(payload: AppNotificationPayload): void {
   sendInAppNotification(stored);
 }
 
+function preserveTrailingNewlines(
+  originalText: string,
+  rewrittenText: string,
+): string {
+  const originalTrailing = originalText.match(/(\r?\n)+$/)?.[0];
+  if (!originalTrailing) return rewrittenText;
+
+  const rewrittenTrailing = rewrittenText.match(/(\r?\n)+$/)?.[0] ?? '';
+  const originalCount = (originalTrailing.match(/\n/g) ?? []).length;
+  const rewrittenCount = (rewrittenTrailing.match(/\n/g) ?? []).length;
+
+  if (rewrittenCount >= originalCount) return rewrittenText;
+
+  const newline = originalTrailing.includes('\r\n') ? '\r\n' : '\n';
+  return `${rewrittenText}${newline.repeat(originalCount - rewrittenCount)}`;
+}
+
 async function rewriteAndReplaceText(
   originalText: string,
   options?: { beforePaste?: () => Promise<void> },
@@ -65,7 +82,7 @@ async function rewriteAndReplaceText(
   let rewrittenText: string;
   try {
     const result = await rewriteText(originalText, role, apiKey, model);
-    rewrittenText = await result.text;
+    rewrittenText = preserveTrailingNewlines(originalText, await result.text);
   } catch (error) {
     const errorDetails = parseAIError(error);
     showNotification({
@@ -139,7 +156,6 @@ export async function handleFixSelection(): Promise<void> {
       return;
     }
 
-    // 5. Rewrite and replace selection
     await rewriteAndReplaceText(originalText);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
@@ -187,7 +203,6 @@ export async function handleFixField(): Promise<void> {
       return;
     }
 
-    // 3. Rewrite and replace field contents
     await rewriteAndReplaceText(originalText, {
       beforePaste: simulateSelectAll,
     });

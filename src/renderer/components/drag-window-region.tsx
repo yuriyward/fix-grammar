@@ -42,7 +42,7 @@ export default function DragWindowRegion({ title }: DragWindowRegionProps) {
   return (
     <div className="flex w-full items-stretch justify-between">
       <div className="draglayer flex flex-1 items-center justify-between">
-        <div className={cn('flex flex-1 py-2', isMacOS ? 'pl-20' : 'pl-4')}>
+        <div className={cn('flex flex-1 py-1', isMacOS ? 'pl-20' : 'pl-4')}>
           {title && !isMacOS && (
             <div className="text-xs whitespace-nowrap text-gray-400 select-none">
               {title}
@@ -51,7 +51,7 @@ export default function DragWindowRegion({ title }: DragWindowRegionProps) {
         </div>
         {!isPopupWindow && (
           <div
-            className="pr-4 pl-2 py-2"
+            className="pr-4 pl-2 py-1"
             style={{ WebkitAppRegion: 'no-drag' }}
           >
             <NotificationCenterButton />

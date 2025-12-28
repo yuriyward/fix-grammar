@@ -102,17 +102,18 @@ Always resolve any linting or type errors before completing a task.
 <!-- AUTO-GENERATED TREE START -->
 
 ```
-actions/ # 9 files
+actions/ # 10 files
   ├─ ai.ts # AI IPC wrappers for renderer
   ├─ app.ts # App info IPC wrappers for renderer
   ├─ automation.ts # Automation IPC wrappers for renderer
   ├─ language.ts # Language preference management for renderer
+  ├─ notifications.ts # Notifications IPC wrappers for renderer
   ├─ settings.ts # Settings IPC wrappers for renderer
   ├─ shell.ts # Shell operations IPC wrapper for renderer
   ├─ shortcuts.ts # Shortcuts IPC wrappers for renderer
   ├─ theme.ts # Theme mode management for renderer
   └─ window.ts # Window control IPC wrappers for renderer
-ipc/ # 3 files, 8 directories
+ipc/ # 3 files, 9 directories
   ├─ ai/ # 3 files
   │ ├─ handlers.ts # AI IPC handlers
   │ ├─ router.ts # AI domain router
@@ -125,6 +126,10 @@ ipc/ # 3 files, 8 directories
   │ ├─ handlers.ts # Automation IPC handlers
   │ ├─ router.ts # Automation domain router
   │ └─ schemas.ts # Zod schemas for automation IPC
+  ├─ notifications/ # 3 files
+  │ ├─ handlers.ts # Notifications IPC handlers
+  │ ├─ router.ts # Notifications domain router
+  │ └─ schemas.ts # Zod schemas for notifications IPC
   ├─ settings/ # 3 files
   │ ├─ handlers.ts # Settings IPC handlers
   │ ├─ router.ts # Settings domain router
@@ -159,9 +164,10 @@ main/ # 1 files, 6 directories
   ├─ shortcuts/ # 2 files
   │ ├─ handlers.ts # Fix selection/field orchestration handlers
   │ └─ manager.ts # Global shortcut registration manager
-  ├─ storage/ # 3 files
+  ├─ storage/ # 4 files
   │ ├─ api-keys.ts # safeStorage wrapper for API key encryption
   │ ├─ context.ts # In-memory edit context storage
+  │ ├─ notifications.ts # 5 exports
   │ └─ settings.ts # electron-store instance for persistent settings
   ├─ tray/ # 1 file
   │ └─ tray-manager.ts # System tray lifecycle management
@@ -171,7 +177,7 @@ main/ # 1 files, 6 directories
 preload/ # 1 file
   └─ bridge.ts # IPC bridge via contextBridge
 renderer/ # 1 files, 5 directories
-  ├─ components/ # 5 files, 1 directories
+  ├─ components/ # 6 files, 1 directories
   │ ├─ ui/ # 50 files
   │ │ ├─ accordion.tsx # 5 exports
   │ │ ├─ alert-dialog.tsx # 13 exports
@@ -227,12 +233,14 @@ renderer/ # 1 files, 5 directories
   │ ├─ error-boundary.tsx # React error boundary with recovery UI
   │ ├─ external-link.tsx # External link button using shell API
   │ ├─ lang-toggle.tsx # Language selection toggle group
+  │ ├─ notification-center.tsx # 1 export
   │ └─ toggle-theme.tsx # Theme toggle button component
   ├─ features/ # 1 directory
   │ └─ settings/ # 1 file
   │   └─ settings-form.tsx # Settings form component
-  ├─ hooks/ # 1 file
-  │ └─ use-mobile.ts # 1 export
+  ├─ hooks/ # 2 files
+  │ ├─ use-mobile.ts # 1 export
+  │ └─ use-notification-listener.ts # 1 export
   ├─ layouts/ # 1 file
   │ └─ base-layout.tsx # Base layout with title bar region
   ├─ lib/ # 6 files
@@ -240,7 +248,7 @@ renderer/ # 1 files, 5 directories
   │ ├─ ipc-manager.ts # IPC client manager for renderer process
   │ ├─ langs.ts # Supported language definitions
   │ ├─ language.ts # Language type definition
-  │ ├─ routes.ts # TanStack Router configuration
+  │ ├─ routes.ts # TanStack Router configuration Uses hash history to support multiple Electron windows with independent routes. Each window can load with a different hash (e.g., #/popup, #/settings) and the router will initialize to that route automatically. Memory history would force all windows to start at the same initial route.
   │ └─ tailwind.ts # Tailwind CSS class merging utility
   └─ app.tsx # React application root and mounting
 routes/ # 3 files
@@ -253,9 +261,10 @@ shared/ # 3 directories
   │ └─ ai-models.ts # Centralized AI model configuration This is the single source of truth for all available models
   ├─ contracts/ # 1 file
   │ └─ ipc-channels.ts # IPC channel names and storage keys
-  └─ types/ # 5 files
+  └─ types/ # 6 files
     ├─ ai.ts # AI types
     ├─ automation.ts # Automation types
+    ├─ notifications.ts # 3 exports
     ├─ settings.ts # Settings schema types
     ├─ shortcuts.ts # Hotkey types
     └─ theme.ts # Theme mode type definition

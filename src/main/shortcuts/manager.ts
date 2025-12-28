@@ -15,10 +15,14 @@ export class ShortcutManager {
     const shortcuts = store.get('hotkeys');
 
     globalShortcut.register(shortcuts.fixSelection, () => {
-      void handleFixSelection();
+      void handleFixSelection().catch((error: unknown) => {
+        console.error('Global shortcut handler failed: fixSelection', error);
+      });
     });
     globalShortcut.register(shortcuts.fixField, () => {
-      void handleFixField();
+      void handleFixField().catch((error: unknown) => {
+        console.error('Global shortcut handler failed: fixField', error);
+      });
     });
     globalShortcut.register(shortcuts.togglePopup, () => {
       handleTogglePopup();

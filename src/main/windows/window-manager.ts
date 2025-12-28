@@ -2,7 +2,7 @@
  * Centralized window lifecycle management
  */
 import path from 'node:path';
-import { app, BrowserWindow, screen } from 'electron';
+import { app, BrowserWindow, type Session, screen } from 'electron';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
 
 const inDevelopment = process.env.NODE_ENV === 'development';
@@ -10,6 +10,68 @@ const inDevelopment = process.env.NODE_ENV === 'development';
 export class WindowManager {
   public mainWindow: BrowserWindow | null = null;
   private popupWindow: BrowserWindow | null = null;
+  private sessionsWithCsp = new WeakSet<Session>();
+
+  private getCspValue(): string {
+    const directives = [
+      "default-src 'self'",
+      "base-uri 'self'",
+      "object-src 'none'",
+      "frame-ancestors 'none'",
+      "form-action 'self'",
+      "img-src 'self' data: blob:",
+      "font-src 'self' data:",
+      "style-src 'self' 'unsafe-inline'",
+      inDevelopment
+        ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'"
+        : "script-src 'self'",
+      inDevelopment ? "connect-src 'self' ws: wss:" : "connect-src 'self'",
+    ];
+
+    return `${directives.join('; ')};`;
+  }
+
+  private ensureCsp(session: Session): void {
+    if (this.sessionsWithCsp.has(session)) return;
+    this.sessionsWithCsp.add(session);
+
+    const cspValue = this.getCspValue();
+
+    session.webRequest.onHeadersReceived((details, callback) => {
+      if (
+        !details.url.startsWith('http://') &&
+        !details.url.startsWith('https://')
+      ) {
+        callback({ responseHeaders: details.responseHeaders });
+        return;
+      }
+
+      if (
+        details.resourceType !== 'mainFrame' &&
+        details.resourceType !== 'subFrame'
+      ) {
+        callback({ responseHeaders: details.responseHeaders });
+        return;
+      }
+
+      const responseHeaders = details.responseHeaders ?? {};
+      const hasCsp = Object.keys(responseHeaders).some(
+        (headerName) => headerName.toLowerCase() === 'content-security-policy',
+      );
+
+      if (hasCsp) {
+        callback({ responseHeaders });
+        return;
+      }
+
+      callback({
+        responseHeaders: {
+          ...responseHeaders,
+          'Content-Security-Policy': [cspValue],
+        },
+      });
+    });
+  }
 
   /**
    * Broadcast a message to all visible, non-destroyed windows.
@@ -80,6 +142,8 @@ export class WindowManager {
       trafficLightPosition:
         process.platform === 'darwin' ? { x: 5, y: 5 } : undefined,
     });
+
+    this.ensureCsp(this.mainWindow.webContents.session);
 
     // Prevent window from showing automatically
     this.mainWindow.once('ready-to-show', () => {
@@ -180,6 +244,8 @@ export class WindowManager {
         preload: preload,
       },
     });
+
+    this.ensureCsp(this.popupWindow.webContents.session);
 
     // Load the popup route
     if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {

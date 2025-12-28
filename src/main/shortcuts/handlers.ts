@@ -106,12 +106,18 @@ async function rewriteAndReplaceText(
     await options.beforePaste();
   }
 
+  // Time-based guard: only restore clipboard if paste completed quickly enough
+  // that user interaction is unlikely. Prevents race condition where another
+  // app or user action modifies clipboard during a slow paste operation.
+  const SAFE_RESTORE_WINDOW_MS = 500;
   const clipboardBeforePaste = readClipboard();
+  const pasteStartedAt = Date.now();
   try {
     writeClipboard(rewrittenText);
     await simulatePaste();
   } finally {
-    if (readClipboard() === rewrittenText) {
+    const elapsed = Date.now() - pasteStartedAt;
+    if (elapsed < SAFE_RESTORE_WINDOW_MS && readClipboard() === rewrittenText) {
       writeClipboard(clipboardBeforePaste);
     }
   }

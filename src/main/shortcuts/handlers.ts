@@ -42,7 +42,7 @@ function showNotification(payload: AppNotificationPayload): void {
   sendInAppNotification(stored);
 }
 
-function preserveTrailingNewlines(
+export function preserveTrailingNewlines(
   originalText: string,
   rewrittenText: string,
 ): string {
@@ -156,6 +156,7 @@ export async function handleFixSelection(): Promise<void> {
       return;
     }
 
+    // 5. Rewrite and replace selection
     await rewriteAndReplaceText(originalText);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
@@ -203,6 +204,7 @@ export async function handleFixField(): Promise<void> {
       return;
     }
 
+    // 3. Rewrite and replace field contents
     await rewriteAndReplaceText(originalText, {
       beforePaste: simulateSelectAll,
     });

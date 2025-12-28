@@ -5,6 +5,14 @@ import { ORPCError, os } from '@orpc/server';
 import type { BrowserWindow } from 'electron';
 import type { WindowManager } from '@/main/windows/window-manager';
 
+/**
+ * Context type that includes the sender window.
+ * This is set during oRPC connection upgrade in app.ts.
+ */
+interface SenderWindowContext {
+  senderWindow?: BrowserWindow;
+}
+
 class IPCContext {
   public mainWindow: BrowserWindow | undefined;
   public windowManager: WindowManager | undefined;
@@ -58,8 +66,7 @@ class IPCContext {
    */
   public get senderWindowContext() {
     return os.middleware(({ next, context }) => {
-      const senderWindow = (context as { senderWindow?: BrowserWindow })
-        .senderWindow;
+      const senderWindow = (context as SenderWindowContext).senderWindow;
 
       if (!senderWindow) {
         console.warn(

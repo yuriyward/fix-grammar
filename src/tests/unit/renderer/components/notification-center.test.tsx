@@ -33,17 +33,30 @@ vi.mock('@/actions/notifications', () => ({
 }));
 
 vi.mock('@/renderer/components/ui/popover', () => ({
-  Popover: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  PopoverTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  PopoverContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Popover: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  PopoverTrigger: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+  PopoverContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
 
 vi.mock('@/renderer/components/ui/scroll-area', () => ({
-  ScrollArea: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  ScrollArea: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
 }));
 
 vi.mock('@/renderer/components/ui/button', () => ({
-  Button: ({ children, onClick, disabled, ...props }: any) => (
+  Button: ({
+    children,
+    onClick,
+    disabled,
+    ...props
+  }: React.ComponentProps<'button'>) => (
     <button onClick={onClick} disabled={disabled} {...props}>
       {children}
     </button>
@@ -243,7 +256,8 @@ describe('NotificationCenterButton', () => {
       });
 
       const notification = screen.getByText('Test Error').closest('button');
-      await userEvent.click(notification!);
+      if (!notification) throw new Error('Notification button not found');
+      await userEvent.click(notification);
 
       await waitFor(() => {
         expect(mockMarkNotificationRead).toHaveBeenCalledWith('test-id');
@@ -272,7 +286,8 @@ describe('NotificationCenterButton', () => {
       });
 
       const notification = screen.getByText('Error').closest('button');
-      await userEvent.click(notification!);
+      if (!notification) throw new Error('Notification button not found');
+      await userEvent.click(notification);
 
       await waitFor(() => {
         expect(screen.queryByText('1')).not.toBeInTheDocument();

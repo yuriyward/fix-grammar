@@ -41,12 +41,18 @@ function checkForUpdates() {
 
 async function setupORPC() {
   const { rpcHandler } = await import('@/ipc/handler');
+  const { BrowserWindow } = await import('electron');
 
   ipcMain.on(IPC_CHANNELS.START_ORPC_SERVER, (event) => {
     const [serverPort] = event.ports;
+    const senderWindow = BrowserWindow.fromWebContents(event.sender);
 
     serverPort.start();
-    rpcHandler.upgrade(serverPort);
+    rpcHandler.upgrade(serverPort, {
+      context: {
+        senderWindow,
+      },
+    });
   });
 }
 

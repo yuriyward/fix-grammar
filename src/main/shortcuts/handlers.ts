@@ -219,10 +219,10 @@ export async function handleFixField(): Promise<void> {
 }
 
 /**
- * Global shortcut handler that opens (or focuses) the popup window.
+ * Global shortcut handler that opens the popup window near the cursor.
  */
 export function handleTogglePopup(): void {
-  windowManager.createOrFocusPopup();
+  windowManager.createOrFocusPopupAtCursor();
 }
 
 /**

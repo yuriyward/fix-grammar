@@ -50,6 +50,34 @@ class IPCContext {
       });
     });
   }
+
+  /**
+   * Middleware that provides the sender window context to IPC handlers.
+   * This allows window control operations to work on the actual calling window
+   * rather than always operating on the main window.
+   */
+  public get senderWindowContext() {
+    return os.middleware(({ next, context }) => {
+      const senderWindow = (context as { senderWindow?: BrowserWindow })
+        .senderWindow;
+
+      if (!senderWindow) {
+        console.warn(
+          '[IPC Context] Sender window not found in context. ' +
+            'Ensure the connection upgrade includes senderWindow.',
+        );
+        throw new ORPCError('PRECONDITION_FAILED', {
+          message: 'Sender window is not available.',
+        });
+      }
+
+      return next({
+        context: {
+          window: senderWindow,
+        },
+      });
+    });
+  }
 }
 
 export const ipcContext = new IPCContext();

@@ -2,7 +2,7 @@
  * Centralized window lifecycle management
  */
 import path from 'node:path';
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, screen } from 'electron';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
 
 const inDevelopment = process.env.NODE_ENV === 'development';
@@ -129,19 +129,47 @@ export class WindowManager {
     }
   }
 
-  createOrFocusPopup(): void {
+  createOrFocusPopupAtCursor(): void {
     if (this.popupWindow) {
       this.popupWindow.focus();
       return;
     }
 
+    // Get cursor position
+    const cursorPoint = screen.getCursorScreenPoint();
+    const display = screen.getDisplayNearestPoint(cursorPoint);
+    const workArea = display.workArea;
+
+    // Calculate popup position near cursor, clamped to screen bounds
+    const popupWidth = 400;
+    const popupHeight = 300;
+    const x = Math.max(
+      workArea.x,
+      Math.min(cursorPoint.x + 10, workArea.x + workArea.width - popupWidth),
+    );
+    const y = Math.max(
+      workArea.y,
+      Math.min(cursorPoint.y + 10, workArea.y + workArea.height - popupHeight),
+    );
+
     const preload = path.join(__dirname, 'preload.js');
 
+    const isMacOS = process.platform === 'darwin';
+
     this.popupWindow = new BrowserWindow({
-      width: 400,
-      height: 300,
+      width: popupWidth,
+      height: popupHeight,
+      x,
+      y,
       alwaysOnTop: true,
-      frame: false,
+      ...(isMacOS
+        ? {
+            frame: true,
+            titleBarStyle: 'hiddenInset',
+          }
+        : {
+            frame: false,
+          }),
       resizable: true,
       webPreferences: {
         devTools: inDevelopment,
@@ -162,11 +190,6 @@ export class WindowManager {
         { hash: '#/popup' },
       );
     }
-
-    // Force navigation to popup route
-    this.popupWindow.webContents.once('did-finish-load', () => {
-      this.navigatePopupWindow('/popup');
-    });
 
     this.popupWindow.on('closed', () => {
       this.popupWindow = null;

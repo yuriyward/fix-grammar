@@ -18,6 +18,7 @@ import {
   PopoverTrigger,
 } from '@/renderer/components/ui/popover';
 import { ScrollArea } from '@/renderer/components/ui/scroll-area';
+import i18n from '@/renderer/lib/i18n';
 import { cn } from '@/renderer/lib/tailwind';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
 import type { AppNotification } from '@/shared/types/notifications';
@@ -26,7 +27,7 @@ function formatTimestamp(timestamp: number): string {
   if (!Number.isFinite(timestamp)) return '';
   const date = new Date(timestamp);
   if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleString();
+  return date.toLocaleString(i18n.language);
 }
 
 function NotificationIcon({ type }: { type: AppNotification['type'] }) {

@@ -138,8 +138,8 @@ export const appSettingsSchema = z.object({
 });
 
 export const saveApiKeyInputSchema = z.object({
-  provider: z.string(),
-  key: z.string(),
+  provider: z.string().min(1).trim(),
+  key: z.string().min(1).trim(),
 });
 
 export const hasApiKeyInputSchema = z.object({

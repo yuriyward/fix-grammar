@@ -2,7 +2,7 @@
  * Centralized window lifecycle management
  */
 import path from 'node:path';
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, type Session, screen } from 'electron';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
 
 const inDevelopment = process.env.NODE_ENV === 'development';
@@ -10,6 +10,68 @@ const inDevelopment = process.env.NODE_ENV === 'development';
 export class WindowManager {
   public mainWindow: BrowserWindow | null = null;
   private popupWindow: BrowserWindow | null = null;
+  private sessionsWithCsp = new WeakSet<Session>();
+
+  private getCspValue(): string {
+    const directives = [
+      "default-src 'self'",
+      "base-uri 'self'",
+      "object-src 'none'",
+      "frame-ancestors 'none'",
+      "form-action 'self'",
+      "img-src 'self' data: blob:",
+      "font-src 'self' data:",
+      "style-src 'self' 'unsafe-inline'",
+      inDevelopment
+        ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'"
+        : "script-src 'self'",
+      inDevelopment ? "connect-src 'self' ws: wss:" : "connect-src 'self'",
+    ];
+
+    return `${directives.join('; ')};`;
+  }
+
+  private ensureCsp(session: Session): void {
+    if (this.sessionsWithCsp.has(session)) return;
+    this.sessionsWithCsp.add(session);
+
+    const cspValue = this.getCspValue();
+
+    session.webRequest.onHeadersReceived((details, callback) => {
+      if (
+        !details.url.startsWith('http://') &&
+        !details.url.startsWith('https://')
+      ) {
+        callback({ responseHeaders: details.responseHeaders });
+        return;
+      }
+
+      if (
+        details.resourceType !== 'mainFrame' &&
+        details.resourceType !== 'subFrame'
+      ) {
+        callback({ responseHeaders: details.responseHeaders });
+        return;
+      }
+
+      const responseHeaders = details.responseHeaders ?? {};
+      const hasCsp = Object.keys(responseHeaders).some(
+        (headerName) => headerName.toLowerCase() === 'content-security-policy',
+      );
+
+      if (hasCsp) {
+        callback({ responseHeaders });
+        return;
+      }
+
+      callback({
+        responseHeaders: {
+          ...responseHeaders,
+          'Content-Security-Policy': [cspValue],
+        },
+      });
+    });
+  }
 
   /**
    * Broadcast a message to all visible, non-destroyed windows.
@@ -81,6 +143,8 @@ export class WindowManager {
         process.platform === 'darwin' ? { x: 5, y: 5 } : undefined,
     });
 
+    this.ensureCsp(this.mainWindow.webContents.session);
+
     // Prevent window from showing automatically
     this.mainWindow.once('ready-to-show', () => {
       // Don't automatically show - wait for user to open from tray
@@ -129,19 +193,47 @@ export class WindowManager {
     }
   }
 
-  createOrFocusPopup(): void {
+  createOrFocusPopupAtCursor(): void {
     if (this.popupWindow) {
       this.popupWindow.focus();
       return;
     }
 
+    // Get cursor position
+    const cursorPoint = screen.getCursorScreenPoint();
+    const display = screen.getDisplayNearestPoint(cursorPoint);
+    const workArea = display.workArea;
+
+    // Calculate popup position near cursor, clamped to screen bounds
+    const popupWidth = 400;
+    const popupHeight = 300;
+    const x = Math.max(
+      workArea.x,
+      Math.min(cursorPoint.x + 10, workArea.x + workArea.width - popupWidth),
+    );
+    const y = Math.max(
+      workArea.y,
+      Math.min(cursorPoint.y + 10, workArea.y + workArea.height - popupHeight),
+    );
+
     const preload = path.join(__dirname, 'preload.js');
 
+    const isMacOS = process.platform === 'darwin';
+
     this.popupWindow = new BrowserWindow({
-      width: 400,
-      height: 300,
+      width: popupWidth,
+      height: popupHeight,
+      x,
+      y,
       alwaysOnTop: true,
-      frame: false,
+      ...(isMacOS
+        ? {
+            frame: true,
+            titleBarStyle: 'hiddenInset',
+          }
+        : {
+            frame: false,
+          }),
       resizable: true,
       webPreferences: {
         devTools: inDevelopment,
@@ -153,6 +245,8 @@ export class WindowManager {
       },
     });
 
+    this.ensureCsp(this.popupWindow.webContents.session);
+
     // Load the popup route
     if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
       this.popupWindow.loadURL(`${MAIN_WINDOW_VITE_DEV_SERVER_URL}#/popup`);
@@ -162,11 +256,6 @@ export class WindowManager {
         { hash: '#/popup' },
       );
     }
-
-    // Force navigation to popup route
-    this.popupWindow.webContents.once('did-finish-load', () => {
-      this.navigatePopupWindow('/popup');
-    });
 
     this.popupWindow.on('closed', () => {
       this.popupWindow = null;

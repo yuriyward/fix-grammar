@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { defineConfig } from 'vite';
+import { NATIVE_EXTERNAL_DEPS } from './src/shared/config/native-deps';
 
 // https://vitejs.dev/config
 export default defineConfig({
@@ -11,11 +12,8 @@ export default defineConfig({
   build: {
     rollupOptions: {
       external: [
-        // Externalize nut-js and its native dependencies
-        '@nut-tree-fork/nut-js',
-        '@nut-tree-fork/libnut-darwin',
-        '@nut-tree-fork/libnut-linux',
-        '@nut-tree-fork/libnut-win32',
+        // Externalize native dependencies (packaged separately)
+        ...NATIVE_EXTERNAL_DEPS,
       ],
     },
   },

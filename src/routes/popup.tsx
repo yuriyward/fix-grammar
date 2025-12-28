@@ -2,7 +2,9 @@
  * Popup chat route component
  */
 import { createFileRoute } from '@tanstack/react-router';
+import { Send } from 'lucide-react';
 import { useState } from 'react';
+import DragWindowRegion from '@/renderer/components/drag-window-region';
 import { Button } from '@/renderer/components/ui/button';
 import { Textarea } from '@/renderer/components/ui/textarea';
 
@@ -25,29 +27,36 @@ function PopupPage() {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
   return (
-    <div className="flex h-full flex-col p-4">
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold">Last Edit Follow-up</h2>
-        <p className="text-muted-foreground text-sm">
-          Enter instructions to refine the last rewrite
-        </p>
+    <div className="flex h-screen flex-col">
+      <DragWindowRegion title="Grammar Copilot" />
+
+      {/* Input area */}
+      <div className="flex flex-1 flex-col gap-2 p-4">
+        <Textarea
+          value={instruction}
+          onChange={(e) => setInstruction(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Enter your instruction..."
+          disabled={isProcessing}
+          className="flex-1 resize-none"
+        />
+        <Button
+          onClick={handleSubmit}
+          disabled={isProcessing || !instruction.trim()}
+          className="self-end"
+        >
+          <Send className="mr-2 size-4" />
+          {isProcessing ? 'Processing...' : 'Send'}
+        </Button>
       </div>
-
-      <Textarea
-        value={instruction}
-        onChange={(e) => setInstruction(e.target.value)}
-        placeholder="e.g., Make it more formal..."
-        className="mb-4 flex-1"
-        disabled={isProcessing}
-      />
-
-      <Button
-        onClick={handleSubmit}
-        disabled={isProcessing || !instruction.trim()}
-      >
-        {isProcessing ? 'Processing...' : 'Apply'}
-      </Button>
     </div>
   );
 }

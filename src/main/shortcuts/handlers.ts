@@ -42,6 +42,23 @@ function showNotification(payload: AppNotificationPayload): void {
   sendInAppNotification(stored);
 }
 
+export function preserveTrailingNewlines(
+  originalText: string,
+  rewrittenText: string,
+): string {
+  const originalTrailing = originalText.match(/(\r?\n)+$/)?.[0];
+  if (!originalTrailing) return rewrittenText;
+
+  const rewrittenTrailing = rewrittenText.match(/(\r?\n)+$/)?.[0] ?? '';
+  const originalCount = (originalTrailing.match(/\n/g) ?? []).length;
+  const rewrittenCount = (rewrittenTrailing.match(/\n/g) ?? []).length;
+
+  if (rewrittenCount >= originalCount) return rewrittenText;
+
+  const newline = originalTrailing.includes('\r\n') ? '\r\n' : '\n';
+  return `${rewrittenText}${newline.repeat(originalCount - rewrittenCount)}`;
+}
+
 async function rewriteAndReplaceText(
   originalText: string,
   options?: { beforePaste?: () => Promise<void> },
@@ -65,7 +82,7 @@ async function rewriteAndReplaceText(
   let rewrittenText: string;
   try {
     const result = await rewriteText(originalText, role, apiKey, model);
-    rewrittenText = await result.text;
+    rewrittenText = preserveTrailingNewlines(originalText, await result.text);
   } catch (error) {
     const errorDetails = parseAIError(error);
     showNotification({
@@ -89,12 +106,18 @@ async function rewriteAndReplaceText(
     await options.beforePaste();
   }
 
+  // Time-based guard: only restore clipboard if paste completed quickly enough
+  // that user interaction is unlikely. Prevents race condition where another
+  // app or user action modifies clipboard during a slow paste operation.
+  const SAFE_RESTORE_WINDOW_MS = 500;
   const clipboardBeforePaste = readClipboard();
+  const pasteStartedAt = Date.now();
   try {
     writeClipboard(rewrittenText);
     await simulatePaste();
   } finally {
-    if (readClipboard() === rewrittenText) {
+    const elapsed = Date.now() - pasteStartedAt;
+    if (elapsed < SAFE_RESTORE_WINDOW_MS && readClipboard() === rewrittenText) {
       writeClipboard(clipboardBeforePaste);
     }
   }
@@ -204,10 +227,10 @@ export async function handleFixField(): Promise<void> {
 }
 
 /**
- * Global shortcut handler that opens (or focuses) the popup window.
+ * Global shortcut handler that opens the popup window near the cursor.
  */
 export function handleTogglePopup(): void {
-  windowManager.createOrFocusPopup();
+  windowManager.createOrFocusPopupAtCursor();
 }
 
 /**

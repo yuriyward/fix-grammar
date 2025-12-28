@@ -5,6 +5,14 @@ import { ORPCError, os } from '@orpc/server';
 import type { BrowserWindow } from 'electron';
 import type { WindowManager } from '@/main/windows/window-manager';
 
+/**
+ * Context type that includes the sender window.
+ * This is set during oRPC connection upgrade in app.ts.
+ */
+interface SenderWindowContext {
+  senderWindow?: BrowserWindow;
+}
+
 class IPCContext {
   public mainWindow: BrowserWindow | undefined;
   public windowManager: WindowManager | undefined;
@@ -46,6 +54,33 @@ class IPCContext {
       return next({
         context: {
           window: this.mainWindow,
+        },
+      });
+    });
+  }
+
+  /**
+   * Middleware that provides the sender window context to IPC handlers.
+   * This allows window control operations to work on the actual calling window
+   * rather than always operating on the main window.
+   */
+  public get senderWindowContext() {
+    return os.middleware(({ next, context }) => {
+      const senderWindow = (context as SenderWindowContext).senderWindow;
+
+      if (!senderWindow) {
+        console.warn(
+          '[IPC Context] Sender window not found in context. ' +
+            'Ensure the connection upgrade includes senderWindow.',
+        );
+        throw new ORPCError('PRECONDITION_FAILED', {
+          message: 'Sender window is not available.',
+        });
+      }
+
+      return next({
+        context: {
+          window: senderWindow,
         },
       });
     });

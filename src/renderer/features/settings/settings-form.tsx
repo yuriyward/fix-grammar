@@ -63,7 +63,6 @@ import {
 } from '@/renderer/lib/validation';
 import {
   AI_PROVIDERS,
-  type AIModel,
   type AIProvider,
   getDefaultModel,
   getModelsForProvider,
@@ -81,7 +80,7 @@ import type { ReasoningEffort, TextVerbosity } from '@/shared/types/settings';
 
 export default function SettingsForm() {
   const [provider, setProvider] = useState<AIProvider>('google');
-  const [model, setModel] = useState<AIModel>(getDefaultModel('google'));
+  const [model, setModel] = useState<string>(getDefaultModel('google'));
   const [role, setRole] = useState<RewriteRole>('grammar');
   const [reasoningEffort, setReasoningEffort] =
     useState<ReasoningEffort>('medium');
@@ -97,6 +96,12 @@ export default function SettingsForm() {
     'http://localhost:1234/v1',
   );
   const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [lmstudioDiscoveredModels, setLmstudioDiscoveredModels] = useState<
+    string[]
+  >([]);
+  const [lmstudioModelsBaseURL, setLmstudioModelsBaseURL] = useState<
+    string | null
+  >(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [fixSelection, setFixSelection] = useState('CommandOrControl+Shift+F');
@@ -239,11 +244,21 @@ export default function SettingsForm() {
   const handleProviderChange = (newProvider: AIProvider) => {
     setProvider(newProvider);
     setModel(getDefaultModel(newProvider));
+    setLmstudioDiscoveredModels([]);
+    setLmstudioModelsBaseURL(null);
 
     if (newProvider === 'lmstudio' && !lmstudioBaseURL) {
       setLmstudioBaseURL('http://localhost:1234/v1');
     }
   };
+
+  useEffect(() => {
+    if (provider !== 'lmstudio') return;
+    const trimmed = lmstudioBaseURL.trim();
+    if (!lmstudioModelsBaseURL || trimmed === lmstudioModelsBaseURL) return;
+    setLmstudioDiscoveredModels([]);
+    setLmstudioModelsBaseURL(null);
+  }, [provider, lmstudioBaseURL, lmstudioModelsBaseURL]);
 
   const handleSaveApiKey = async () => {
     if (!apiKey.trim()) return;
@@ -274,12 +289,9 @@ export default function SettingsForm() {
     }
   };
 
-  const handleTestLMStudioConnection = async () => {
+  const handleFetchLMStudioModels = async () => {
     if (!lmstudioBaseURL.trim()) {
-      addErrorToast(
-        'Test Connection Failed',
-        new Error('Base URL is required'),
-      );
+      addErrorToast('Fetch Models Failed', new Error('Base URL is required'));
       return;
     }
 
@@ -288,15 +300,20 @@ export default function SettingsForm() {
       const result = await testLMStudioConnection(lmstudioBaseURL.trim());
 
       if (result.success) {
-        addSuccessToast(result.message || 'Connection successful');
+        const models = Array.from(
+          new Set((result.models ?? []).map((entry) => entry.trim())),
+        ).filter((entry) => entry.length > 0);
+        setLmstudioDiscoveredModels(models);
+        setLmstudioModelsBaseURL(lmstudioBaseURL.trim());
+        addSuccessToast(result.message || 'Models fetched');
       } else {
         addErrorToast(
-          'Connection Failed',
+          'Fetch Models Failed',
           new Error(result.error || 'Unknown error'),
         );
       }
     } catch (error) {
-      addErrorToast('Connection Failed', error);
+      addErrorToast('Fetch Models Failed', error);
     } finally {
       setIsTestingConnection(false);
     }
@@ -403,6 +420,12 @@ export default function SettingsForm() {
     },
   ] as const;
 
+  const lmstudioPopularModels = getModelsForProvider('lmstudio');
+  const lmstudioExtraModels = (() => {
+    const known = new Set(lmstudioPopularModels.map((entry) => entry.id));
+    return lmstudioDiscoveredModels.filter((id) => !known.has(id));
+  })();
+
   return (
     <Form
       id="settings-form"
@@ -450,6 +473,45 @@ export default function SettingsForm() {
             <FieldError />
           </Field>
 
+          {provider === 'lmstudio' && (
+            <Field name="ai.lmstudioBaseURL">
+              <FieldLabel>Base URL</FieldLabel>
+              <div className="flex gap-2">
+                <Input
+                  type="url"
+                  value={lmstudioBaseURL}
+                  onChange={(e) => setLmstudioBaseURL(e.target.value)}
+                  placeholder="http://localhost:1234/v1"
+                  disabled={isSaving || isTestingConnection}
+                />
+                <Button
+                  type="button"
+                  onClick={handleFetchLMStudioModels}
+                  disabled={
+                    isSaving || isTestingConnection || !lmstudioBaseURL.trim()
+                  }
+                  variant="outline"
+                >
+                  {isTestingConnection ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Spinner className="size-4" />
+                      Fetching...
+                    </span>
+                  ) : (
+                    'Fetch Models'
+                  )}
+                </Button>
+              </div>
+              <FieldError />
+              <FieldDescription>
+                URL of your LM Studio local server (default:
+                http://localhost:1234/v1)
+                {lmstudioDiscoveredModels.length > 0 &&
+                  ` • ${lmstudioDiscoveredModels.length} models fetched`}
+              </FieldDescription>
+            </Field>
+          )}
+
           {provider === 'lmstudio' ? (
             <Field name="ai.model">
               <FieldLabel>Model</FieldLabel>
@@ -464,13 +526,25 @@ export default function SettingsForm() {
                 />
                 <AutocompletePopup>
                   <AutocompleteList>
+                    {lmstudioExtraModels.length > 0 && (
+                      <AutocompleteGroup>
+                        <AutocompleteGroupLabel>
+                          Discovered Models
+                        </AutocompleteGroupLabel>
+                        {lmstudioExtraModels.map((id) => (
+                          <AutocompleteItem key={id} value={id}>
+                            {id}
+                          </AutocompleteItem>
+                        ))}
+                      </AutocompleteGroup>
+                    )}
                     <AutocompleteGroup>
                       <AutocompleteGroupLabel>
                         Popular Models
                       </AutocompleteGroupLabel>
-                      {getModelsForProvider(provider).map((m) => (
-                        <AutocompleteItem key={m.id} value={m.id}>
-                          {m.name}
+                      {lmstudioPopularModels.map((entry) => (
+                        <AutocompleteItem key={entry.id} value={entry.id}>
+                          {entry.name}
                         </AutocompleteItem>
                       ))}
                     </AutocompleteGroup>
@@ -489,7 +563,7 @@ export default function SettingsForm() {
               <Select
                 name="ai.model"
                 value={model}
-                onValueChange={(value) => setModel(value as AIModel)}
+                onValueChange={(value) => setModel(value)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -571,43 +645,6 @@ export default function SettingsForm() {
                 <FieldError />
               </Field>
             </>
-          )}
-
-          {provider === 'lmstudio' && (
-            <Field name="ai.lmstudioBaseURL">
-              <FieldLabel>Base URL</FieldLabel>
-              <div className="flex gap-2">
-                <Input
-                  type="url"
-                  value={lmstudioBaseURL}
-                  onChange={(e) => setLmstudioBaseURL(e.target.value)}
-                  placeholder="http://localhost:1234/v1"
-                  disabled={isSaving || isTestingConnection}
-                />
-                <Button
-                  type="button"
-                  onClick={handleTestLMStudioConnection}
-                  disabled={
-                    isSaving || isTestingConnection || !lmstudioBaseURL.trim()
-                  }
-                  variant="outline"
-                >
-                  {isTestingConnection ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Spinner className="size-4" />
-                      Testing...
-                    </span>
-                  ) : (
-                    'Test Connection'
-                  )}
-                </Button>
-              </div>
-              <FieldError />
-              <FieldDescription>
-                URL of your LM Studio local server (default:
-                http://localhost:1234/v1)
-              </FieldDescription>
-            </Field>
           )}
 
           <Field>

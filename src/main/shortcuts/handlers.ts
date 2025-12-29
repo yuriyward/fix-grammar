@@ -3,7 +3,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import { Notification } from 'electron';
-import { rewriteText } from '@/main/ai/client';
+import { rewriteTextWithSettings } from '@/main/ai/client';
 import { parseAIError } from '@/main/ai/error-handler';
 import {
   readClipboard,
@@ -12,15 +12,14 @@ import {
   writeClipboard,
 } from '@/main/automation/clipboard';
 import { pressCopyShortcut, simulatePaste } from '@/main/automation/keyboard';
-import { getApiKey } from '@/main/storage/api-keys';
 import { saveEditContext } from '@/main/storage/context';
 import { addNotification } from '@/main/storage/notifications';
 import { store } from '@/main/storage/settings';
 import { trayManager } from '@/main/tray/tray-manager';
 import { windowManager } from '@/main/windows/window-manager';
+import type { AIModel, AIProvider } from '@/shared/config/ai-models';
 import { AI_PROVIDERS } from '@/shared/config/ai-models';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
-import type { AIModel, AIProvider } from '@/shared/config/ai-models';
 import type {
   AppNotification,
   AppNotificationPayload,
@@ -181,25 +180,14 @@ async function processFixAsync(
   trayManager.startBusy('Processing in background…');
 
   try {
-    // Get AI configuration
+    // Get AI configuration for metadata
     const provider = store.get('ai.provider');
-    const apiKey = getApiKey(provider);
-
-    if (!apiKey) {
-      showNotification({
-        type: 'error',
-        title: 'Grammar Copilot',
-        description: `API key not found for provider: ${provider}`,
-      });
-      return;
-    }
-
     const role = store.get('ai.role');
     const model = store.get('ai.model');
     const modelLabel = getModelLabel(provider, model);
 
-    // AI rewriting
-    const result = await rewriteText(originalText, role, apiKey, model, provider);
+    // AI rewriting using unified function
+    const result = await rewriteTextWithSettings(originalText, role);
     const rewrittenText = preserveTrailingNewlines(
       originalText,
       await result.text,
@@ -239,8 +227,7 @@ async function processFixAsync(
         showNotification({
           type: 'info',
           title: 'Grammar Copilot',
-          description:
-            `Selection changed. Result copied to clipboard for manual paste. Used ${modelLabel}.`,
+          description: `Selection changed. Result copied to clipboard for manual paste. Used ${modelLabel}.`,
         });
       }
     } else {

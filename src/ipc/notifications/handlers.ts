@@ -19,9 +19,9 @@ import {
   markNotificationRead,
 } from '@/main/storage/notifications';
 import { windowManager } from '@/main/windows/window-manager';
+import type { AIModel, AIProvider } from '@/shared/config/ai-models';
 import { AI_PROVIDERS } from '@/shared/config/ai-models';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
-import type { AIModel, AIProvider } from '@/shared/config/ai-models';
 import type {
   AppNotification,
   AppNotificationPayload,

@@ -15,6 +15,8 @@ export const store = new ElectronStore<AppSettings>({
       provider: 'google',
       model: getDefaultModel('google'),
       role: 'grammar',
+      reasoningEffort: 'medium',
+      textVerbosity: 'medium',
     },
     automation: {
       clipboardSyncDelayMs: 200,

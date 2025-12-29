@@ -9,10 +9,21 @@ export interface HotkeysSettings {
   togglePopup: string;
 }
 
+export type ReasoningEffort =
+  | 'none'
+  | 'minimal'
+  | 'low'
+  | 'medium'
+  | 'high'
+  | 'xhigh';
+export type TextVerbosity = 'low' | 'medium' | 'high';
+
 export interface AISettings {
   provider: AIProvider;
   model: AIModel;
   role: RewriteRole;
+  reasoningEffort?: ReasoningEffort;
+  textVerbosity?: TextVerbosity;
 }
 
 export interface AutomationSettings {

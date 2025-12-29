@@ -106,10 +106,22 @@ export const hotkeysSettingsSchema = z.object({
   togglePopup: hotkeyAcceleratorSchema,
 });
 
+const reasoningEffortSchema = z.enum([
+  'none',
+  'minimal',
+  'low',
+  'medium',
+  'high',
+  'xhigh',
+]);
+const textVerbositySchema = z.enum(['low', 'medium', 'high']);
+
 export const aiSettingsSchema = z.object({
   provider: aiProviderSchema,
   model: aiModelSchema,
   role: rewriteRoleSchema,
+  reasoningEffort: reasoningEffortSchema.optional(),
+  textVerbosity: textVerbositySchema.optional(),
 });
 
 export const automationSettingsSchema = z.object({

@@ -6,7 +6,7 @@
 export interface ModelConfig {
   id: string;
   name: string;
-  provider: 'google' | 'xai';
+  provider: 'google' | 'xai' | 'openai';
 }
 
 export interface ProviderConfig {
@@ -72,6 +72,32 @@ export const AI_PROVIDERS = {
       },
     ],
     defaultModel: 'grok-4-1-fast-reasoning',
+  },
+  openai: {
+    name: 'OpenAI',
+    models: [
+      {
+        id: 'gpt-5.1',
+        name: 'GPT-5.1',
+        provider: 'openai' as const,
+      },
+      {
+        id: 'gpt-4.1',
+        name: 'GPT-4.1',
+        provider: 'openai' as const,
+      },
+      {
+        id: 'o4-mini',
+        name: 'O4 Mini',
+        provider: 'openai' as const,
+      },
+      {
+        id: 'gpt-4o',
+        name: 'GPT-4o',
+        provider: 'openai' as const,
+      },
+    ],
+    defaultModel: 'gpt-5.1',
   },
 } as const satisfies Record<string, ProviderConfig>;
 

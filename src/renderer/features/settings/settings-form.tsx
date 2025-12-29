@@ -50,11 +50,15 @@ import {
 } from '@/shared/config/ai-models';
 import type { RewriteRole } from '@/shared/types/ai';
 import type { AutomationCalibrationResult } from '@/shared/types/automation';
+import type { ReasoningEffort, TextVerbosity } from '@/shared/types/settings';
 
 export default function SettingsForm() {
   const [provider, setProvider] = useState<AIProvider>('google');
   const [model, setModel] = useState<AIModel>(getDefaultModel('google'));
   const [role, setRole] = useState<RewriteRole>('grammar');
+  const [reasoningEffort, setReasoningEffort] =
+    useState<ReasoningEffort>('medium');
+  const [textVerbosity, setTextVerbosity] = useState<TextVerbosity>('medium');
   const [apiKey, setApiKey] = useState('');
   const [apiKeyPreview, setApiKeyPreview] = useState('');
   const [hasKey, setHasKey] = useState(false);
@@ -92,6 +96,8 @@ export default function SettingsForm() {
       setProvider(settings.ai.provider);
       setModel(settings.ai.model);
       setRole(settings.ai.role);
+      setReasoningEffort(settings.ai.reasoningEffort ?? 'medium');
+      setTextVerbosity(settings.ai.textVerbosity ?? 'medium');
       setFixSelection(settings.hotkeys.fixSelection);
       setTogglePopup(settings.hotkeys.togglePopup);
       setClipboardSyncDelayMs(settings.automation.clipboardSyncDelayMs);
@@ -168,7 +174,7 @@ export default function SettingsForm() {
     setIsSaving(true);
     try {
       await updateSettings({
-        ai: { provider, model, role },
+        ai: { provider, model, role, reasoningEffort, textVerbosity },
         hotkeys: { fixSelection, togglePopup },
         automation: { clipboardSyncDelayMs, selectionDelayMs },
       });
@@ -310,6 +316,51 @@ export default function SettingsForm() {
             </SelectContent>
           </Select>
         </div>
+
+        {provider === 'openai' && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="reasoningEffort">Reasoning Effort</Label>
+              <Select
+                value={reasoningEffort}
+                onValueChange={(value) =>
+                  setReasoningEffort(value as ReasoningEffort)
+                }
+              >
+                <SelectTrigger id="reasoningEffort">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="minimal">Minimal</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium (Default)</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="xhigh">Extra High</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="textVerbosity">Text Verbosity</Label>
+              <Select
+                value={textVerbosity}
+                onValueChange={(value) =>
+                  setTextVerbosity(value as TextVerbosity)
+                }
+              >
+                <SelectTrigger id="textVerbosity">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low (Concise)</SelectItem>
+                  <SelectItem value="medium">Medium (Balanced)</SelectItem>
+                  <SelectItem value="high">High (Verbose)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="apiKey">

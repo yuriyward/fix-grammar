@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  applyFix,
   clearNotifications,
   listNotifications,
   markAllNotificationsRead,
@@ -39,6 +40,7 @@ function NotificationIcon({ type }: { type: AppNotification['type'] }) {
 
 export function NotificationCenterButton() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [open, setOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     const items = await listNotifications();
@@ -69,6 +71,23 @@ export function NotificationCenterButton() {
       window.removeEventListener('focus', onFocus);
     };
   }, [refresh]);
+
+  useEffect(() => {
+    const onOpenNotifications = () => {
+      setOpen(true);
+    };
+
+    window.addEventListener(
+      IPC_CHANNELS.OPEN_NOTIFICATIONS,
+      onOpenNotifications,
+    );
+    return () => {
+      window.removeEventListener(
+        IPC_CHANNELS.OPEN_NOTIFICATIONS,
+        onOpenNotifications,
+      );
+    };
+  }, []);
 
   const unreadCount = useMemo(
     () =>
@@ -107,7 +126,7 @@ export function NotificationCenterButton() {
   }, []);
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
           <Button
@@ -166,17 +185,15 @@ export function NotificationCenterButton() {
           <ScrollArea className="max-h-[min(60vh,520px)]">
             <div className="flex flex-col">
               {notifications.map((item) => (
-                <button
+                <div
                   key={item.id}
-                  type="button"
                   className={cn(
-                    'flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-accent',
+                    'flex w-full items-start gap-3 px-4 py-3',
                     item.readAt == null &&
                       (item.type === 'error' || item.type === 'warning') &&
                       'bg-accent/30',
                     item.readAt != null && 'opacity-70',
                   )}
-                  onClick={() => void markRead(item.id)}
                 >
                   <div className="relative mt-0.5 shrink-0 [&>svg]:size-4">
                     <NotificationIcon type={item.type} />
@@ -199,8 +216,30 @@ export function NotificationCenterButton() {
                         {item.description}
                       </div>
                     )}
+                    {(() => {
+                      const action = item.action;
+                      if (action?.type !== 'apply-fix') return null;
+                      return (
+                        <Button
+                          className="mt-2"
+                          size="xs"
+                          variant="default"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              await applyFix(action.contextId);
+                              await markRead(item.id);
+                            } catch (error) {
+                              console.error('Failed to apply fix:', error);
+                            }
+                          }}
+                        >
+                          Apply Fix
+                        </Button>
+                      );
+                    })()}
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           </ScrollArea>

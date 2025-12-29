@@ -15,6 +15,13 @@ i18n.use(initReactI18next).init({
         documentation: 'Documentation',
         version: 'Version',
         madeBy: 'Made by Yuriy Babyak',
+        onboarding: {
+          notificationsNotePrefix:
+            'In development, macOS may list the sender as',
+          notificationsNoteAppName: 'Electron',
+          notificationsNoteSuffix:
+            '(not "Grammar Copilot"). Make sure notifications are allowed for that entry.',
+        },
       },
     },
     pl: {
@@ -25,6 +32,13 @@ i18n.use(initReactI18next).init({
         documentation: 'Dokumentacja',
         version: 'Wersja',
         madeBy: 'Przygotował Yuriy Babyak',
+        onboarding: {
+          notificationsNotePrefix:
+            'W trybie deweloperskim macOS może wyświetlać nadawcę jako',
+          notificationsNoteAppName: 'Electron',
+          notificationsNoteSuffix:
+            '(a nie "Grammar Copilot"). Upewnij się, że powiadomienia są dozwolone dla tego wpisu.',
+        },
       },
     },
     uk: {
@@ -35,6 +49,13 @@ i18n.use(initReactI18next).init({
         documentation: 'Документація',
         version: 'Версія',
         madeBy: 'Створив Yuriy Babyak',
+        onboarding: {
+          notificationsNotePrefix:
+            'У режимі розробки macOS може відображати відправника як',
+          notificationsNoteAppName: 'Electron',
+          notificationsNoteSuffix:
+            '(а не "Grammar Copilot"). Переконайтеся, що сповіщення дозволені для цього запису.',
+        },
       },
     },
   },

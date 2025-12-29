@@ -8,15 +8,20 @@ type PackageJson = {
   optionalDependencies?: Record<string, string>;
 };
 
+type DependencyToCopy = {
+  name: string;
+  optional: boolean;
+};
+
 function packageDepsToCopy(
   packageName: string,
   packageJson: PackageJson,
   platform: string,
-): string[] {
-  const dependencies = Object.keys({
-    ...(packageJson.dependencies ?? {}),
-    ...(packageJson.optionalDependencies ?? {}),
-  });
+): DependencyToCopy[] {
+  const dependencies = Object.keys(packageJson.dependencies ?? {});
+  const optionalDependencies = Object.keys(
+    packageJson.optionalDependencies ?? {},
+  );
 
   if (packageName === '@nut-tree-fork/libnut') {
     const platformLibnut =
@@ -26,10 +31,18 @@ function packageDepsToCopy(
           ? '@nut-tree-fork/libnut-win32'
           : '@nut-tree-fork/libnut-darwin';
 
-    return dependencies.filter((dep) => dep === platformLibnut);
+    return dependencies
+      .filter((dep) => dep === platformLibnut)
+      .map((name) => ({ name, optional: false }));
   }
 
-  return dependencies;
+  const required = dependencies.map((name) => ({ name, optional: false }));
+  const requiredSet = new Set(dependencies);
+  const optional = optionalDependencies
+    .filter((name) => !requiredSet.has(name))
+    .map((name) => ({ name, optional: true }));
+
+  return [...required, ...optional];
 }
 
 async function copyNodeModulePackage(
@@ -38,41 +51,51 @@ async function copyNodeModulePackage(
   packageName: string,
   platform: string,
   copied: Set<string>,
+  inProgress: Set<string>,
+  isOptional: boolean,
 ): Promise<void> {
-  if (copied.has(packageName)) return;
-  copied.add(packageName);
+  if (copied.has(packageName) || inProgress.has(packageName)) return;
+  inProgress.add(packageName);
 
   const packagePathParts = packageName.split('/');
   const src = path.join(projectDir, 'node_modules', ...packagePathParts);
   const dest = path.join(buildPath, 'node_modules', ...packagePathParts);
 
   try {
-    await fs.stat(src);
-  } catch {
-    throw new Error(
-      `Missing runtime dependency ${JSON.stringify(packageName)} at ${JSON.stringify(src)}.`,
-    );
-  }
+    try {
+      await fs.stat(src);
+    } catch {
+      if (isOptional) return;
+      throw new Error(
+        `Missing runtime dependency ${JSON.stringify(packageName)} at ${JSON.stringify(src)}.`,
+      );
+    }
 
-  await fs.mkdir(path.dirname(dest), { recursive: true });
-  await copyDir(src, dest);
+    await fs.mkdir(path.dirname(dest), { recursive: true });
+    await copyDir(src, dest);
+    copied.add(packageName);
 
-  const packageJsonPath = path.join(src, 'package.json');
-  const packageJson = JSON.parse(
-    await fs.readFile(packageJsonPath, 'utf8'),
-  ) as PackageJson;
-  const deps = packageDepsToCopy(packageName, packageJson, platform);
-  await Promise.all(
-    deps.map((dependencyName) =>
-      copyNodeModulePackage(
-        projectDir,
-        buildPath,
-        dependencyName,
-        platform,
-        copied,
+    const packageJsonPath = path.join(src, 'package.json');
+    const packageJson = JSON.parse(
+      await fs.readFile(packageJsonPath, 'utf8'),
+    ) as PackageJson;
+    const deps = packageDepsToCopy(packageName, packageJson, platform);
+    await Promise.all(
+      deps.map(({ name, optional }) =>
+        copyNodeModulePackage(
+          projectDir,
+          buildPath,
+          name,
+          platform,
+          copied,
+          inProgress,
+          optional,
+        ),
       ),
-    ),
-  );
+    );
+  } finally {
+    inProgress.delete(packageName);
+  }
 }
 
 function nutNativeRuntimePackages(platform: string): readonly string[] {
@@ -100,6 +123,7 @@ export async function copyNativeModules(
 
   const projectDir = process.cwd();
   const copied = new Set<string>();
+  const inProgress = new Set<string>();
   await Promise.all(
     packages.map((packageName) =>
       copyNodeModulePackage(
@@ -108,6 +132,8 @@ export async function copyNativeModules(
         packageName,
         platform,
         copied,
+        inProgress,
+        false,
       ),
     ),
   );

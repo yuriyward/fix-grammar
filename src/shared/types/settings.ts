@@ -6,9 +6,7 @@ import type { RewriteRole } from '@/shared/types/ai';
 
 export interface HotkeysSettings {
   fixSelection: string;
-  fixField: string;
   togglePopup: string;
-  openSettings: string;
 }
 
 export interface AISettings {

@@ -3,12 +3,7 @@
  */
 import { globalShortcut } from 'electron';
 import { store } from '@/main/storage/settings';
-import {
-  handleFixField,
-  handleFixSelection,
-  handleOpenSettings,
-  handleTogglePopup,
-} from './handlers';
+import { handleFixSelection, handleTogglePopup } from './handlers';
 
 export class ShortcutManager {
   register(): void {
@@ -19,16 +14,8 @@ export class ShortcutManager {
         console.error('Global shortcut handler failed: fixSelection', error);
       });
     });
-    globalShortcut.register(shortcuts.fixField, () => {
-      void handleFixField().catch((error: unknown) => {
-        console.error('Global shortcut handler failed: fixField', error);
-      });
-    });
     globalShortcut.register(shortcuts.togglePopup, () => {
       handleTogglePopup();
-    });
-    globalShortcut.register(shortcuts.openSettings, () => {
-      handleOpenSettings();
     });
   }
 

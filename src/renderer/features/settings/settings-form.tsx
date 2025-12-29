@@ -64,9 +64,7 @@ export default function SettingsForm() {
   >(null);
 
   const [fixSelection, setFixSelection] = useState('CommandOrControl+Shift+F');
-  const [fixField, setFixField] = useState('CommandOrControl+Shift+G');
   const [togglePopup, setTogglePopup] = useState('CommandOrControl+Shift+P');
-  const [openSettings, setOpenSettings] = useState('CommandOrControl+,');
 
   const [clipboardSyncDelayMs, setClipboardSyncDelayMs] = useState(200);
   const [selectionDelayMs, setSelectionDelayMs] = useState(100);
@@ -95,9 +93,7 @@ export default function SettingsForm() {
       setModel(settings.ai.model);
       setRole(settings.ai.role);
       setFixSelection(settings.hotkeys.fixSelection);
-      setFixField(settings.hotkeys.fixField);
       setTogglePopup(settings.hotkeys.togglePopup);
-      setOpenSettings(settings.hotkeys.openSettings);
       setClipboardSyncDelayMs(settings.automation.clipboardSyncDelayMs);
       setSelectionDelayMs(settings.automation.selectionDelayMs);
     } catch (error) {
@@ -173,7 +169,7 @@ export default function SettingsForm() {
     try {
       await updateSettings({
         ai: { provider, model, role },
-        hotkeys: { fixSelection, fixField, togglePopup, openSettings },
+        hotkeys: { fixSelection, togglePopup },
         automation: { clipboardSyncDelayMs, selectionDelayMs },
       });
       await reregisterShortcuts();
@@ -236,25 +232,11 @@ export default function SettingsForm() {
       placeholder: 'CommandOrControl+Shift+F',
     },
     {
-      id: 'fixField',
-      label: 'Fix Field',
-      value: fixField,
-      setValue: setFixField,
-      placeholder: 'CommandOrControl+Shift+G',
-    },
-    {
       id: 'togglePopup',
       label: 'Toggle Popup',
       value: togglePopup,
       setValue: setTogglePopup,
       placeholder: 'CommandOrControl+Shift+P',
-    },
-    {
-      id: 'openSettings',
-      label: 'Open Settings',
-      value: openSettings,
-      setValue: setOpenSettings,
-      placeholder: 'CommandOrControl+,',
     },
   ] as const;
 
@@ -462,8 +444,7 @@ export default function SettingsForm() {
         <div className="space-y-2">
           <Label htmlFor="selectionDelayMs">Selection Delay (ms)</Label>
           <p className="text-sm text-muted-foreground">
-            Fixed delay after Select All; increase if “Fix Field” sometimes
-            captures partial text.
+            Fixed delay after keyboard simulation.
           </p>
           <Input
             id="selectionDelayMs"

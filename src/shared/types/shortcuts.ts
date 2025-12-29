@@ -1,8 +1,4 @@
 /**
  * Hotkey types
  */
-export type ShortcutAction =
-  | 'fixSelection'
-  | 'fixField'
-  | 'togglePopup'
-  | 'openSettings';
+export type ShortcutAction = 'fixSelection' | 'togglePopup';

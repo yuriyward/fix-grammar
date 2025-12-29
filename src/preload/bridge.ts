@@ -34,6 +34,12 @@ export function setupBridge() {
     );
   });
 
+  ipcRenderer.on(IPC_CHANNELS.OPEN_NOTIFICATIONS, () => {
+    window.dispatchEvent(
+      new CustomEvent<void>(IPC_CHANNELS.OPEN_NOTIFICATIONS),
+    );
+  });
+
   window.addEventListener('message', (event) => {
     if (event.data === IPC_CHANNELS.START_ORPC_SERVER) {
       const [serverPort] = event.ports;

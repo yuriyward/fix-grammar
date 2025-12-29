@@ -25,9 +25,7 @@ const {
     store: {
       hotkeys: {
         fixSelection: 'CommandOrControl+Shift+F',
-        fixField: 'CommandOrControl+Shift+G',
         togglePopup: 'CommandOrControl+Shift+P',
-        openSettings: 'CommandOrControl+,',
       },
       ai: {
         provider: 'google',
@@ -78,9 +76,7 @@ describe('Settings IPC handlers', () => {
     mockStore.store = {
       hotkeys: {
         fixSelection: 'CommandOrControl+Shift+F',
-        fixField: 'CommandOrControl+Shift+G',
         togglePopup: 'CommandOrControl+Shift+P',
-        openSettings: 'CommandOrControl+,',
       },
       ai: {
         provider: 'google',
@@ -108,9 +104,7 @@ describe('Settings IPC handlers', () => {
     const next: AppSettings = {
       hotkeys: {
         fixSelection: 'CommandOrControl+Shift+F',
-        fixField: 'CommandOrControl+Shift+G',
         togglePopup: 'CommandOrControl+Shift+P',
-        openSettings: 'CommandOrControl+,',
       },
       ai: {
         provider: 'google',
@@ -137,9 +131,7 @@ describe('Settings IPC handlers', () => {
     const invalid: AppSettings = {
       hotkeys: {
         fixSelection: 'CommandOrControl+Shift+F',
-        fixField: 'CommandOrControl+Shift+G',
         togglePopup: 'CommandOrControl+Shift+P',
-        openSettings: 'CommandOrControl+,',
       },
       ai: {
         provider: 'google',
@@ -163,9 +155,7 @@ describe('Settings IPC handlers', () => {
     const invalid: AppSettings = {
       hotkeys: {
         fixSelection: 'CommandOrControl+Shift+F',
-        fixField: 'CommandOrControl+Shift+G',
-        togglePopup: 'CommandOrControl+Shift+P',
-        openSettings: 'Not A Hotkey',
+        togglePopup: 'Not A Hotkey',
       },
       ai: {
         provider: 'google',

@@ -3,7 +3,11 @@
  */
 import { randomUUID } from 'node:crypto';
 import { Key, keyboard } from '@nut-tree-fork/nut-js';
-import { readClipboard, writeClipboard } from '@/main/automation/clipboard';
+import {
+  readClipboard,
+  waitForClipboardTextToNotEqual,
+  writeClipboard,
+} from '@/main/automation/clipboard';
 import { store } from '@/main/storage/settings';
 
 const isMac = process.platform === 'darwin';
@@ -17,25 +21,6 @@ function getDelayMs(
   if (!Number.isFinite(value)) return 0;
   if (value < 0) return 0;
   return value;
-}
-
-async function sleep(ms: number): Promise<void> {
-  await new Promise<void>((resolve) => setTimeout(resolve, ms));
-}
-
-async function waitForClipboardTextToNotEqual(
-  text: string,
-  timeoutMs: number,
-): Promise<void> {
-  if (timeoutMs <= 0) return;
-
-  const pollIntervalMs = 25;
-  const deadline = Date.now() + timeoutMs;
-
-  while (Date.now() < deadline) {
-    if (readClipboard() !== text) return;
-    await sleep(Math.min(pollIntervalMs, Math.max(0, deadline - Date.now())));
-  }
 }
 
 export async function pressCopyShortcut(): Promise<void> {

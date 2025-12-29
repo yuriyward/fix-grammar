@@ -2,6 +2,7 @@
  * Notifications domain router
  */
 import {
+  applyFixHandler,
   clearNotificationsHandler,
   listNotificationsHandler,
   markAllNotificationsReadHandler,
@@ -13,4 +14,5 @@ export const notifications = {
   markRead: markNotificationReadHandler,
   markAllRead: markAllNotificationsReadHandler,
   clear: clearNotificationsHandler,
+  applyFix: applyFixHandler,
 };

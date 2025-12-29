@@ -20,3 +20,7 @@ export async function markAllNotificationsRead(): Promise<void> {
 export async function clearNotifications(): Promise<void> {
   await ipc.client.notifications.clear();
 }
+
+export async function applyFix(contextId: string): Promise<void> {
+  await ipc.client.notifications.applyFix({ contextId });
+}

@@ -1,21 +1,17 @@
 /**
- * Fix selection/field orchestration handlers
+ * Fix selection orchestration handlers
  */
 import { randomUUID } from 'node:crypto';
 import { Notification } from 'electron';
 import { rewriteText } from '@/main/ai/client';
 import { parseAIError } from '@/main/ai/error-handler';
 import {
-  backupClipboard,
   readClipboard,
-  restoreClipboard,
+  SAFE_RESTORE_WINDOW_MS,
+  waitForClipboardTextToNotEqual,
   writeClipboard,
 } from '@/main/automation/clipboard';
-import {
-  simulateCopy,
-  simulatePaste,
-  simulateSelectAll,
-} from '@/main/automation/keyboard';
+import { pressCopyShortcut, simulatePaste } from '@/main/automation/keyboard';
 import { getApiKey } from '@/main/storage/api-keys';
 import { saveEditContext } from '@/main/storage/context';
 import { addNotification } from '@/main/storage/notifications';
@@ -27,6 +23,10 @@ import type {
   AppNotification,
   AppNotificationPayload,
 } from '@/shared/types/notifications';
+import { type AppContext, getFrontmostApp, isSameApp } from './app-context';
+import { fixStateManager } from './fix-state';
+
+const activeOsNotifications = new Set<Notification>();
 
 function sendInAppNotification(notification: AppNotification): void {
   windowManager.broadcast(IPC_CHANNELS.NOTIFY, notification);
@@ -40,6 +40,30 @@ function showNotification(payload: AppNotificationPayload): void {
   });
   osNotification.show();
   sendInAppNotification(stored);
+}
+
+function getClipboardSyncDelayMs(): number {
+  const value = store.get('automation.clipboardSyncDelayMs');
+  if (typeof value !== 'number') return 0;
+  if (!Number.isFinite(value)) return 0;
+  if (value < 0) return 0;
+  return value;
+}
+
+async function captureSelectionText(): Promise<string | null> {
+  const clipboardBeforeCopy = readClipboard();
+  const sentinel = `__grammar_copilot_selection_${randomUUID()}__`;
+
+  try {
+    writeClipboard(sentinel);
+    await pressCopyShortcut();
+    await waitForClipboardTextToNotEqual(sentinel, getClipboardSyncDelayMs());
+
+    const copied = readClipboard();
+    return copied === sentinel ? null : copied;
+  } finally {
+    writeClipboard(clipboardBeforeCopy);
+  }
 }
 
 export function preserveTrailingNewlines(
@@ -59,59 +83,21 @@ export function preserveTrailingNewlines(
   return `${rewrittenText}${newline.repeat(originalCount - rewrittenCount)}`;
 }
 
-async function rewriteAndReplaceText(
-  originalText: string,
+/**
+ * Apply a fix directly by pasting it with clipboard guard
+ */
+async function applyFixDirectly(
+  rewrittenText: string,
   options?: { beforePaste?: () => Promise<void> },
 ): Promise<void> {
-  const provider = store.get('ai.provider');
-  const apiKey = getApiKey(provider);
-
-  if (!apiKey) {
-    showNotification({
-      type: 'error',
-      title: 'Grammar Copilot',
-      description: `API key not found for provider: ${provider}`,
-    });
-    return;
-  }
-
-  const role = store.get('ai.role');
-  const model = store.get('ai.model');
-  trayManager.startBusy();
-
-  let rewrittenText: string;
-  try {
-    const result = await rewriteText(originalText, role, apiKey, model);
-    rewrittenText = preserveTrailingNewlines(originalText, await result.text);
-  } catch (error) {
-    const errorDetails = parseAIError(error);
-    showNotification({
-      type: 'error',
-      title: errorDetails.title,
-      description: errorDetails.message,
-    });
-    throw error; // Re-throw to prevent continuing with undefined rewrittenText
-  } finally {
-    trayManager.stopBusy();
-  }
-
-  saveEditContext(randomUUID(), {
-    originalText,
-    rewrittenText,
-    timestamp: Date.now(),
-    role,
-  });
-
   if (options?.beforePaste) {
     await options.beforePaste();
   }
 
   // Time-based guard: only restore clipboard if paste completed quickly enough
-  // that user interaction is unlikely. Prevents race condition where another
-  // app or user action modifies clipboard during a slow paste operation.
-  const SAFE_RESTORE_WINDOW_MS = 500;
   const clipboardBeforePaste = readClipboard();
   const pasteStartedAt = Date.now();
+
   try {
     writeClipboard(rewrittenText);
     await simulatePaste();
@@ -121,39 +107,163 @@ async function rewriteAndReplaceText(
       writeClipboard(clipboardBeforePaste);
     }
   }
+}
 
-  showNotification({
-    type: 'success',
+/**
+ * Show persistent notification with "Apply Fix" action
+ */
+function showPersistentFixNotification(
+  contextId: string,
+  sourceApp: AppContext,
+): void {
+  const notification = addNotification({
+    type: 'info',
     title: 'Grammar Copilot',
-    description: 'Text rewritten successfully',
+    description: `Your fix is ready for ${sourceApp.name}. Open Grammar Copilot and click "Apply Fix" to paste it.`,
+    action: { type: 'apply-fix', contextId },
+    persistent: true,
   });
+
+  // OS notification (non-actionable, just for awareness)
+  const osNotification = new Notification({
+    title: notification.title,
+    body: notification.description,
+  });
+  activeOsNotifications.add(osNotification);
+  osNotification.on('close', () => {
+    activeOsNotifications.delete(osNotification);
+  });
+  osNotification.on('click', () => {
+    windowManager.openNotificationCenter();
+  });
+  osNotification.show();
+
+  // In-app notification (actionable)
+  sendInAppNotification(notification);
+}
+
+/**
+ * Process fix asynchronously in the background
+ */
+async function processFixAsync(
+  contextId: string,
+  originalText: string,
+  sourceApp: AppContext | null,
+  options?: { beforePaste?: () => Promise<void> },
+): Promise<void> {
+  trayManager.startBusy('Processing in background…');
+
+  try {
+    // Get AI configuration
+    const provider = store.get('ai.provider');
+    const apiKey = getApiKey(provider);
+
+    if (!apiKey) {
+      showNotification({
+        type: 'error',
+        title: 'Grammar Copilot',
+        description: `API key not found for provider: ${provider}`,
+      });
+      return;
+    }
+
+    const role = store.get('ai.role');
+    const model = store.get('ai.model');
+
+    // AI rewriting
+    const result = await rewriteText(originalText, role, apiKey, model);
+    const rewrittenText = preserveTrailingNewlines(
+      originalText,
+      await result.text,
+    );
+
+    // Save context
+    saveEditContext(contextId, {
+      originalText,
+      rewrittenText,
+      timestamp: Date.now(),
+      role,
+      sourceApp: sourceApp ?? undefined,
+    });
+
+    // Smart completion: check if user is still in same app
+    const currentApp = await getFrontmostApp();
+
+    if (sourceApp && currentApp && isSameApp(sourceApp, currentApp)) {
+      const currentSelectionText = await captureSelectionText();
+      if (currentSelectionText === originalText) {
+        // AUTO-PASTE: User is still in same app and selection is unchanged
+        await applyFixDirectly(rewrittenText, options);
+
+        showNotification({
+          type: 'success',
+          title: 'Grammar Copilot',
+          description: 'Text rewritten and pasted',
+        });
+      } else {
+        // SELECTION CHANGED: Avoid pasting into the wrong place
+        writeClipboard(rewrittenText);
+        showNotification({
+          type: 'info',
+          title: 'Grammar Copilot',
+          description:
+            'Selection changed. Result copied to clipboard for manual paste.',
+        });
+      }
+    } else {
+      // NOTIFICATION: User switched apps
+      if (sourceApp) {
+        showPersistentFixNotification(contextId, sourceApp);
+      } else {
+        // Fallback: no source app captured
+        showNotification({
+          type: 'info',
+          title: 'Grammar Copilot',
+          description: 'Text rewritten. Result copied to clipboard.',
+        });
+        writeClipboard(rewrittenText);
+      }
+    }
+  } catch (error) {
+    const errorDetails = parseAIError(error);
+    showNotification({
+      type: 'error',
+      title: errorDetails.title,
+      description: errorDetails.message,
+    });
+    // Don't re-throw: user notification is sufficient
+  } finally {
+    trayManager.stopBusy();
+  }
 }
 
 /**
  * Global shortcut handler that rewrites the current selection in the focused app.
  *
- * Copies the current selection, sends it to the AI rewriter, then pastes the rewritten
- * text back in place. Uses temporary clipboard overrides and shows system notifications.
+ * Captures the selection and processes it asynchronously. If user stays in the same app,
+ * the fix is pasted automatically. Otherwise, a persistent notification is shown.
  */
 export async function handleFixSelection(): Promise<void> {
+  // Guard: reject if already processing
+  if (!fixStateManager.canStartFix()) {
+    showNotification({
+      type: 'warning',
+      title: 'Grammar Copilot',
+      description: 'Already processing a fix request',
+    });
+    return;
+  }
+
   trayManager.startBusy('Grammar Copilot — Capturing selection…');
+
   try {
-    // 1. Backup clipboard and capture selection
-    backupClipboard();
-    const originalText = await (async (): Promise<string> => {
-      try {
-        // 2. Simulate Cmd+C to capture selection
-        await simulateCopy();
+    // 1. Capture app context BEFORE copying
+    const sourceApp = await getFrontmostApp();
 
-        // 3. Read captured text
-        return readClipboard();
-      } finally {
-        // 4. Restore clipboard immediately (even if simulateCopy throws)
-        restoreClipboard();
-      }
-    })();
+    // 2. Capture selection (without disturbing user clipboard)
+    const originalText = await captureSelectionText();
 
-    if (!originalText.trim()) {
+    if (!originalText || !originalText.trim()) {
       showNotification({
         type: 'info',
         title: 'Grammar Copilot',
@@ -162,65 +272,26 @@ export async function handleFixSelection(): Promise<void> {
       return;
     }
 
-    // 5. Rewrite and replace selection
-    await rewriteAndReplaceText(originalText);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    showNotification({
-      type: 'error',
-      title: 'Grammar Copilot Error',
-      description: `Rewrite failed: ${message}`,
-    });
-  } finally {
-    trayManager.stopBusy();
-  }
-}
+    // 3. Start async processing (fire and forget)
+    const contextId = randomUUID();
+    fixStateManager.startFix(contextId, sourceApp);
 
-/**
- * Global shortcut handler that rewrites the entire active input/textarea field.
- *
- * Selects all, copies the field contents, sends it to the AI rewriter, then selects
- * all again and pastes the rewritten text. Uses temporary clipboard overrides and
- * shows system notifications.
- */
-export async function handleFixField(): Promise<void> {
-  trayManager.startBusy('Grammar Copilot — Capturing field…');
-  try {
-    backupClipboard();
-    const originalText = await (async (): Promise<string> => {
-      try {
-        // 1. Select all in active field
-        await simulateSelectAll();
-
-        // 2. Copy entire field
-        await simulateCopy();
-
-        return readClipboard();
-      } finally {
-        restoreClipboard();
-      }
-    })();
-
-    if (!originalText.trim()) {
-      showNotification({
-        type: 'info',
-        title: 'Grammar Copilot',
-        description: 'No text in field',
+    processFixAsync(contextId, originalText, sourceApp)
+      .catch((error) => {
+        // Fallback: log unexpected errors that weren't caught by processFixAsync
+        console.error('[handleFixSelection] Unexpected error:', error);
+      })
+      .finally(() => {
+        fixStateManager.completeFix();
       });
-      return;
-    }
-
-    // 3. Rewrite and replace field contents
-    await rewriteAndReplaceText(originalText, {
-      beforePaste: simulateSelectAll,
-    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     showNotification({
       type: 'error',
       title: 'Grammar Copilot Error',
-      description: `Rewrite failed: ${message}`,
+      description: `Capture failed: ${message}`,
     });
+    fixStateManager.completeFix();
   } finally {
     trayManager.stopBusy();
   }
@@ -231,15 +302,4 @@ export async function handleFixField(): Promise<void> {
  */
 export function handleTogglePopup(): void {
   windowManager.createOrFocusPopupAtCursor();
-}
-
-/**
- * Global shortcut handler that opens the Settings page in the main window.
- */
-export function handleOpenSettings(): void {
-  // Show main window
-  windowManager.showMainWindow();
-
-  // Navigate to /settings route
-  windowManager.navigateMainWindow('/settings');
 }

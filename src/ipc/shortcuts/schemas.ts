@@ -3,12 +3,7 @@
  */
 import { z } from 'zod';
 
-export const shortcutActionSchema = z.enum([
-  'fixSelection',
-  'fixField',
-  'togglePopup',
-  'openSettings',
-]);
+export const shortcutActionSchema = z.enum(['fixSelection', 'togglePopup']);
 
 export const registerShortcutInputSchema = z.object({
   action: shortcutActionSchema,

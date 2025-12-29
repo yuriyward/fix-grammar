@@ -22,9 +22,7 @@ import {
 
 const hotkeyLabels = {
   fixSelection: 'Fix Selection',
-  fixField: 'Fix Field',
   togglePopup: 'Toggle Popup',
-  openSettings: 'Open Settings',
 } as const satisfies Record<keyof HotkeysSettings, string>;
 
 function normalizeHotkeyAcceleratorForUniqueness(accelerator: string): string {
@@ -104,9 +102,7 @@ export const updateSettings = os
   .handler(({ input }) => {
     const hotkeys: HotkeysSettings = {
       fixSelection: input.hotkeys.fixSelection.trim(),
-      fixField: input.hotkeys.fixField.trim(),
       togglePopup: input.hotkeys.togglePopup.trim(),
-      openSettings: input.hotkeys.openSettings.trim(),
     };
 
     validateHotkeys(hotkeys);

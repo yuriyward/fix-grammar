@@ -87,7 +87,11 @@ export function initializeApp() {
     .then(initializeWindows)
     .then(setupORPC)
     .then(installExtensions)
-    .then(checkForUpdates);
+    .then(checkForUpdates)
+    .catch((error) => {
+      console.error('[app] Fatal error during initialization:', error);
+      app.quit();
+    });
 
   // Don't quit when all windows are closed - tray keeps app alive
   app.on('window-all-closed', () => {

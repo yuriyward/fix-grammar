@@ -103,9 +103,7 @@ export const aiModelSchema: z.ZodType<AIModel> = z
 
 export const hotkeysSettingsSchema = z.object({
   fixSelection: hotkeyAcceleratorSchema,
-  fixField: hotkeyAcceleratorSchema,
   togglePopup: hotkeyAcceleratorSchema,
-  openSettings: hotkeyAcceleratorSchema,
 });
 
 export const aiSettingsSchema = z.object({

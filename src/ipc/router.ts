@@ -5,6 +5,7 @@ import { ai } from './ai/router';
 import { app } from './app/router';
 import { automation } from './automation/router';
 import { notifications } from './notifications/router';
+import { permissions } from './permissions/router';
 import { settings } from './settings/router';
 import { shell } from './shell/router';
 import { shortcuts } from './shortcuts/router';
@@ -21,4 +22,5 @@ export const router = {
   ai,
   shortcuts,
   notifications,
+  permissions,
 };

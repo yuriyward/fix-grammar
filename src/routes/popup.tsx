@@ -4,7 +4,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { Send } from 'lucide-react';
 import { useState } from 'react';
-import DragWindowRegion from '@/renderer/components/drag-window-region';
 import { Button } from '@/renderer/components/ui/button';
 import { Textarea } from '@/renderer/components/ui/textarea';
 
@@ -36,8 +35,6 @@ function PopupPage() {
 
   return (
     <div className="flex h-screen flex-col">
-      <DragWindowRegion title="Grammar Copilot" />
-
       {/* Input area */}
       <div className="flex flex-1 flex-col gap-2 p-4">
         <Textarea

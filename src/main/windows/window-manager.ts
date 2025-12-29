@@ -123,6 +123,12 @@ export class WindowManager {
     this.sendToWindow(this.popupWindow, IPC_CHANNELS.NAVIGATE, to);
   }
 
+  openNotificationCenter(): void {
+    this.showMainWindow();
+    if (!this.mainWindow) return;
+    this.sendToWindow(this.mainWindow, IPC_CHANNELS.OPEN_NOTIFICATIONS);
+  }
+
   createMainWindow(): BrowserWindow {
     const preload = path.join(__dirname, 'preload.js');
 

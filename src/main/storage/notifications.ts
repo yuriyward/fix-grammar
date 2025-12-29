@@ -37,10 +37,32 @@ function validateTimestamp(value: unknown, fallback: number): number {
   return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 }
 
+function validatePersistent(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined;
+}
+
+function validateAction(
+  value: unknown,
+): AppNotificationPayload['action'] | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+
+  const record = value as Record<string, unknown>;
+  if (record.type !== 'apply-fix') return undefined;
+
+  const contextId =
+    typeof record.contextId === 'string' && record.contextId.length > 0
+      ? record.contextId
+      : null;
+  if (!contextId) return undefined;
+
+  return { type: 'apply-fix', contextId };
+}
+
 function validateReadAt(
   value: unknown,
   type: AppNotification['type'],
   createdAt: number,
+  persistent: boolean | undefined,
 ): number | null {
   const explicit =
     value === null
@@ -50,6 +72,7 @@ function validateReadAt(
         : undefined;
 
   if (explicit !== undefined) return explicit;
+  if (persistent === true) return null;
 
   return type === 'error' || type === 'warning' ? null : createdAt;
 }
@@ -71,11 +94,22 @@ function normalizeNotification(
   const type = validateType(record.type);
   const description =
     typeof record.description === 'string' ? record.description : undefined;
+  const persistent = validatePersistent(record.persistent);
+  const action = validateAction(record.action);
   const createdAt = validateTimestamp(record.createdAt, fallbackCreatedAt);
-  const readAt = validateReadAt(record.readAt, type, createdAt);
+  const readAt = validateReadAt(record.readAt, type, createdAt, persistent);
   const id = generateId(record.id);
 
-  return { id, type, title, description, createdAt, readAt };
+  return {
+    id,
+    type,
+    title,
+    description,
+    createdAt,
+    readAt,
+    persistent,
+    action,
+  };
 }
 
 function getAll(): AppNotification[] {
@@ -103,12 +137,19 @@ export function listNotifications(): AppNotification[] {
     .sort((a, b) => b.createdAt - a.createdAt);
 }
 
+function shouldAutoMarkRead(payload: AppNotificationPayload): boolean {
+  return (
+    !payload.persistent &&
+    payload.type !== 'error' &&
+    payload.type !== 'warning'
+  );
+}
+
 export function addNotification(
   payload: AppNotificationPayload,
 ): AppNotification {
   const createdAt = Date.now();
-  const readAt =
-    payload.type === 'error' || payload.type === 'warning' ? null : createdAt;
+  const readAt = shouldAutoMarkRead(payload) ? createdAt : null;
 
   const notification: AppNotification = {
     id: randomUUID(),

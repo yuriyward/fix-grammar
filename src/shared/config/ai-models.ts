@@ -20,6 +20,11 @@ export const AI_PROVIDERS = {
     name: 'Google Gemini',
     models: [
       {
+        id: 'gemini-3-flash-preview',
+        name: 'Gemini 3 Flash',
+        provider: 'google' as const,
+      },
+      {
         id: 'gemini-2.5-flash',
         name: 'Gemini 2.5 Flash',
         provider: 'google' as const,
@@ -35,7 +40,7 @@ export const AI_PROVIDERS = {
         provider: 'google' as const,
       },
     ],
-    defaultModel: 'gemini-2.5-flash',
+    defaultModel: 'gemini-3-flash-preview',
   },
   xai: {
     name: 'xAI Grok',

@@ -44,7 +44,7 @@ describe('AI IPC handlers', () => {
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockStoreGet.mockImplementation((key: string) => {
       if (key === 'ai.provider') return 'google';
-      if (key === 'ai.model') return 'gemini-2.5-flash';
+      if (key === 'ai.model') return 'gemini-3-flash-preview';
       return undefined;
     });
   });
@@ -83,7 +83,7 @@ describe('AI IPC handlers', () => {
       'Hello',
       'grammar-tone',
       'test-key',
-      'gemini-2.5-flash',
+      'gemini-3-flash-preview',
     );
   });
 

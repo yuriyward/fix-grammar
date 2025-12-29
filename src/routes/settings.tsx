@@ -18,13 +18,18 @@ function SettingsPage() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex-shrink-0 border-b px-6 py-3">
-        <Button
-          variant="ghost"
-          onClick={() => navigate({ to: '/' })}
-          className="mb-2"
-        >
-          ← Back to Dashboard
-        </Button>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <Button variant="ghost" onClick={() => navigate({ to: '/' })}>
+            ← Back to Dashboard
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => navigate({ to: '/onboarding' })}
+          >
+            Permissions
+          </Button>
+        </div>
         <h1 className="text-2xl font-bold">Settings</h1>
       </div>
 

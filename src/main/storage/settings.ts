@@ -9,9 +9,7 @@ export const store = new ElectronStore<AppSettings>({
   defaults: {
     hotkeys: {
       fixSelection: 'CommandOrControl+Shift+F',
-      fixField: 'CommandOrControl+Shift+G',
       togglePopup: 'CommandOrControl+Shift+P',
-      openSettings: 'CommandOrControl+,',
     },
     ai: {
       provider: 'google',

@@ -1,11 +1,14 @@
 /**
  * In-memory edit context storage
  */
+import type { AppContext } from '@/main/shortcuts/app-context';
+
 export interface EditContext {
   originalText: string;
   rewrittenText: string;
   timestamp: number;
   role: string;
+  sourceApp?: AppContext;
 }
 
 const contextMap = new Map<string, EditContext>();

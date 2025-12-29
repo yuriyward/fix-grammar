@@ -108,7 +108,9 @@ export function addNotification(
 ): AppNotification {
   const createdAt = Date.now();
   const readAt =
-    payload.type === 'error' || payload.type === 'warning' ? null : createdAt;
+    payload.persistent || payload.type === 'error' || payload.type === 'warning'
+      ? null
+      : createdAt;
 
   const notification: AppNotification = {
     id: randomUUID(),

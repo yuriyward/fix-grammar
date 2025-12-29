@@ -10,17 +10,32 @@ const {
   mockMarkNotificationRead,
   mockMarkAllNotificationsRead,
   mockClearNotifications,
+  mockGetEditContext,
+  mockSwitchToApp,
+  mockReadClipboard,
+  mockWriteClipboard,
+  mockSimulatePaste,
 } = vi.hoisted(() => {
   const mockListNotifications = vi.fn<[], AppNotification[]>();
   const mockMarkNotificationRead = vi.fn<[string], void>();
   const mockMarkAllNotificationsRead = vi.fn<[], void>();
   const mockClearNotifications = vi.fn<[], void>();
+  const mockGetEditContext = vi.fn();
+  const mockSwitchToApp = vi.fn();
+  const mockReadClipboard = vi.fn();
+  const mockWriteClipboard = vi.fn();
+  const mockSimulatePaste = vi.fn();
 
   return {
     mockListNotifications,
     mockMarkNotificationRead,
     mockMarkAllNotificationsRead,
     mockClearNotifications,
+    mockGetEditContext,
+    mockSwitchToApp,
+    mockReadClipboard,
+    mockWriteClipboard,
+    mockSimulatePaste,
   };
 });
 
@@ -29,6 +44,23 @@ vi.mock('@/main/storage/notifications', () => ({
   markNotificationRead: mockMarkNotificationRead,
   markAllNotificationsRead: mockMarkAllNotificationsRead,
   clearNotifications: mockClearNotifications,
+}));
+
+vi.mock('@/main/storage/context', () => ({
+  getEditContext: mockGetEditContext,
+}));
+
+vi.mock('@/main/shortcuts/app-context', () => ({
+  switchToApp: mockSwitchToApp,
+}));
+
+vi.mock('@/main/automation/clipboard', () => ({
+  readClipboard: mockReadClipboard,
+  writeClipboard: mockWriteClipboard,
+}));
+
+vi.mock('@/main/automation/keyboard', () => ({
+  simulatePaste: mockSimulatePaste,
 }));
 
 describe('Notifications IPC handlers', () => {

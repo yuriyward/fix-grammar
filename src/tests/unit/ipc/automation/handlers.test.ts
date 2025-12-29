@@ -3,6 +3,7 @@
  */
 import { createProcedureClient } from '@orpc/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
 
 let clipboardText = '';
 
@@ -17,6 +18,9 @@ const {
   mockSimulateSelectAll,
   mockStoreGet,
   mockIpcContext,
+  mockIpcMain,
+  emitIpcMain,
+  resetIpcMainListeners,
 } = vi.hoisted(() => {
   const mockBackupClipboard = vi.fn();
   const mockRestoreClipboard = vi.fn();
@@ -36,6 +40,37 @@ const {
     mainWindow: undefined,
   };
 
+  const ipcMainListeners = new Map<string, Set<unknown>>();
+
+  const mockIpcMain = {
+    on: vi.fn((channel: string, listener: unknown) => {
+      const set = ipcMainListeners.get(channel) ?? new Set();
+      set.add(listener);
+      ipcMainListeners.set(channel, set);
+      return mockIpcMain;
+    }),
+    removeListener: vi.fn((channel: string, listener: unknown) => {
+      ipcMainListeners.get(channel)?.delete(listener);
+      return mockIpcMain;
+    }),
+  };
+
+  const emitIpcMain = (channel: string, ...args: unknown[]) => {
+    const listeners = ipcMainListeners.get(channel);
+    if (!listeners) return;
+    for (const listener of listeners) {
+      if (typeof listener === 'function') {
+        listener(...args);
+      }
+    }
+  };
+
+  const resetIpcMainListeners = () => {
+    ipcMainListeners.clear();
+    mockIpcMain.on.mockClear();
+    mockIpcMain.removeListener.mockClear();
+  };
+
   return {
     mockBackupClipboard,
     mockRestoreClipboard,
@@ -47,8 +82,15 @@ const {
     mockSimulateSelectAll,
     mockStoreGet,
     mockIpcContext,
+    mockIpcMain,
+    emitIpcMain,
+    resetIpcMainListeners,
   };
 });
+
+vi.mock('electron', () => ({
+  ipcMain: mockIpcMain,
+}));
 
 vi.mock('@/main/automation/clipboard', () => ({
   backupClipboard: mockBackupClipboard,
@@ -80,6 +122,7 @@ describe('Automation IPC handlers', () => {
     clipboardText = '';
     mockIpcContext.mainWindow = undefined;
     mockStoreGet.mockReturnValue(100);
+    resetIpcMainListeners();
   });
 
   it('captures clipboard text for selection mode', async () => {
@@ -168,7 +211,18 @@ describe('Automation IPC handlers', () => {
       focus: vi.fn(),
       isFocused: vi.fn(() => true),
       webContents: {
-        executeJavaScript: vi.fn(async () => ({ ok: true, reason: null })),
+        id: 1,
+        send: vi.fn((channel: string, payload: unknown) => {
+          if (channel !== IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_REQUEST) {
+            return;
+          }
+          const request = payload as { requestId: string };
+          emitIpcMain(
+            IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_RESPONSE,
+            { sender: { id: 1 } },
+            { requestId: request.requestId, ok: true, reason: null },
+          );
+        }),
       },
     };
 
@@ -189,7 +243,7 @@ describe('Automation IPC handlers', () => {
 
     expect(mockWindow.show).toHaveBeenCalledTimes(1);
     expect(mockWindow.focus).toHaveBeenCalledTimes(1);
-    expect(mockWindow.webContents.executeJavaScript).toHaveBeenCalledTimes(5);
+    expect(mockWindow.webContents.send).toHaveBeenCalledTimes(5);
     expect(mockPressCopyShortcut).toHaveBeenCalledTimes(5);
     expect(mockBackupClipboard).toHaveBeenCalledTimes(1);
     expect(mockRestoreClipboard).toHaveBeenCalledTimes(1);
@@ -207,7 +261,18 @@ describe('Automation IPC handlers', () => {
       focus: vi.fn(),
       isFocused: vi.fn(() => true),
       webContents: {
-        executeJavaScript: vi.fn(async () => ({ ok: true, reason: null })),
+        id: 1,
+        send: vi.fn((channel: string, payload: unknown) => {
+          if (channel !== IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_REQUEST) {
+            return;
+          }
+          const request = payload as { requestId: string };
+          emitIpcMain(
+            IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_RESPONSE,
+            { sender: { id: 1 } },
+            { requestId: request.requestId, ok: true, reason: null },
+          );
+        }),
       },
     };
 
@@ -235,10 +300,22 @@ describe('Automation IPC handlers', () => {
       focus: vi.fn(),
       isFocused: vi.fn(() => true),
       webContents: {
-        executeJavaScript: vi.fn(async () => ({
-          ok: false,
-          reason: 'Calibration field not found.',
-        })),
+        id: 1,
+        send: vi.fn((channel: string, payload: unknown) => {
+          if (channel !== IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_REQUEST) {
+            return;
+          }
+          const request = payload as { requestId: string };
+          emitIpcMain(
+            IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_RESPONSE,
+            { sender: { id: 1 } },
+            {
+              requestId: request.requestId,
+              ok: false,
+              reason: 'Calibration field not found.',
+            },
+          );
+        }),
       },
     };
 

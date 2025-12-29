@@ -48,8 +48,13 @@ import {
   getModelsForProvider,
   getProviderName,
 } from '@/shared/config/ai-models';
+import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
 import type { RewriteRole } from '@/shared/types/ai';
-import type { AutomationCalibrationResult } from '@/shared/types/automation';
+import type {
+  AutomationCalibrationFocusRequest,
+  AutomationCalibrationFocusResponse,
+  AutomationCalibrationResult,
+} from '@/shared/types/automation';
 import type { ReasoningEffort, TextVerbosity } from '@/shared/types/settings';
 
 export default function SettingsForm() {
@@ -135,6 +140,71 @@ export default function SettingsForm() {
   useEffect(() => {
     void loadApiKeyStatus();
   }, [loadApiKeyStatus]);
+
+  useEffect(() => {
+    const onFocusRequest = (event: Event) => {
+      const request = (event as CustomEvent<AutomationCalibrationFocusRequest>)
+        .detail;
+
+      const el = document.getElementById('calibrationText');
+      if (!(el instanceof HTMLTextAreaElement)) {
+        const response: AutomationCalibrationFocusResponse = {
+          requestId: request.requestId,
+          ok: false,
+          reason: 'Calibration field not found.',
+        };
+        window.dispatchEvent(
+          new CustomEvent<AutomationCalibrationFocusResponse>(
+            IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_RESPONSE,
+            { detail: response },
+          ),
+        );
+        return;
+      }
+
+      if (el.value !== request.expectedText) {
+        const response: AutomationCalibrationFocusResponse = {
+          requestId: request.requestId,
+          ok: false,
+          reason: 'Calibration text mismatch.',
+        };
+        window.dispatchEvent(
+          new CustomEvent<AutomationCalibrationFocusResponse>(
+            IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_RESPONSE,
+            { detail: response },
+          ),
+        );
+        return;
+      }
+
+      el.focus();
+      el.select();
+
+      const ok = document.activeElement === el;
+      const response: AutomationCalibrationFocusResponse = {
+        requestId: request.requestId,
+        ok,
+        reason: ok ? null : 'Calibration field not focused.',
+      };
+      window.dispatchEvent(
+        new CustomEvent<AutomationCalibrationFocusResponse>(
+          IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_RESPONSE,
+          { detail: response },
+        ),
+      );
+    };
+
+    window.addEventListener(
+      IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_REQUEST,
+      onFocusRequest,
+    );
+    return () => {
+      window.removeEventListener(
+        IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_REQUEST,
+        onFocusRequest,
+      );
+    };
+  }, []);
 
   const handleProviderChange = (newProvider: AIProvider) => {
     setProvider(newProvider);

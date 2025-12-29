@@ -12,4 +12,7 @@ export const IPC_CHANNELS = {
   NAVIGATE: 'app:navigate',
   NOTIFY: 'app:notify',
   OPEN_NOTIFICATIONS: 'app:open-notifications',
+  AUTOMATION_CALIBRATION_FOCUS_REQUEST: 'automation:calibration-focus-request',
+  AUTOMATION_CALIBRATION_FOCUS_RESPONSE:
+    'automation:calibration-focus-response',
 };

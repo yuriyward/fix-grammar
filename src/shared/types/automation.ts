@@ -19,3 +19,14 @@ export type AutomationCalibrationResult =
       recommended: { clipboardSyncDelayMs: number; selectionDelayMs: number };
     }
   | { success: false; reason: string };
+
+export type AutomationCalibrationFocusRequest = {
+  requestId: string;
+  expectedText: string;
+};
+
+export type AutomationCalibrationFocusResponse = {
+  requestId: string;
+  ok: boolean;
+  reason: string | null;
+};

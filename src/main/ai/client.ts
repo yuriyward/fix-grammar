@@ -39,8 +39,8 @@ export async function rewriteText(
   let modelInstance: LanguageModel;
   if (provider === 'openai') {
     const openaiProvider = createOpenAI({ apiKey });
-    // Explicitly use Responses API for OpenAI to ensure reasoningEffort and textVerbosity work
-    modelInstance = openaiProvider.responses(model);
+    // openai() defaults to Responses API in AI SDK 5+
+    modelInstance = openaiProvider(model);
   } else if (provider === 'xai') {
     const xaiProvider = createXai({ apiKey });
     modelInstance = xaiProvider(model);
@@ -52,23 +52,20 @@ export async function rewriteText(
   const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
   // Build provider-specific options for OpenAI
-  const openaiOptions: Record<string, unknown> = {};
-  if (reasoningEffort) {
-    openaiOptions.reasoningEffort = reasoningEffort;
-  }
-  if (textVerbosity) {
-    openaiOptions.textVerbosity = textVerbosity;
-  }
+  const openaiOptions = {
+    ...(reasoningEffort && { reasoningEffort }),
+    ...(textVerbosity && { textVerbosity }),
+  };
 
   return streamText({
     model: modelInstance,
     prompt,
     maxRetries: 2,
     abortSignal: AbortSignal.timeout(TIMEOUT_MS),
-    ...(provider === 'openai' &&
-      Object.keys(openaiOptions).length > 0 && {
-        providerOptions: { openai: openaiOptions },
-      }),
+    providerOptions:
+      provider === 'openai' && Object.keys(openaiOptions).length > 0
+        ? { openai: openaiOptions }
+        : undefined,
   });
 }
 

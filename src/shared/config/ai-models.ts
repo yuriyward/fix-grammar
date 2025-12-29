@@ -131,3 +131,13 @@ export function getProviderName(provider: AIProvider): string {
 export function isValidModel(provider: AIProvider, modelId: string): boolean {
   return AI_PROVIDERS[provider].models.some((m) => m.id === modelId);
 }
+
+/**
+ * Get user-friendly model label for display in notifications and UI
+ */
+export function getModelLabel(provider: AIProvider, model: AIModel): string {
+  const config = AI_PROVIDERS[provider].models.find(
+    (entry) => entry.id === model,
+  );
+  return config?.name ?? model;
+}

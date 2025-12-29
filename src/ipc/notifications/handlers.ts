@@ -19,8 +19,7 @@ import {
   markNotificationRead,
 } from '@/main/storage/notifications';
 import { windowManager } from '@/main/windows/window-manager';
-import type { AIModel, AIProvider } from '@/shared/config/ai-models';
-import { AI_PROVIDERS } from '@/shared/config/ai-models';
+import { getModelLabel } from '@/shared/config/ai-models';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
 import type {
   AppNotification,
@@ -56,13 +55,6 @@ function formatDurationMs(durationMs: number): string {
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
   return `${hours}h ${String(remainingMinutes).padStart(2, '0')}m`;
-}
-
-function getModelLabel(provider: AIProvider, model: AIModel): string {
-  const config = AI_PROVIDERS[provider].models.find(
-    (entry) => entry.id === model,
-  );
-  return config?.name ?? model;
 }
 
 export const listNotificationsHandler = os.handler(() => {

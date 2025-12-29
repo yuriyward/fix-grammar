@@ -20,15 +20,6 @@ import {
   AlertDescription,
   AlertTitle,
 } from '@/renderer/components/ui/alert';
-import {
-  Autocomplete,
-  AutocompleteGroup,
-  AutocompleteGroupLabel,
-  AutocompleteInput,
-  AutocompleteItem,
-  AutocompleteList,
-  AutocompletePopup,
-} from '@/renderer/components/ui/autocomplete';
 import { Button } from '@/renderer/components/ui/button';
 import {
   Card,
@@ -38,6 +29,15 @@ import {
   CardPanel,
   CardTitle,
 } from '@/renderer/components/ui/card';
+import {
+  Combobox,
+  ComboboxGroup,
+  ComboboxGroupLabel,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxPopup,
+} from '@/renderer/components/ui/combobox';
 import {
   Field,
   FieldDescription,
@@ -515,42 +515,42 @@ export default function SettingsForm() {
           {provider === 'lmstudio' ? (
             <Field name="ai.model">
               <FieldLabel>Model</FieldLabel>
-              <Autocomplete
+              <Combobox
                 name="ai.model"
                 value={model}
+                inputValue={model}
+                onInputValueChange={(value) => setModel(value)}
                 onValueChange={(value) => setModel(value || '')}
               >
-                <AutocompleteInput
+                <ComboboxInput
                   placeholder="Type model name or select from list"
                   showTrigger
                 />
-                <AutocompletePopup>
-                  <AutocompleteList>
+                <ComboboxPopup>
+                  <ComboboxList>
                     {lmstudioExtraModels.length > 0 && (
-                      <AutocompleteGroup>
-                        <AutocompleteGroupLabel>
+                      <ComboboxGroup>
+                        <ComboboxGroupLabel>
                           Discovered Models
-                        </AutocompleteGroupLabel>
+                        </ComboboxGroupLabel>
                         {lmstudioExtraModels.map((id) => (
-                          <AutocompleteItem key={id} value={id}>
+                          <ComboboxItem key={id} value={id}>
                             {id}
-                          </AutocompleteItem>
+                          </ComboboxItem>
                         ))}
-                      </AutocompleteGroup>
+                      </ComboboxGroup>
                     )}
-                    <AutocompleteGroup>
-                      <AutocompleteGroupLabel>
-                        Popular Models
-                      </AutocompleteGroupLabel>
+                    <ComboboxGroup>
+                      <ComboboxGroupLabel>Popular Models</ComboboxGroupLabel>
                       {lmstudioPopularModels.map((entry) => (
-                        <AutocompleteItem key={entry.id} value={entry.id}>
+                        <ComboboxItem key={entry.id} value={entry.id}>
                           {entry.name}
-                        </AutocompleteItem>
+                        </ComboboxItem>
                       ))}
-                    </AutocompleteGroup>
-                  </AutocompleteList>
-                </AutocompletePopup>
-              </Autocomplete>
+                    </ComboboxGroup>
+                  </ComboboxList>
+                </ComboboxPopup>
+              </Combobox>
               <FieldError />
               <FieldDescription>
                 Select a model or type a custom model name (e.g., your

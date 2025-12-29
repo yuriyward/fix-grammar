@@ -2,7 +2,6 @@
  * Notifications IPC handlers
  */
 import { os } from '@orpc/server';
-import { Notification } from 'electron';
 import {
   readClipboard,
   SAFE_RESTORE_WINDOW_MS,
@@ -12,34 +11,14 @@ import { simulatePaste } from '@/main/automation/keyboard';
 import { switchToApp } from '@/main/shortcuts/app-context';
 import { getEditContext } from '@/main/storage/context';
 import {
-  addNotification,
   clearNotifications,
   listNotifications,
   markAllNotificationsRead,
   markNotificationRead,
 } from '@/main/storage/notifications';
-import { windowManager } from '@/main/windows/window-manager';
+import { showNotification } from '@/main/utils/notifications';
 import { getModelLabel } from '@/shared/config/ai-models';
-import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
-import type {
-  AppNotification,
-  AppNotificationPayload,
-} from '@/shared/types/notifications';
 import { applyFixSchema, notificationIdSchema } from './schemas';
-
-function sendInAppNotification(notification: AppNotification): void {
-  windowManager.broadcast(IPC_CHANNELS.NOTIFY, notification);
-}
-
-function showNotification(payload: AppNotificationPayload): void {
-  const stored = addNotification(payload);
-  const osNotification = new Notification({
-    title: stored.title,
-    body: stored.description,
-  });
-  osNotification.show();
-  sendInAppNotification(stored);
-}
 
 function formatDurationMs(durationMs: number): string {
   const clampedMs = Math.max(0, durationMs);

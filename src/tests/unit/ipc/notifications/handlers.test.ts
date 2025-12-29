@@ -5,12 +5,6 @@ import { createProcedureClient } from '@orpc/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppNotification } from '@/shared/types/notifications';
 
-vi.mock('electron', () => ({
-  Notification: class Notification {
-    show(): void {}
-  },
-}));
-
 const {
   mockAddNotification,
   mockListNotifications,

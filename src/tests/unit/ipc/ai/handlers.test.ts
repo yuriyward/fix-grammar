@@ -8,8 +8,20 @@ const { mockRewriteTextWithSettings } = vi.hoisted(() => ({
   mockRewriteTextWithSettings: vi.fn(),
 }));
 
+const { mockShowNotification } = vi.hoisted(() => ({
+  mockShowNotification: vi.fn(),
+}));
+
 vi.mock('@/main/ai/client', () => ({
   rewriteTextWithSettings: mockRewriteTextWithSettings,
+}));
+
+vi.mock('@/main/utils/notifications', () => ({
+  showNotification: mockShowNotification,
+}));
+
+vi.mock('@/main/ai/error-handler', () => ({
+  parseAIError: () => ({ title: 'Test Error', message: 'Test message' }),
 }));
 
 async function* textStream(
@@ -68,7 +80,7 @@ describe('AI IPC handlers', () => {
     );
   });
 
-  it('falls back to original text when stream fails before yielding any chunk', async () => {
+  it('shows notification and throws when stream fails before yielding any chunk', async () => {
     mockRewriteTextWithSettings.mockResolvedValue({
       textStream: textStream(['unused'], 0),
     });
@@ -78,12 +90,16 @@ describe('AI IPC handlers', () => {
 
     await expect(
       callRewrite({ text: 'Original', role: 'grammar' }),
-    ).resolves.toEqual({
-      content: 'Original',
+    ).rejects.toThrow('AI rewrite failed: Test message');
+
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      type: 'error',
+      title: 'Test Error',
+      description: 'Test message',
     });
   });
 
-  it('returns partial text when stream fails after some chunks', async () => {
+  it('shows notification and returns partial text when stream fails after some chunks', async () => {
     mockRewriteTextWithSettings.mockResolvedValue({
       textStream: textStream(['Partial', 'Ignored'], 1),
     });
@@ -95,6 +111,12 @@ describe('AI IPC handlers', () => {
       callRewrite({ text: 'Original', role: 'grammar' }),
     ).resolves.toEqual({
       content: 'Partial',
+    });
+
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      type: 'error',
+      title: 'Test Error',
+      description: 'Test message',
     });
   });
 

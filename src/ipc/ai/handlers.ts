@@ -1,8 +1,11 @@
 /**
  * AI IPC handlers
  */
+
 import { os } from '@orpc/server';
 import { rewriteTextWithSettings } from '@/main/ai/client';
+import { parseAIError } from '@/main/ai/error-handler';
+import { showNotification } from '@/main/utils/notifications';
 import { rewriteInputSchema } from './schemas';
 
 export const rewriteTextHandler = os
@@ -18,8 +21,16 @@ export const rewriteTextHandler = os
       }
     } catch (error) {
       console.error('AI rewrite stream failed:', error);
+
+      const errorDetails = parseAIError(error);
+      showNotification({
+        type: 'error',
+        title: errorDetails.title,
+        description: errorDetails.message,
+      });
+
       if (fullText.length === 0) {
-        return { content: input.text };
+        throw new Error(`AI rewrite failed: ${errorDetails.message}`);
       }
     }
 

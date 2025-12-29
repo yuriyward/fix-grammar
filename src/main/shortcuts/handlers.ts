@@ -16,13 +16,11 @@ import { saveEditContext } from '@/main/storage/context';
 import { addNotification } from '@/main/storage/notifications';
 import { store } from '@/main/storage/settings';
 import { trayManager } from '@/main/tray/tray-manager';
+import { showNotification } from '@/main/utils/notifications';
 import { windowManager } from '@/main/windows/window-manager';
 import { getModelLabel } from '@/shared/config/ai-models';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
-import type {
-  AppNotification,
-  AppNotificationPayload,
-} from '@/shared/types/notifications';
+import type { AppNotification } from '@/shared/types/notifications';
 import { type AppContext, getFrontmostApp, isSameApp } from './app-context';
 import { fixStateManager } from './fix-state';
 
@@ -30,16 +28,6 @@ const activeOsNotifications = new Set<Notification>();
 
 function sendInAppNotification(notification: AppNotification): void {
   windowManager.broadcast(IPC_CHANNELS.NOTIFY, notification);
-}
-
-function showNotification(payload: AppNotificationPayload): void {
-  const stored = addNotification(payload);
-  const osNotification = new Notification({
-    title: stored.title,
-    body: stored.description,
-  });
-  osNotification.show();
-  sendInAppNotification(stored);
 }
 
 function formatDurationMs(durationMs: number): string {

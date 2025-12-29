@@ -5,13 +5,8 @@ import { randomUUID } from 'node:crypto';
 import { Notification } from 'electron';
 import { rewriteText } from '@/main/ai/client';
 import { parseAIError } from '@/main/ai/error-handler';
-import {
-  backupClipboard,
-  readClipboard,
-  restoreClipboard,
-  writeClipboard,
-} from '@/main/automation/clipboard';
-import { simulateCopy, simulatePaste } from '@/main/automation/keyboard';
+import { readClipboard, writeClipboard } from '@/main/automation/clipboard';
+import { pressCopyShortcut, simulatePaste } from '@/main/automation/keyboard';
 import { getApiKey } from '@/main/storage/api-keys';
 import { saveEditContext } from '@/main/storage/context';
 import { addNotification } from '@/main/storage/notifications';
@@ -38,6 +33,49 @@ function showNotification(payload: AppNotificationPayload): void {
   });
   osNotification.show();
   sendInAppNotification(stored);
+}
+
+function getClipboardSyncDelayMs(): number {
+  const value = store.get('automation.clipboardSyncDelayMs');
+  if (typeof value !== 'number') return 0;
+  if (!Number.isFinite(value)) return 0;
+  if (value < 0) return 0;
+  return value;
+}
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForClipboardTextToNotEqual(
+  text: string,
+  timeoutMs: number,
+): Promise<void> {
+  if (timeoutMs <= 0) return;
+
+  const pollIntervalMs = 25;
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    if (readClipboard() !== text) return;
+    await sleep(Math.min(pollIntervalMs, Math.max(0, deadline - Date.now())));
+  }
+}
+
+async function captureSelectionText(): Promise<string | null> {
+  const clipboardBeforeCopy = readClipboard();
+  const sentinel = `__grammar_copilot_selection_${randomUUID()}__`;
+
+  try {
+    writeClipboard(sentinel);
+    await pressCopyShortcut();
+    await waitForClipboardTextToNotEqual(sentinel, getClipboardSyncDelayMs());
+
+    const copied = readClipboard();
+    return copied === sentinel ? null : copied;
+  } finally {
+    writeClipboard(clipboardBeforeCopy);
+  }
 }
 
 export function preserveTrailingNewlines(
@@ -158,14 +196,26 @@ async function processFixAsync(
     const currentApp = await getFrontmostApp();
 
     if (sourceApp && currentApp && isSameApp(sourceApp, currentApp)) {
-      // AUTO-PASTE: User is still in same app
-      await applyFixDirectly(rewrittenText, options);
+      const currentSelectionText = await captureSelectionText();
+      if (currentSelectionText === originalText) {
+        // AUTO-PASTE: User is still in same app and selection is unchanged
+        await applyFixDirectly(rewrittenText, options);
 
-      showNotification({
-        type: 'success',
-        title: 'Grammar Copilot',
-        description: 'Text rewritten and pasted',
-      });
+        showNotification({
+          type: 'success',
+          title: 'Grammar Copilot',
+          description: 'Text rewritten and pasted',
+        });
+      } else {
+        // SELECTION CHANGED: Avoid pasting into the wrong place
+        writeClipboard(rewrittenText);
+        showNotification({
+          type: 'info',
+          title: 'Grammar Copilot',
+          description:
+            'Selection changed. Result copied to clipboard for manual paste.',
+        });
+      }
     } else {
       // NOTIFICATION: User switched apps
       if (sourceApp) {
@@ -216,18 +266,10 @@ export async function handleFixSelection(): Promise<void> {
     // 1. Capture app context BEFORE copying
     const sourceApp = await getFrontmostApp();
 
-    // 2. Backup clipboard and capture selection
-    backupClipboard();
-    const originalText = await (async (): Promise<string> => {
-      try {
-        await simulateCopy();
-        return readClipboard();
-      } finally {
-        restoreClipboard();
-      }
-    })();
+    // 2. Capture selection (without disturbing user clipboard)
+    const originalText = await captureSelectionText();
 
-    if (!originalText.trim()) {
+    if (!originalText || !originalText.trim()) {
       showNotification({
         type: 'info',
         title: 'Grammar Copilot',

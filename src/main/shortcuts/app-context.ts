@@ -1,10 +1,62 @@
 /**
  * macOS app context utilities for tracking frontmost application
  */
-import { exec } from 'node:child_process';
-import { promisify } from 'node:util';
+import { execFile } from 'node:child_process';
 
-const execAsync = promisify(exec);
+const OSASCRIPT_PATH = '/usr/bin/osascript';
+
+const GET_FRONTMOST_APP_SCRIPT = `
+tell application "System Events"
+  set frontApp to first application process whose frontmost is true
+  set appName to name of frontApp
+  set appBundleId to bundle identifier of frontApp
+  return appName & "|" & appBundleId
+end tell
+`;
+
+const ACTIVATE_APP_BY_ID_SCRIPT = `
+on run argv
+  set identifier to item 1 of argv
+  tell application id identifier
+    activate
+  end tell
+end run
+`;
+
+const ACTIVATE_APP_BY_NAME_SCRIPT = `
+on run argv
+  set appName to item 1 of argv
+  tell application appName
+    activate
+  end tell
+end run
+`;
+
+function runAppleScript(
+  script: string,
+  args: readonly string[] = [],
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const osascriptArgs = [
+      '-e',
+      script,
+      ...(args.length > 0 ? ['--', ...args] : []),
+    ];
+
+    execFile(
+      OSASCRIPT_PATH,
+      osascriptArgs,
+      { encoding: 'utf8' },
+      (error, stdout) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        resolve(stdout);
+      },
+    );
+  });
+}
 
 export interface AppContext {
   name: string;
@@ -13,35 +65,12 @@ export interface AppContext {
 }
 
 /**
- * Escape a string for safe use in AppleScript
- * Handles single quotes, backslashes, and newlines to prevent injection
- */
-function escapeAppleScript(str: string): string {
-  return str
-    .replace(/\\/g, '\\\\') // Escape backslashes first
-    .replace(/'/g, "\\'") // Escape single quotes
-    .replace(/\n/g, '\\n') // Escape newlines
-    .replace(/\r/g, '\\r'); // Escape carriage returns
-}
-
-/**
  * Get the currently frontmost (focused) application on macOS
  * Uses AppleScript to query System Events for the frontmost process
  */
 export async function getFrontmostApp(): Promise<AppContext | null> {
   try {
-    // Hardcoded script - no user input, no escaping needed
-    const script = `
-      tell application "System Events"
-        set frontApp to first application process whose frontmost is true
-        set appName to name of frontApp
-        set appBundleId to bundle identifier of frontApp
-        return appName & "|" & appBundleId
-      end tell
-    `;
-
-    const { stdout } = await execAsync(`osascript -e '${script}'`);
-    const output = stdout.trim();
+    const output = (await runAppleScript(GET_FRONTMOST_APP_SCRIPT)).trim();
 
     if (!output) return null;
 
@@ -86,27 +115,14 @@ export function isSameApp(a: AppContext | null, b: AppContext | null): boolean {
 export async function switchToApp(context: AppContext): Promise<void> {
   try {
     // Prefer bundle ID for activation (more reliable)
-    // Escape user-controlled identifier to prevent injection
     const identifier = context.bundleId || context.name;
 
-    const script = `
-      tell application id "${escapeAppleScript(identifier)}"
-        activate
-      end tell
-    `;
-
-    await execAsync(`osascript -e '${script}'`);
+    await runAppleScript(ACTIVATE_APP_BY_ID_SCRIPT, [identifier]);
   } catch (error) {
     // If bundle ID fails, try app name as fallback
     if (context.bundleId && context.name) {
       try {
-        // Escape user-controlled app name to prevent injection
-        const fallbackScript = `
-          tell application "${escapeAppleScript(context.name)}"
-            activate
-          end tell
-        `;
-        await execAsync(`osascript -e '${fallbackScript}'`);
+        await runAppleScript(ACTIVATE_APP_BY_NAME_SCRIPT, [context.name]);
         return;
       } catch (fallbackError) {
         console.error('[app-context] Failed to switch to app:', fallbackError);

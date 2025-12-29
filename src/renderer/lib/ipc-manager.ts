@@ -3,11 +3,7 @@
  */
 import { type ClientContext, createORPCClient } from '@orpc/client';
 import { RPCLink } from '@orpc/client/message-port';
-import type { RouterClient } from '@orpc/server';
-import type { router } from '@/ipc/router';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
-
-type RPCClient = RouterClient<typeof router>;
 
 class IPCManager {
   private readonly clientPort: MessagePort;
@@ -15,7 +11,7 @@ class IPCManager {
 
   private readonly rpcLink: RPCLink<ClientContext>;
 
-  public readonly client: RPCClient;
+  public readonly client: ReturnType<typeof createORPCClient>;
 
   private initialized: boolean = false;
 

@@ -15,6 +15,10 @@ export interface ProviderConfig {
   defaultModel: string;
 }
 
+// Model ID formats: @ai-sdk/google accepts both 'model-name' and 'models/model-name'.
+// The SDK normalizes these internally to the Google API's expected 'models/' format.
+// While the prefix is technically optional in @ai-sdk/google, both formats work correctly.
+// See: https://sdk.vercel.ai/providers/ai-sdk-providers/google-generative-ai
 export const AI_PROVIDERS = {
   google: {
     name: 'Google Gemini',
@@ -25,22 +29,17 @@ export const AI_PROVIDERS = {
         provider: 'google' as const,
       },
       {
-        id: 'gemini-2.5-flash',
-        name: 'Gemini 2.5 Flash',
-        provider: 'google' as const,
-      },
-      {
-        id: 'models/gemini-2.5-pro',
+        id: 'gemini-2.5-pro',
         name: 'Gemini 2.5 Pro',
         provider: 'google' as const,
       },
       {
-        id: 'models/gemini-flash-latest',
+        id: 'gemini-flash-latest',
         name: 'Gemini Flash (Latest)',
         provider: 'google' as const,
       },
       {
-        id: 'models/gemini-flash-lite-latest',
+        id: 'gemini-flash-lite-latest',
         name: 'Gemini Flash Lite (Latest)',
         provider: 'google' as const,
       },
@@ -103,32 +102,42 @@ export const AI_PROVIDERS = {
     name: 'LM Studio',
     models: [
       {
-        id: 'llama-3.2-3b',
-        name: 'Llama 3.2 3B',
+        id: 'google/gemma-3n-e4b',
+        name: 'Google Gemma 3n E4B',
         provider: 'lmstudio' as const,
       },
       {
-        id: 'llama-3.2-1b',
-        name: 'Llama 3.2 1B',
+        id: 'openai/gpt-oss-20b',
+        name: 'OpenAI GPT OSS 20B',
         provider: 'lmstudio' as const,
       },
       {
-        id: 'mistral-7b-instruct-v0.3',
-        name: 'Mistral 7B Instruct',
+        id: 'gemma-3-12b-instruct',
+        name: 'Gemma 3 12B Instruct',
         provider: 'lmstudio' as const,
       },
       {
-        id: 'phi-3-mini-4k-instruct',
-        name: 'Phi-3 Mini 4K',
+        id: 'qwen3-30b-instruct',
+        name: 'Qwen 3 30B Instruct',
         provider: 'lmstudio' as const,
       },
       {
-        id: 'gemma-2-2b-instruct',
-        name: 'Gemma 2 2B Instruct',
+        id: 'ministral-3-8b',
+        name: 'Ministral 3 8B',
+        provider: 'lmstudio' as const,
+      },
+      {
+        id: 'gemma-3-4b-instruct',
+        name: 'Gemma 3 4B Instruct',
+        provider: 'lmstudio' as const,
+      },
+      {
+        id: 'qwen3-8b-instruct',
+        name: 'Qwen 3 8B Instruct',
         provider: 'lmstudio' as const,
       },
     ],
-    defaultModel: 'llama-3.2-3b',
+    defaultModel: 'google/gemma-3n-e4b',
   },
 } as const satisfies Record<string, ProviderConfig>;
 

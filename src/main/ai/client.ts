@@ -8,6 +8,7 @@ import { createXai } from '@ai-sdk/xai';
 import { type LanguageModel, streamText } from 'ai';
 import { getApiKey } from '@/main/storage/api-keys';
 import { store } from '@/main/storage/settings';
+import { AI_STREAM_TIMEOUT_MS } from '@/shared/config/ai';
 import type { AIProvider } from '@/shared/config/ai-models';
 import type { RewriteRole } from '@/shared/types/ai';
 import type { ReasoningEffort, TextVerbosity } from '@/shared/types/settings';
@@ -38,28 +39,28 @@ export async function rewriteText(
 ) {
   const prompt = buildPrompt(text, role);
 
-  // Create the appropriate provider instance based on the selected provider
-  let modelInstance: LanguageModel;
-  if (provider === 'openai') {
-    const openaiProvider = createOpenAI({ apiKey });
+  // Provider factory map following Open/Closed Principle
+  const providerFactories: Record<
+    AIProvider,
+    (apiKey: string, model: string, baseURL?: string) => LanguageModel
+  > = {
+    google: (apiKey, model) => createGoogleGenerativeAI({ apiKey })(model),
+    xai: (apiKey, model) => createXai({ apiKey })(model),
     // openai() defaults to Responses API in AI SDK 5+
-    modelInstance = openaiProvider(model);
-  } else if (provider === 'xai') {
-    const xaiProvider = createXai({ apiKey });
-    modelInstance = xaiProvider(model);
-  } else if (provider === 'lmstudio') {
-    const lmstudioProvider = createOpenAICompatible({
-      name: 'lmstudio',
-      baseURL: lmstudioBaseURL || 'http://localhost:1234/v1',
-      apiKey: apiKey || 'not-needed',
-    });
-    modelInstance = lmstudioProvider(model);
-  } else {
-    const googleProvider = createGoogleGenerativeAI({ apiKey });
-    modelInstance = googleProvider(model);
-  }
+    openai: (apiKey, model) => createOpenAI({ apiKey })(model),
+    lmstudio: (apiKey, model, baseURL) =>
+      createOpenAICompatible({
+        name: 'lmstudio',
+        baseURL: baseURL || 'http://localhost:1234/v1',
+        apiKey: apiKey || 'not-needed',
+      })(model),
+  };
 
-  const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+  const modelInstance = providerFactories[provider](
+    apiKey,
+    model,
+    lmstudioBaseURL,
+  );
 
   // Build provider-specific options for OpenAI
   const openaiOptions = {
@@ -71,7 +72,7 @@ export async function rewriteText(
     model: modelInstance,
     prompt,
     maxRetries: 2,
-    abortSignal: AbortSignal.timeout(TIMEOUT_MS),
+    abortSignal: AbortSignal.timeout(AI_STREAM_TIMEOUT_MS),
     providerOptions:
       provider === 'openai' && Object.keys(openaiOptions).length > 0
         ? { openai: openaiOptions }

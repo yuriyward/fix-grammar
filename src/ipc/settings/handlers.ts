@@ -19,6 +19,12 @@ import {
   testLMStudioConnectionInputSchema,
 } from './schemas';
 
+const LM_STUDIO_CONNECTION_TIMEOUT_MS = 5000;
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Unknown error';
+}
+
 export const getSettings = os.handler(() => {
   return store.store;
 });
@@ -72,7 +78,7 @@ export const testLMStudioConnection = os
       const response = await fetch(`${input.baseURL}/models`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(5000),
+        signal: AbortSignal.timeout(LM_STUDIO_CONNECTION_TIMEOUT_MS),
       });
 
       if (!response.ok) {
@@ -95,7 +101,7 @@ export const testLMStudioConnection = os
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Connection failed',
+        error: getErrorMessage(error),
       };
     }
   });

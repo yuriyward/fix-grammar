@@ -4,6 +4,14 @@
 import type { ZodError } from 'zod';
 
 /**
+ * Data-slot selector constants for form field queries
+ */
+const SLOT_SELECTORS = {
+  fieldError: '[data-slot="field-error"]',
+  field: '[data-slot="field"]',
+} as const;
+
+/**
  * Extract field-level errors from a Zod validation error
  * Returns a flat object mapping field paths to error messages (first error only per field)
  */
@@ -22,16 +30,19 @@ export function extractFieldErrors(zodError: ZodError): Record<string, string> {
  * Focus the first invalid field in the form
  * Uses requestAnimationFrame to ensure React has rendered the error state
  */
-export function focusFirstInvalidField(errors: Record<string, string>): void {
+export function focusFirstInvalidField(
+  errors: Record<string, string>,
+  formId = 'settings-form',
+): void {
   if (Object.keys(errors).length === 0) return;
 
   // Run after React renders the errors
   requestAnimationFrame(() => {
-    const form = document.getElementById('settings-form');
+    const form = document.getElementById(formId);
     if (!(form instanceof HTMLElement)) return;
 
-    const firstFieldError = form.querySelector('[data-slot="field-error"]');
-    const field = firstFieldError?.closest('[data-slot="field"]');
+    const firstFieldError = form.querySelector(SLOT_SELECTORS.fieldError);
+    const field = firstFieldError?.closest(SLOT_SELECTORS.field);
 
     const focusTarget =
       field?.querySelector<HTMLElement>('[aria-invalid="true"]') ??

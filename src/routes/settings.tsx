@@ -30,7 +30,12 @@ function SettingsPage() {
             Permissions
           </Button>
         </div>
-        <h1 className="text-2xl font-bold">Settings</h1>
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="text-2xl font-bold">Settings</h1>
+          <Button form="settings-form" type="submit">
+            Save Settings
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-4">

@@ -10,89 +10,14 @@ import {
   saveApiKey,
 } from '@/main/storage/api-keys';
 import { store } from '@/main/storage/settings';
-import type { HotkeysSettings } from '@/shared/types/settings';
+import { appSettingsSchema } from '@/shared/schemas/settings';
 import {
-  appSettingsSchema,
   deleteApiKeyInputSchema,
   hasApiKeyInputSchema,
   isEncryptionAvailableInputSchema,
-  isValidHotkeyAccelerator,
   saveApiKeyInputSchema,
   testLMStudioConnectionInputSchema,
 } from './schemas';
-
-const hotkeyLabels = {
-  fixSelection: 'Fix Selection',
-  togglePopup: 'Toggle Popup',
-} as const satisfies Record<keyof HotkeysSettings, string>;
-
-function normalizeHotkeyAcceleratorForUniqueness(accelerator: string): string {
-  const modifierAliases: Record<string, string> = {
-    commandorcontrol: 'commandorcontrol',
-    cmdorctrl: 'commandorcontrol',
-    command: 'cmd',
-    cmd: 'cmd',
-    control: 'ctrl',
-    ctrl: 'ctrl',
-    alt: 'alt',
-    option: 'alt',
-    altgr: 'altgr',
-    shift: 'shift',
-    super: 'meta',
-    meta: 'meta',
-  };
-
-  const trimmed = accelerator.trim();
-  const parts = trimmed.split('+');
-  const key = parts.at(-1) ?? '';
-  const modifiers = parts
-    .slice(0, -1)
-    .map(
-      (modifier) =>
-        modifierAliases[modifier.toLowerCase()] ?? modifier.toLowerCase(),
-    )
-    .sort();
-
-  const normalizedKey = (() => {
-    const lower = key.toLowerCase();
-    if (lower === 'escape') return 'esc';
-    if (lower === 'return') return 'enter';
-    return key.length === 1 ? lower : lower;
-  })();
-
-  return [...modifiers, normalizedKey].join('+');
-}
-
-function validateHotkeys(hotkeys: HotkeysSettings): void {
-  for (const [id, accelerator] of Object.entries(hotkeys) as Array<
-    [keyof HotkeysSettings, string]
-  >) {
-    if (isValidHotkeyAccelerator(accelerator)) continue;
-    throw new Error(
-      `Invalid hotkey for "${hotkeyLabels[id]}": "${accelerator}"`,
-    );
-  }
-
-  const seen = new Map<
-    string,
-    { id: keyof HotkeysSettings; accelerator: string }
-  >();
-
-  for (const [id, accelerator] of Object.entries(hotkeys) as Array<
-    [keyof HotkeysSettings, string]
-  >) {
-    const normalized = normalizeHotkeyAcceleratorForUniqueness(accelerator);
-    const existing = seen.get(normalized);
-    if (!existing) {
-      seen.set(normalized, { id, accelerator });
-      continue;
-    }
-
-    throw new Error(
-      `Hotkeys must be unique: "${hotkeyLabels[existing.id]}" and "${hotkeyLabels[id]}" both use "${existing.accelerator}"`,
-    );
-  }
-}
 
 export const getSettings = os.handler(() => {
   return store.store;
@@ -101,12 +26,10 @@ export const getSettings = os.handler(() => {
 export const updateSettings = os
   .input(appSettingsSchema)
   .handler(({ input }) => {
-    const hotkeys: HotkeysSettings = {
+    const hotkeys = {
       fixSelection: input.hotkeys.fixSelection.trim(),
       togglePopup: input.hotkeys.togglePopup.trim(),
     };
-
-    validateHotkeys(hotkeys);
 
     store.set({ ...input, hotkeys });
     return store.store;

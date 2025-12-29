@@ -38,6 +38,13 @@ import {
   CardPanel,
   CardTitle,
 } from '@/renderer/components/ui/card';
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from '@/renderer/components/ui/field';
+import { Form } from '@/renderer/components/ui/form';
 import { Input } from '@/renderer/components/ui/input';
 import { Label } from '@/renderer/components/ui/label';
 import {
@@ -51,6 +58,10 @@ import { Spinner } from '@/renderer/components/ui/spinner';
 import { Textarea } from '@/renderer/components/ui/textarea';
 import { toastManager } from '@/renderer/components/ui/toast';
 import {
+  extractFieldErrors,
+  focusFirstInvalidField,
+} from '@/renderer/lib/validation';
+import {
   AI_PROVIDERS,
   type AIModel,
   type AIProvider,
@@ -59,6 +70,7 @@ import {
   getProviderName,
 } from '@/shared/config/ai-models';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
+import { appSettingsSchema } from '@/shared/schemas/settings';
 import type { RewriteRole } from '@/shared/types/ai';
 import type {
   AutomationCalibrationFocusRequest,
@@ -85,6 +97,7 @@ export default function SettingsForm() {
     'http://localhost:1234/v1',
   );
   const [isTestingConnection, setIsTestingConnection] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [fixSelection, setFixSelection] = useState('CommandOrControl+Shift+F');
   const [togglePopup, setTogglePopup] = useState('CommandOrControl+Shift+P');
@@ -289,22 +302,39 @@ export default function SettingsForm() {
     }
   };
 
-  const handleSaveSettings = async () => {
+  const handleSaveSettings = async (event: React.FormEvent) => {
+    event.preventDefault(); // Prevent default form submit
+    if (isSaving) return;
     setIsSaving(true);
+    setFieldErrors({}); // Clear previous errors
+
+    // Build settings object from React state (controlled components)
+    const candidateSettings = {
+      ai: {
+        provider,
+        model,
+        role,
+        reasoningEffort,
+        textVerbosity,
+        lmstudioBaseURL: provider === 'lmstudio' ? lmstudioBaseURL : undefined,
+      },
+      hotkeys: { fixSelection, togglePopup },
+      automation: { clipboardSyncDelayMs, selectionDelayMs },
+    };
+
+    // Client-side validation
+    const result = appSettingsSchema.safeParse(candidateSettings);
+    if (!result.success) {
+      const errors = extractFieldErrors(result.error);
+      setFieldErrors(errors);
+      focusFirstInvalidField(errors); // Auto-focus first invalid field
+      setIsSaving(false);
+      return;
+    }
+
+    // Save to IPC
     try {
-      await updateSettings({
-        ai: {
-          provider,
-          model,
-          role,
-          reasoningEffort,
-          textVerbosity,
-          lmstudioBaseURL:
-            provider === 'lmstudio' ? lmstudioBaseURL : undefined,
-        },
-        hotkeys: { fixSelection, togglePopup },
-        automation: { clipboardSyncDelayMs, selectionDelayMs },
-      });
+      await updateSettings(result.data);
       await reregisterShortcuts();
       addSuccessToast('Settings saved');
     } catch (error) {
@@ -374,348 +404,363 @@ export default function SettingsForm() {
   ] as const;
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Appearance</h2>
-        <div className="space-y-2">
-          <Label>Theme</Label>
-          <div className="flex items-center gap-2">
-            <ToggleTheme />
+    <Form
+      id="settings-form"
+      validationMode="onSubmit"
+      errors={fieldErrors}
+      onSubmit={handleSaveSettings}
+    >
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Appearance</h2>
+          <div className="space-y-2">
+            <Label>Theme</Label>
+            <div className="flex items-center gap-2">
+              <ToggleTheme />
+            </div>
           </div>
-        </div>
-        <div className="space-y-2">
-          <Label>Language</Label>
-          <div className="flex items-center gap-2">
-            <LangToggle />
+          <div className="space-y-2">
+            <Label>Language</Label>
+            <div className="flex items-center gap-2">
+              <LangToggle />
+            </div>
           </div>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">AI Provider</h2>
-        <div className="space-y-2">
-          <Label htmlFor="provider">Provider</Label>
-          <Select value={provider} onValueChange={handleProviderChange}>
-            <SelectTrigger id="provider">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {(Object.keys(AI_PROVIDERS) as AIProvider[]).map((p) => (
-                <SelectItem key={p} value={p}>
-                  {getProviderName(p)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
 
-        {provider === 'lmstudio' ? (
-          <div className="space-y-2">
-            <Label htmlFor="model">Model</Label>
-            <Autocomplete
-              value={model}
-              onValueChange={(value) => setModel(value || '')}
-            >
-              <AutocompleteInput
-                id="model"
-                placeholder="Type model name or select from list"
-                showTrigger
-              />
-              <AutocompletePopup>
-                <AutocompleteList>
-                  <AutocompleteGroup>
-                    <AutocompleteGroupLabel>
-                      Popular Models
-                    </AutocompleteGroupLabel>
-                    {getModelsForProvider(provider).map((m) => (
-                      <AutocompleteItem key={m.id} value={m.id}>
-                        {m.name}
-                      </AutocompleteItem>
-                    ))}
-                  </AutocompleteGroup>
-                </AutocompleteList>
-              </AutocompletePopup>
-            </Autocomplete>
-            <p className="text-sm text-muted-foreground">
-              Select a model or type a custom model name (e.g., your downloaded
-              model name)
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <Label htmlFor="model">Model</Label>
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">AI Provider</h2>
+          <Field name="ai.provider">
+            <FieldLabel>Provider</FieldLabel>
             <Select
-              value={model}
-              onValueChange={(value) => setModel(value as AIModel)}
+              name="ai.provider"
+              value={provider}
+              onValueChange={handleProviderChange}
             >
-              <SelectTrigger id="model">
+              <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {getModelsForProvider(provider).map((m) => (
-                  <SelectItem key={m.id} value={m.id}>
-                    {m.name}
+                {(Object.keys(AI_PROVIDERS) as AIProvider[]).map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {getProviderName(p)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        )}
+            <FieldError />
+          </Field>
 
-        <div className="space-y-2">
-          <Label htmlFor="role">Rewrite Mode</Label>
-          <Select
-            value={role}
-            onValueChange={(value) => setRole(value as RewriteRole)}
-          >
-            <SelectTrigger id="role">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="grammar">Grammar Only</SelectItem>
-              <SelectItem value="grammar-tone">Grammar + Tone</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {provider === 'openai' && (
-          <>
-            <div className="space-y-2">
-              <Label htmlFor="reasoningEffort">Reasoning Effort</Label>
-              <Select
-                value={reasoningEffort}
-                onValueChange={(value) =>
-                  setReasoningEffort(value as ReasoningEffort)
-                }
+          {provider === 'lmstudio' ? (
+            <Field name="ai.model">
+              <FieldLabel>Model</FieldLabel>
+              <Autocomplete
+                name="ai.model"
+                value={model}
+                onValueChange={(value) => setModel(value || '')}
               >
-                <SelectTrigger id="reasoningEffort">
+                <AutocompleteInput
+                  placeholder="Type model name or select from list"
+                  showTrigger
+                />
+                <AutocompletePopup>
+                  <AutocompleteList>
+                    <AutocompleteGroup>
+                      <AutocompleteGroupLabel>
+                        Popular Models
+                      </AutocompleteGroupLabel>
+                      {getModelsForProvider(provider).map((m) => (
+                        <AutocompleteItem key={m.id} value={m.id}>
+                          {m.name}
+                        </AutocompleteItem>
+                      ))}
+                    </AutocompleteGroup>
+                  </AutocompleteList>
+                </AutocompletePopup>
+              </Autocomplete>
+              <FieldError />
+              <FieldDescription>
+                Select a model or type a custom model name (e.g., your
+                downloaded model name)
+              </FieldDescription>
+            </Field>
+          ) : (
+            <Field name="ai.model">
+              <FieldLabel>Model</FieldLabel>
+              <Select
+                name="ai.model"
+                value={model}
+                onValueChange={(value) => setModel(value as AIModel)}
+              >
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  <SelectItem value="minimal">Minimal</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium (Default)</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="xhigh">Extra High</SelectItem>
+                  {getModelsForProvider(provider).map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-            </div>
+              <FieldError />
+            </Field>
+          )}
 
-            <div className="space-y-2">
-              <Label htmlFor="textVerbosity">Text Verbosity</Label>
-              <Select
-                value={textVerbosity}
-                onValueChange={(value) =>
-                  setTextVerbosity(value as TextVerbosity)
-                }
-              >
-                <SelectTrigger id="textVerbosity">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low (Concise)</SelectItem>
-                  <SelectItem value="medium">Medium (Balanced)</SelectItem>
-                  <SelectItem value="high">High (Verbose)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </>
-        )}
+          <Field name="ai.role">
+            <FieldLabel>Rewrite Mode</FieldLabel>
+            <Select
+              name="ai.role"
+              value={role}
+              onValueChange={(value) => setRole(value as RewriteRole)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="grammar">Grammar Only</SelectItem>
+                <SelectItem value="grammar-tone">Grammar + Tone</SelectItem>
+              </SelectContent>
+            </Select>
+            <FieldError />
+          </Field>
 
-        {provider === 'lmstudio' && (
-          <div className="space-y-2">
-            <Label htmlFor="lmstudioBaseURL">Base URL</Label>
+          {provider === 'openai' && (
+            <>
+              <Field name="ai.reasoningEffort">
+                <FieldLabel>Reasoning Effort</FieldLabel>
+                <Select
+                  name="ai.reasoningEffort"
+                  value={reasoningEffort}
+                  onValueChange={(value) =>
+                    setReasoningEffort(value as ReasoningEffort)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="minimal">Minimal</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium (Default)</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="xhigh">Extra High</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FieldError />
+              </Field>
+
+              <Field name="ai.textVerbosity">
+                <FieldLabel>Text Verbosity</FieldLabel>
+                <Select
+                  name="ai.textVerbosity"
+                  value={textVerbosity}
+                  onValueChange={(value) =>
+                    setTextVerbosity(value as TextVerbosity)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low (Concise)</SelectItem>
+                    <SelectItem value="medium">Medium (Balanced)</SelectItem>
+                    <SelectItem value="high">High (Verbose)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FieldError />
+              </Field>
+            </>
+          )}
+
+          {provider === 'lmstudio' && (
+            <Field name="ai.lmstudioBaseURL">
+              <FieldLabel>Base URL</FieldLabel>
+              <div className="flex gap-2">
+                <Input
+                  type="url"
+                  value={lmstudioBaseURL}
+                  onChange={(e) => setLmstudioBaseURL(e.target.value)}
+                  placeholder="http://localhost:1234/v1"
+                  disabled={isSaving || isTestingConnection}
+                />
+                <Button
+                  type="button"
+                  onClick={handleTestLMStudioConnection}
+                  disabled={
+                    isSaving || isTestingConnection || !lmstudioBaseURL.trim()
+                  }
+                  variant="outline"
+                >
+                  {isTestingConnection ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Spinner className="size-4" />
+                      Testing...
+                    </span>
+                  ) : (
+                    'Test Connection'
+                  )}
+                </Button>
+              </div>
+              <FieldError />
+              <FieldDescription>
+                URL of your LM Studio local server (default:
+                http://localhost:1234/v1)
+              </FieldDescription>
+            </Field>
+          )}
+
+          <Field>
+            <FieldLabel>
+              API Key{' '}
+              {hasKey && <span className="text-muted-foreground">(saved)</span>}
+            </FieldLabel>
             <div className="flex gap-2">
               <Input
-                id="lmstudioBaseURL"
-                type="url"
-                value={lmstudioBaseURL}
-                onChange={(e) => setLmstudioBaseURL(e.target.value)}
-                placeholder="http://localhost:1234/v1"
-                disabled={isSaving || isTestingConnection}
-              />
-              <Button
-                onClick={handleTestLMStudioConnection}
-                disabled={
-                  isSaving || isTestingConnection || !lmstudioBaseURL.trim()
+                id="apiKey"
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder={
+                  isEncryptionAvailable === false
+                    ? 'Encryption unavailable'
+                    : apiKeyPlaceholder
                 }
-                variant="outline"
-              >
-                {isTestingConnection ? (
-                  <span className="inline-flex items-center gap-2">
-                    <Spinner className="size-4" />
-                    Testing...
-                  </span>
-                ) : (
-                  'Test Connection'
-                )}
-              </Button>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              URL of your LM Studio local server (default:
-              http://localhost:1234/v1)
-            </p>
-          </div>
-        )}
-
-        <div className="space-y-2">
-          <Label htmlFor="apiKey">
-            API Key{' '}
-            {hasKey && <span className="text-muted-foreground">(saved)</span>}
-          </Label>
-          <div className="flex gap-2">
-            <Input
-              id="apiKey"
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder={
-                isEncryptionAvailable === false
-                  ? 'Encryption unavailable'
-                  : apiKeyPlaceholder
-              }
-              disabled={isSaving || isEncryptionAvailable === false}
-            />
-            <Button
-              onClick={handleSaveApiKey}
-              disabled={
-                isSaving || !apiKey.trim() || isEncryptionAvailable === false
-              }
-            >
-              Save Key
-            </Button>
-            {hasKey && (
-              <Button
-                onClick={handleDeleteApiKey}
-                variant="destructive"
-                disabled={isSaving}
-              >
-                Delete
-              </Button>
-            )}
-          </div>
-          {isEncryptionAvailable === false && (
-            <Alert variant="warning">
-              <AlertTitle>Encryption Unavailable</AlertTitle>
-              <AlertDescription>
-                System keychain integration is not available. API keys cannot be
-                securely saved.
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Global Shortcuts</h2>
-        {hotkeyFields.map((field) => (
-          <div key={field.id} className="space-y-2">
-            <Label htmlFor={field.id}>{field.label}</Label>
-            <Input
-              id={field.id}
-              value={field.value}
-              onChange={(e) => field.setValue(e.target.value)}
-              placeholder={field.placeholder}
-            />
-          </div>
-        ))}
-      </div>
-
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Automation</h2>
-        <Card>
-          <CardHeader>
-            <CardTitle>Calibration</CardTitle>
-            <CardDescription>
-              Recommended: click Calibrate to measure timing on your machine and
-              auto-save safe values.
-            </CardDescription>
-            <CardAction>
-              <Button
-                onClick={handleCalibrateAutomation}
-                disabled={isSaving || isCalibrating}
-              >
-                {isCalibrating ? (
-                  <span className="inline-flex items-center gap-2">
-                    <Spinner className="size-4" />
-                    Calibrating…
-                  </span>
-                ) : (
-                  'Calibrate'
-                )}
-              </Button>
-            </CardAction>
-          </CardHeader>
-          <CardPanel className="space-y-3">
-            <div className="space-y-2">
-              <Label htmlFor="calibrationText">Calibration Text</Label>
-              <Textarea
-                id="calibrationText"
-                ref={calibrationFieldRef}
-                value={calibrationText}
-                onChange={(e) => setCalibrationText(e.target.value)}
+                disabled={isSaving || isEncryptionAvailable === false}
               />
+              <Button
+                type="button"
+                onClick={handleSaveApiKey}
+                disabled={
+                  isSaving || !apiKey.trim() || isEncryptionAvailable === false
+                }
+              >
+                Save Key
+              </Button>
+              {hasKey && (
+                <Button
+                  type="button"
+                  onClick={handleDeleteApiKey}
+                  variant="destructive"
+                  disabled={isSaving}
+                >
+                  Delete
+                </Button>
+              )}
             </div>
-            {calibration?.success && (
-              <p className="text-sm text-muted-foreground">
-                Measured clipboard update: p95{' '}
-                {calibration.measuredClipboardMs.p95Ms}ms (max{' '}
-                {calibration.measuredClipboardMs.maxMs}ms,{' '}
-                {calibration.measuredClipboardMs.samplesMs.length} runs)
-              </p>
+            {isEncryptionAvailable === false && (
+              <Alert variant="warning">
+                <AlertTitle>Encryption Unavailable</AlertTitle>
+                <AlertDescription>
+                  System keychain integration is not available. API keys cannot
+                  be securely saved.
+                </AlertDescription>
+              </Alert>
             )}
-          </CardPanel>
-        </Card>
-
-        <div className="space-y-2">
-          <Label htmlFor="clipboardSyncDelayMs">
-            Clipboard Sync Delay (ms)
-          </Label>
-          <p className="text-sm text-muted-foreground">
-            Maximum time to wait after copy; usually returns sooner once the
-            clipboard updates.
-          </p>
-          <Input
-            id="clipboardSyncDelayMs"
-            type="number"
-            min={0}
-            max={5000}
-            step={25}
-            value={clipboardSyncDelayMs}
-            onChange={(e) => {
-              const next = e.target.valueAsNumber;
-              setClipboardSyncDelayMs(Number.isFinite(next) ? next : 0);
-            }}
-          />
+          </Field>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="selectionDelayMs">Selection Delay (ms)</Label>
-          <p className="text-sm text-muted-foreground">
-            Fixed delay after keyboard simulation.
-          </p>
-          <Input
-            id="selectionDelayMs"
-            type="number"
-            min={0}
-            max={5000}
-            step={25}
-            value={selectionDelayMs}
-            onChange={(e) => {
-              const next = e.target.valueAsNumber;
-              setSelectionDelayMs(Number.isFinite(next) ? next : 0);
-            }}
-          />
+
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Global Shortcuts</h2>
+          {hotkeyFields.map((field) => (
+            <Field key={field.id} name={`hotkeys.${field.id}`}>
+              <FieldLabel>{field.label}</FieldLabel>
+              <Input
+                value={field.value}
+                onChange={(e) => field.setValue(e.target.value)}
+                placeholder={field.placeholder}
+              />
+              <FieldError />
+            </Field>
+          ))}
+        </div>
+
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Automation</h2>
+          <Card>
+            <CardHeader>
+              <CardTitle>Calibration</CardTitle>
+              <CardDescription>
+                Recommended: click Calibrate to measure timing on your machine
+                and auto-save safe values.
+              </CardDescription>
+              <CardAction>
+                <Button
+                  type="button"
+                  onClick={handleCalibrateAutomation}
+                  disabled={isSaving || isCalibrating}
+                >
+                  {isCalibrating ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Spinner className="size-4" />
+                      Calibrating…
+                    </span>
+                  ) : (
+                    'Calibrate'
+                  )}
+                </Button>
+              </CardAction>
+            </CardHeader>
+            <CardPanel className="space-y-3">
+              <Field>
+                <FieldLabel>Calibration Text</FieldLabel>
+                <Textarea
+                  id="calibrationText"
+                  ref={calibrationFieldRef}
+                  value={calibrationText}
+                  onChange={(e) => setCalibrationText(e.target.value)}
+                />
+              </Field>
+              {calibration?.success && (
+                <p className="text-sm text-muted-foreground">
+                  Measured clipboard update: p95{' '}
+                  {calibration.measuredClipboardMs.p95Ms}ms (max{' '}
+                  {calibration.measuredClipboardMs.maxMs}ms,{' '}
+                  {calibration.measuredClipboardMs.samplesMs.length} runs)
+                </p>
+              )}
+            </CardPanel>
+          </Card>
+
+          <Field name="automation.clipboardSyncDelayMs">
+            <FieldLabel>Clipboard Sync Delay (ms)</FieldLabel>
+            <FieldDescription>
+              Maximum time to wait after copy; usually returns sooner once the
+              clipboard updates.
+            </FieldDescription>
+            <Input
+              type="number"
+              min={0}
+              max={5000}
+              step={25}
+              value={clipboardSyncDelayMs}
+              onChange={(e) => {
+                const next = e.target.valueAsNumber;
+                setClipboardSyncDelayMs(Number.isFinite(next) ? next : 0);
+              }}
+            />
+            <FieldError />
+          </Field>
+          <Field name="automation.selectionDelayMs">
+            <FieldLabel>Selection Delay (ms)</FieldLabel>
+            <FieldDescription>
+              Fixed delay after keyboard simulation.
+            </FieldDescription>
+            <Input
+              type="number"
+              min={0}
+              max={5000}
+              step={25}
+              value={selectionDelayMs}
+              onChange={(e) => {
+                const next = e.target.valueAsNumber;
+                setSelectionDelayMs(Number.isFinite(next) ? next : 0);
+              }}
+            />
+            <FieldError />
+          </Field>
         </div>
       </div>
-
-      <Button
-        onClick={handleSaveSettings}
-        disabled={isSaving}
-        className="w-full"
-      >
-        {isSaving ? 'Saving...' : 'Save Settings'}
-      </Button>
-    </div>
+    </Form>
   );
 }

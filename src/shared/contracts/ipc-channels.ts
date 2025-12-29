@@ -11,4 +11,5 @@ export const IPC_CHANNELS = {
   START_ORPC_SERVER: 'start-orpc-server',
   NAVIGATE: 'app:navigate',
   NOTIFY: 'app:notify',
+  OPEN_NOTIFICATIONS: 'app:open-notifications',
 };

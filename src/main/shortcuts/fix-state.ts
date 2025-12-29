@@ -28,13 +28,13 @@ class FixStateManager {
   /**
    * Start a new fix operation
    * Should only be called after canStartFix() returns true
+   * @throws {Error} If a fix is already in progress
    */
   startFix(contextId: string, sourceApp: AppContext | null): void {
     if (this.state.isProcessing) {
-      console.warn(
-        '[fix-state] Attempted to start fix while already processing',
+      throw new Error(
+        'Cannot start new fix: a fix operation is already in progress',
       );
-      return;
     }
 
     this.state = {

@@ -5,7 +5,11 @@ import { randomUUID } from 'node:crypto';
 import { Notification } from 'electron';
 import { rewriteText } from '@/main/ai/client';
 import { parseAIError } from '@/main/ai/error-handler';
-import { readClipboard, writeClipboard } from '@/main/automation/clipboard';
+import {
+  readClipboard,
+  SAFE_RESTORE_WINDOW_MS,
+  writeClipboard,
+} from '@/main/automation/clipboard';
 import { pressCopyShortcut, simulatePaste } from '@/main/automation/keyboard';
 import { getApiKey } from '@/main/storage/api-keys';
 import { saveEditContext } from '@/main/storage/context';
@@ -20,6 +24,8 @@ import type {
 } from '@/shared/types/notifications';
 import { type AppContext, getFrontmostApp, isSameApp } from './app-context';
 import { fixStateManager } from './fix-state';
+
+const activeOsNotifications = new Set<Notification>();
 
 function sendInAppNotification(notification: AppNotification): void {
   windowManager.broadcast(IPC_CHANNELS.NOTIFY, notification);
@@ -107,7 +113,6 @@ async function applyFixDirectly(
   }
 
   // Time-based guard: only restore clipboard if paste completed quickly enough
-  const SAFE_RESTORE_WINDOW_MS = 500;
   const clipboardBeforePaste = readClipboard();
   const pasteStartedAt = Date.now();
 
@@ -132,7 +137,7 @@ function showPersistentFixNotification(
   const notification = addNotification({
     type: 'info',
     title: 'Grammar Copilot',
-    description: `Your fix is ready for ${sourceApp.name}. Click "Apply Fix" to paste it.`,
+    description: `Your fix is ready for ${sourceApp.name}. Open Grammar Copilot and click "Apply Fix" to paste it.`,
     action: { type: 'apply-fix', contextId },
     persistent: true,
   });
@@ -141,6 +146,13 @@ function showPersistentFixNotification(
   const osNotification = new Notification({
     title: notification.title,
     body: notification.description,
+  });
+  activeOsNotifications.add(osNotification);
+  osNotification.on('close', () => {
+    activeOsNotifications.delete(osNotification);
+  });
+  osNotification.on('click', () => {
+    windowManager.openNotificationCenter();
   });
   osNotification.show();
 
@@ -237,7 +249,7 @@ async function processFixAsync(
       title: errorDetails.title,
       description: errorDetails.message,
     });
-    throw error;
+    // Don't re-throw: user notification is sufficient
   } finally {
     trayManager.stopBusy();
   }
@@ -284,7 +296,8 @@ export async function handleFixSelection(): Promise<void> {
 
     processFixAsync(contextId, originalText, sourceApp)
       .catch((error) => {
-        console.error('[handleFixSelection] processFixAsync failed:', error);
+        // Fallback: log unexpected errors that weren't caught by processFixAsync
+        console.error('[handleFixSelection] Unexpected error:', error);
       })
       .finally(() => {
         fixStateManager.completeFix();

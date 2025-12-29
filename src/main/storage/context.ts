@@ -3,6 +3,10 @@
  */
 import type { AppContext } from '@/main/shortcuts/app-context';
 
+/**
+ * Stored context for a grammar fix operation
+ * Used to apply fixes later via notifications
+ */
 export interface EditContext {
   originalText: string;
   rewrittenText: string;

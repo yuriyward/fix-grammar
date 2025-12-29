@@ -8,8 +8,20 @@ const execAsync = promisify(exec);
 
 export interface AppContext {
   name: string;
-  bundleId?: string;
+  bundleId?: string | undefined;
   timestamp: number;
+}
+
+/**
+ * Escape a string for safe use in AppleScript
+ * Handles single quotes, backslashes, and newlines to prevent injection
+ */
+function escapeAppleScript(str: string): string {
+  return str
+    .replace(/\\/g, '\\\\') // Escape backslashes first
+    .replace(/'/g, "\\'") // Escape single quotes
+    .replace(/\n/g, '\\n') // Escape newlines
+    .replace(/\r/g, '\\r'); // Escape carriage returns
 }
 
 /**
@@ -18,6 +30,7 @@ export interface AppContext {
  */
 export async function getFrontmostApp(): Promise<AppContext | null> {
   try {
+    // Hardcoded script - no user input, no escaping needed
     const script = `
       tell application "System Events"
         set frontApp to first application process whose frontmost is true
@@ -32,7 +45,12 @@ export async function getFrontmostApp(): Promise<AppContext | null> {
 
     if (!output) return null;
 
-    const [name, bundleId] = output.split('|');
+    const parts = output.split('|');
+    if (parts.length !== 2) {
+      console.error('[app-context] Unexpected output format:', output);
+      return null;
+    }
+    const [name, bundleId] = parts;
 
     return {
       name: name?.trim() || '',
@@ -68,10 +86,11 @@ export function isSameApp(a: AppContext | null, b: AppContext | null): boolean {
 export async function switchToApp(context: AppContext): Promise<void> {
   try {
     // Prefer bundle ID for activation (more reliable)
+    // Escape user-controlled identifier to prevent injection
     const identifier = context.bundleId || context.name;
 
     const script = `
-      tell application id "${identifier}"
+      tell application id "${escapeAppleScript(identifier)}"
         activate
       end tell
     `;
@@ -81,8 +100,9 @@ export async function switchToApp(context: AppContext): Promise<void> {
     // If bundle ID fails, try app name as fallback
     if (context.bundleId && context.name) {
       try {
+        // Escape user-controlled app name to prevent injection
         const fallbackScript = `
-          tell application "${context.name}"
+          tell application "${escapeAppleScript(context.name)}"
             activate
           end tell
         `;

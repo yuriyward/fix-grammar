@@ -2,7 +2,11 @@
  * Notifications IPC handlers
  */
 import { os } from '@orpc/server';
-import { readClipboard, writeClipboard } from '@/main/automation/clipboard';
+import {
+  readClipboard,
+  SAFE_RESTORE_WINDOW_MS,
+  writeClipboard,
+} from '@/main/automation/clipboard';
 import { simulatePaste } from '@/main/automation/keyboard';
 import { switchToApp } from '@/main/shortcuts/app-context';
 import { getEditContext } from '@/main/storage/context';
@@ -48,8 +52,11 @@ export const applyFixHandler = os
     if (context.sourceApp) {
       try {
         await switchToApp(context.sourceApp);
-        // Small delay for app switch to complete
-        await new Promise((resolve) => setTimeout(resolve, 300));
+        // Allow time for app activation to complete
+        const APP_SWITCH_DELAY_MS = 300;
+        await new Promise((resolve) =>
+          setTimeout(resolve, APP_SWITCH_DELAY_MS),
+        );
       } catch (error) {
         throw new Error(
           `Failed to switch to app "${context.sourceApp.name}": ${
@@ -60,7 +67,6 @@ export const applyFixHandler = os
     }
 
     // Paste the fix using the same logic as direct paste
-    const SAFE_RESTORE_WINDOW_MS = 500;
     const clipboardBeforePaste = readClipboard();
     const pasteStartedAt = Date.now();
 

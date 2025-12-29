@@ -6,7 +6,10 @@ import { Notification, systemPreferences } from 'electron';
 import { requestAccessibilityAccessSchema } from './schemas';
 
 function isAccessibilityTrusted(): boolean {
-  if (process.platform !== 'darwin') return true;
+  // Only macOS requires explicit accessibility permission
+  if (process.platform !== 'darwin') {
+    return true; // Other platforms grant access by default
+  }
   return systemPreferences.isTrustedAccessibilityClient(false);
 }
 

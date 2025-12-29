@@ -40,6 +40,7 @@ function NotificationIcon({ type }: { type: AppNotification['type'] }) {
 
 export function NotificationCenterButton() {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [open, setOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     const items = await listNotifications();
@@ -70,6 +71,23 @@ export function NotificationCenterButton() {
       window.removeEventListener('focus', onFocus);
     };
   }, [refresh]);
+
+  useEffect(() => {
+    const onOpenNotifications = () => {
+      setOpen(true);
+    };
+
+    window.addEventListener(
+      IPC_CHANNELS.OPEN_NOTIFICATIONS,
+      onOpenNotifications,
+    );
+    return () => {
+      window.removeEventListener(
+        IPC_CHANNELS.OPEN_NOTIFICATIONS,
+        onOpenNotifications,
+      );
+    };
+  }, []);
 
   const unreadCount = useMemo(
     () =>
@@ -108,7 +126,7 @@ export function NotificationCenterButton() {
   }, []);
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={
           <Button
@@ -198,24 +216,28 @@ export function NotificationCenterButton() {
                         {item.description}
                       </div>
                     )}
-                    {item.action?.type === 'apply-fix' && (
-                      <Button
-                        className="mt-2"
-                        size="xs"
-                        variant="default"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          try {
-                            await applyFix(item.action.contextId);
-                            await markRead(item.id);
-                          } catch (error) {
-                            console.error('Failed to apply fix:', error);
-                          }
-                        }}
-                      >
-                        Apply Fix
-                      </Button>
-                    )}
+                    {(() => {
+                      const action = item.action;
+                      if (action?.type !== 'apply-fix') return null;
+                      return (
+                        <Button
+                          className="mt-2"
+                          size="xs"
+                          variant="default"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            try {
+                              await applyFix(action.contextId);
+                              await markRead(item.id);
+                            } catch (error) {
+                              console.error('Failed to apply fix:', error);
+                            }
+                          }}
+                        >
+                          Apply Fix
+                        </Button>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}

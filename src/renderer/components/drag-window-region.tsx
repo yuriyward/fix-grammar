@@ -1,7 +1,6 @@
 /**
  * Draggable title bar with window controls
  */
-import { useMatchRoute } from '@tanstack/react-router';
 import { type ReactNode, useEffect, useState } from 'react';
 import { getPlatform } from '@/actions/app';
 import { closeWindow, maximizeWindow, minimizeWindow } from '@/actions/window';
@@ -14,8 +13,6 @@ interface DragWindowRegionProps {
 
 export default function DragWindowRegion({ title }: DragWindowRegionProps) {
   const [platform, setPlatform] = useState<string | null>(null);
-  const matchRoute = useMatchRoute();
-  const isPopupWindow = Boolean(matchRoute({ to: '/popup' }));
 
   useEffect(() => {
     let active = true;
@@ -49,14 +46,9 @@ export default function DragWindowRegion({ title }: DragWindowRegionProps) {
             </div>
           )}
         </div>
-        {!isPopupWindow && (
-          <div
-            className="pr-4 pl-2 py-1"
-            style={{ WebkitAppRegion: 'no-drag' }}
-          >
-            <NotificationCenterButton />
-          </div>
-        )}
+        <div className="pr-4 pl-2 py-1" style={{ WebkitAppRegion: 'no-drag' }}>
+          <NotificationCenterButton />
+        </div>
       </div>
       {!isMacOS && <WindowButtons />}
     </div>

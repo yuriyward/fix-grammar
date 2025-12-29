@@ -3,6 +3,7 @@
  */
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   getPermissionsStatus,
   type PermissionsStatus,
@@ -29,6 +30,7 @@ function formatStatusLabel(value: boolean): string {
 
 function OnboardingPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [state, setState] = useState<LoadState>({ status: 'idle' });
 
   const refresh = useCallback(async () => {
@@ -55,13 +57,14 @@ function OnboardingPage() {
     if (!isMacOS) return null;
     return (
       <>
-        In development, macOS may list the sender as{' '}
-        <span className="font-medium">Electron</span>
-        (not “Grammar Copilot”). Make sure notifications are allowed for that
-        entry.
+        {t('onboarding.notificationsNotePrefix')}{' '}
+        <span className="font-medium">
+          {t('onboarding.notificationsNoteAppName')}
+        </span>{' '}
+        {t('onboarding.notificationsNoteSuffix')}
       </>
     );
-  }, [isMacOS]);
+  }, [isMacOS, t]);
 
   return (
     <div className="flex h-full min-h-0 flex-col">

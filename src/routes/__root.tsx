@@ -56,7 +56,7 @@ function Root() {
   }, [accessibilityTrusted, navigate, pathname]);
 
   return (
-    <BaseLayout>
+    <BaseLayout title={pathname === '/popup' ? 'Grammar Copilot' : undefined}>
       <Outlet />
       {/* Uncomment the following line to enable the router devtools */}
       {/* <TanStackRouterDevtools /> */}

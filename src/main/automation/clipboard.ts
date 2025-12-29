@@ -3,6 +3,9 @@
  */
 import { clipboard } from 'electron';
 
+/** Prevent clipboard restoration during slow pastes */
+export const SAFE_RESTORE_WINDOW_MS = 500;
+
 let clipboardBackup: string | null = null;
 
 export function backupClipboard(): void {

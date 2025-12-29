@@ -18,7 +18,9 @@ import { addNotification } from '@/main/storage/notifications';
 import { store } from '@/main/storage/settings';
 import { trayManager } from '@/main/tray/tray-manager';
 import { windowManager } from '@/main/windows/window-manager';
+import { AI_PROVIDERS } from '@/shared/config/ai-models';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
+import type { AIModel, AIProvider } from '@/shared/config/ai-models';
 import type {
   AppNotification,
   AppNotificationPayload,
@@ -40,6 +42,29 @@ function showNotification(payload: AppNotificationPayload): void {
   });
   osNotification.show();
   sendInAppNotification(stored);
+}
+
+function formatDurationMs(durationMs: number): string {
+  const clampedMs = Math.max(0, durationMs);
+  if (clampedMs < 10_000) return `${(clampedMs / 1000).toFixed(1)}s`;
+
+  const totalSeconds = Math.round(clampedMs / 1000);
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes < 60) return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return `${hours}h ${String(remainingMinutes).padStart(2, '0')}m`;
+}
+
+function getModelLabel(provider: AIProvider, model: AIModel): string {
+  const config = AI_PROVIDERS[provider].models.find(
+    (entry) => entry.id === model,
+  );
+  return config?.name ?? model;
 }
 
 function getClipboardSyncDelayMs(): number {
@@ -115,11 +140,12 @@ async function applyFixDirectly(
 function showPersistentFixNotification(
   contextId: string,
   sourceApp: AppContext,
+  modelLabel: string,
 ): void {
   const notification = addNotification({
     type: 'info',
     title: 'Grammar Copilot',
-    description: `Your fix is ready for ${sourceApp.name}. Open Grammar Copilot and click "Apply Fix" to paste it.`,
+    description: `Your fix is ready for ${sourceApp.name}. Used ${modelLabel}. Open Grammar Copilot and click "Apply Fix" to paste it.`,
     action: { type: 'apply-fix', contextId },
     persistent: true,
   });
@@ -149,6 +175,7 @@ async function processFixAsync(
   contextId: string,
   originalText: string,
   sourceApp: AppContext | null,
+  fixStartedAt: number,
   options?: { beforePaste?: () => Promise<void> },
 ): Promise<void> {
   trayManager.startBusy('Processing in background…');
@@ -169,9 +196,10 @@ async function processFixAsync(
 
     const role = store.get('ai.role');
     const model = store.get('ai.model');
+    const modelLabel = getModelLabel(provider, model);
 
     // AI rewriting
-    const result = await rewriteText(originalText, role, apiKey, model);
+    const result = await rewriteText(originalText, role, apiKey, model, provider);
     const rewrittenText = preserveTrailingNewlines(
       originalText,
       await result.text,
@@ -181,8 +209,10 @@ async function processFixAsync(
     saveEditContext(contextId, {
       originalText,
       rewrittenText,
-      timestamp: Date.now(),
+      startedAt: fixStartedAt,
       role,
+      provider,
+      model,
       sourceApp: sourceApp ?? undefined,
     });
 
@@ -194,11 +224,14 @@ async function processFixAsync(
       if (currentSelectionText === originalText) {
         // AUTO-PASTE: User is still in same app and selection is unchanged
         await applyFixDirectly(rewrittenText, options);
+        const elapsedToPasteMs = Date.now() - fixStartedAt;
 
         showNotification({
           type: 'success',
           title: 'Grammar Copilot',
-          description: 'Text rewritten and pasted',
+          description: `Text rewritten and pasted (${modelLabel}, ${formatDurationMs(
+            elapsedToPasteMs,
+          )})`,
         });
       } else {
         // SELECTION CHANGED: Avoid pasting into the wrong place
@@ -207,19 +240,19 @@ async function processFixAsync(
           type: 'info',
           title: 'Grammar Copilot',
           description:
-            'Selection changed. Result copied to clipboard for manual paste.',
+            `Selection changed. Result copied to clipboard for manual paste. Used ${modelLabel}.`,
         });
       }
     } else {
       // NOTIFICATION: User switched apps
       if (sourceApp) {
-        showPersistentFixNotification(contextId, sourceApp);
+        showPersistentFixNotification(contextId, sourceApp, modelLabel);
       } else {
         // Fallback: no source app captured
         showNotification({
           type: 'info',
           title: 'Grammar Copilot',
-          description: 'Text rewritten. Result copied to clipboard.',
+          description: `Text rewritten. Used ${modelLabel}. Result copied to clipboard.`,
         });
         writeClipboard(rewrittenText);
       }
@@ -254,6 +287,7 @@ export async function handleFixSelection(): Promise<void> {
     return;
   }
 
+  const fixStartedAt = Date.now();
   trayManager.startBusy('Grammar Copilot — Capturing selection…');
 
   try {
@@ -276,7 +310,7 @@ export async function handleFixSelection(): Promise<void> {
     const contextId = randomUUID();
     fixStateManager.startFix(contextId, sourceApp);
 
-    processFixAsync(contextId, originalText, sourceApp)
+    processFixAsync(contextId, originalText, sourceApp, fixStartedAt)
       .catch((error) => {
         // Fallback: log unexpected errors that weren't caught by processFixAsync
         console.error('[handleFixSelection] Unexpected error:', error);

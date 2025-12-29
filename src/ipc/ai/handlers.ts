@@ -22,7 +22,13 @@ export const rewriteTextHandler = os
     const model = store.get('ai.model');
 
     // Rewrite text (collecting all chunks)
-    const result = await rewriteText(input.text, input.role, apiKey, model);
+    const result = await rewriteText(
+      input.text,
+      input.role,
+      apiKey,
+      model,
+      provider,
+    );
 
     let fullText = '';
     try {

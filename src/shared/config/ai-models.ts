@@ -30,13 +30,18 @@ export const AI_PROVIDERS = {
         provider: 'google' as const,
       },
       {
-        id: 'gemini-2.0-flash-thinking-exp',
-        name: 'Gemini 2.0 Flash Thinking (Experimental)',
+        id: 'models/gemini-2.5-pro',
+        name: 'Gemini 2.5 Pro',
         provider: 'google' as const,
       },
       {
-        id: 'gemini-1.5-pro',
-        name: 'Gemini 1.5 Pro',
+        id: 'models/gemini-flash-latest',
+        name: 'Gemini Flash (Latest)',
+        provider: 'google' as const,
+      },
+      {
+        id: 'models/gemini-flash-lite-latest',
+        name: 'Gemini Flash Lite (Latest)',
         provider: 'google' as const,
       },
     ],
@@ -46,17 +51,27 @@ export const AI_PROVIDERS = {
     name: 'xAI Grok',
     models: [
       {
-        id: 'grok-beta',
-        name: 'Grok Beta',
+        id: 'grok-4-1-fast-reasoning',
+        name: 'Grok 4.1 Fast (Reasoning)',
         provider: 'xai' as const,
       },
       {
-        id: 'grok-vision-beta',
-        name: 'Grok Vision Beta',
+        id: 'grok-4-1-fast-non-reasoning',
+        name: 'Grok 4.1 Fast (Non-Reasoning)',
+        provider: 'xai' as const,
+      },
+      {
+        id: 'grok-code-fast-1',
+        name: 'Grok Code Fast',
+        provider: 'xai' as const,
+      },
+      {
+        id: 'grok-4',
+        name: 'Grok 4',
         provider: 'xai' as const,
       },
     ],
-    defaultModel: 'grok-beta',
+    defaultModel: 'grok-4-1-fast-reasoning',
   },
 } as const satisfies Record<string, ProviderConfig>;
 

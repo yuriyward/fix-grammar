@@ -2,6 +2,7 @@
  * Notifications IPC handlers
  */
 import { os } from '@orpc/server';
+import { Notification } from 'electron';
 import {
   readClipboard,
   SAFE_RESTORE_WINDOW_MS,
@@ -11,12 +12,58 @@ import { simulatePaste } from '@/main/automation/keyboard';
 import { switchToApp } from '@/main/shortcuts/app-context';
 import { getEditContext } from '@/main/storage/context';
 import {
+  addNotification,
   clearNotifications,
   listNotifications,
   markAllNotificationsRead,
   markNotificationRead,
 } from '@/main/storage/notifications';
+import { windowManager } from '@/main/windows/window-manager';
+import { AI_PROVIDERS } from '@/shared/config/ai-models';
+import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
+import type { AIModel, AIProvider } from '@/shared/config/ai-models';
+import type {
+  AppNotification,
+  AppNotificationPayload,
+} from '@/shared/types/notifications';
 import { applyFixSchema, notificationIdSchema } from './schemas';
+
+function sendInAppNotification(notification: AppNotification): void {
+  windowManager.broadcast(IPC_CHANNELS.NOTIFY, notification);
+}
+
+function showNotification(payload: AppNotificationPayload): void {
+  const stored = addNotification(payload);
+  const osNotification = new Notification({
+    title: stored.title,
+    body: stored.description,
+  });
+  osNotification.show();
+  sendInAppNotification(stored);
+}
+
+function formatDurationMs(durationMs: number): string {
+  const clampedMs = Math.max(0, durationMs);
+  if (clampedMs < 10_000) return `${(clampedMs / 1000).toFixed(1)}s`;
+
+  const totalSeconds = Math.round(clampedMs / 1000);
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes < 60) return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return `${hours}h ${String(remainingMinutes).padStart(2, '0')}m`;
+}
+
+function getModelLabel(provider: AIProvider, model: AIModel): string {
+  const config = AI_PROVIDERS[provider].models.find(
+    (entry) => entry.id === model,
+  );
+  return config?.name ?? model;
+}
 
 export const listNotificationsHandler = os.handler(() => {
   return { notifications: listNotifications() };
@@ -82,6 +129,16 @@ export const applyFixHandler = os
         writeClipboard(clipboardBeforePaste);
       }
     }
+
+    const elapsedToPasteMs = Date.now() - context.startedAt;
+    const modelLabel = getModelLabel(context.provider, context.model);
+    showNotification({
+      type: 'success',
+      title: 'Grammar Copilot',
+      description: `Text rewritten and pasted (${modelLabel}, ${formatDurationMs(
+        elapsedToPasteMs,
+      )})`,
+    });
 
     // Mark notification as read
     markNotificationRead(input.contextId);

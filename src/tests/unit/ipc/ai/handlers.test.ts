@@ -84,6 +84,7 @@ describe('AI IPC handlers', () => {
       'grammar-tone',
       'test-key',
       'gemini-3-flash-preview',
+      'google',
     );
   });
 

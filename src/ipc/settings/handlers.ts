@@ -18,6 +18,7 @@ import {
   isEncryptionAvailableInputSchema,
   isValidHotkeyAccelerator,
   saveApiKeyInputSchema,
+  testLMStudioConnectionInputSchema,
 } from './schemas';
 
 const hotkeyLabels = {
@@ -139,4 +140,39 @@ export const isEncryptionAvailableHandler = os
   .input(isEncryptionAvailableInputSchema)
   .handler(() => {
     return { available: isEncryptionAvailable() };
+  });
+
+export const testLMStudioConnection = os
+  .input(testLMStudioConnectionInputSchema)
+  .handler(async ({ input }) => {
+    try {
+      const response = await fetch(`${input.baseURL}/models`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: `Server responded with status ${response.status}`,
+        };
+      }
+
+      const data = (await response.json()) as {
+        data?: Array<{ id: string }>;
+      };
+      const modelCount = data.data?.length || 0;
+
+      return {
+        success: true,
+        message: `Connected successfully. Found ${modelCount} model(s).`,
+        models: data.data?.map((m) => m.id) || [],
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Connection failed',
+      };
+    }
   });

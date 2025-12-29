@@ -119,18 +119,42 @@ const textVerbositySchema = z.enum(['low', 'medium', 'high']);
 export const aiSettingsSchema = z
   .object({
     provider: aiProviderSchema,
-    model: aiModelSchema,
+    model: z.string(),
     role: rewriteRoleSchema,
     reasoningEffort: reasoningEffortSchema.optional(),
     textVerbosity: textVerbositySchema.optional(),
+    lmstudioBaseURL: z.string().optional(),
   })
-  .superRefine(({ provider, model, reasoningEffort }, ctx) => {
-    if (!isValidModel(provider, model)) {
+  .superRefine(({ provider, model, reasoningEffort, lmstudioBaseURL }, ctx) => {
+    // Validate model for non-LM Studio providers
+    if (provider !== 'lmstudio' && !isValidModel(provider, model)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['model'],
         message: `Model "${model}" is not valid for provider "${provider}"`,
       });
+    }
+
+    // LM Studio requires baseURL
+    if (provider === 'lmstudio') {
+      if (!lmstudioBaseURL || lmstudioBaseURL.trim() === '') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['lmstudioBaseURL'],
+          message: 'Base URL is required for LM Studio provider',
+        });
+      } else {
+        // Validate URL format
+        try {
+          new URL(lmstudioBaseURL);
+        } catch {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['lmstudioBaseURL'],
+            message: 'Invalid URL format',
+          });
+        }
+      }
     }
 
     if (reasoningEffort === 'none' && !model.startsWith('gpt-5.1')) {
@@ -177,3 +201,7 @@ export const deleteApiKeyInputSchema = z.object({
 });
 
 export const isEncryptionAvailableInputSchema = z.void();
+
+export const testLMStudioConnectionInputSchema = z.object({
+  baseURL: z.string().url(),
+});

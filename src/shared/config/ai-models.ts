@@ -6,7 +6,7 @@
 export interface ModelConfig {
   id: string;
   name: string;
-  provider: 'google' | 'xai' | 'openai';
+  provider: 'google' | 'xai' | 'openai' | 'lmstudio';
 }
 
 export interface ProviderConfig {
@@ -99,6 +99,37 @@ export const AI_PROVIDERS = {
     ],
     defaultModel: 'gpt-5.1',
   },
+  lmstudio: {
+    name: 'LM Studio',
+    models: [
+      {
+        id: 'llama-3.2-3b',
+        name: 'Llama 3.2 3B',
+        provider: 'lmstudio' as const,
+      },
+      {
+        id: 'llama-3.2-1b',
+        name: 'Llama 3.2 1B',
+        provider: 'lmstudio' as const,
+      },
+      {
+        id: 'mistral-7b-instruct-v0.3',
+        name: 'Mistral 7B Instruct',
+        provider: 'lmstudio' as const,
+      },
+      {
+        id: 'phi-3-mini-4k-instruct',
+        name: 'Phi-3 Mini 4K',
+        provider: 'lmstudio' as const,
+      },
+      {
+        id: 'gemma-2-2b-instruct',
+        name: 'Gemma 2 2B Instruct',
+        provider: 'lmstudio' as const,
+      },
+    ],
+    defaultModel: 'llama-3.2-3b',
+  },
 } as const satisfies Record<string, ProviderConfig>;
 
 export type AIProvider = keyof typeof AI_PROVIDERS;
@@ -127,8 +158,12 @@ export function getProviderName(provider: AIProvider): string {
 
 /**
  * Validate if a model ID is valid for a provider
+ * LM Studio accepts any model name since users can load custom models
  */
 export function isValidModel(provider: AIProvider, modelId: string): boolean {
+  if (provider === 'lmstudio') {
+    return true;
+  }
   return AI_PROVIDERS[provider].models.some((m) => m.id === modelId);
 }
 

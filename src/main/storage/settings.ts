@@ -17,6 +17,7 @@ export const store = new ElectronStore<AppSettings>({
       role: 'grammar',
       reasoningEffort: 'medium',
       textVerbosity: 'medium',
+      lmstudioBaseURL: 'http://localhost:1234/v1',
     },
     automation: {
       clipboardSyncDelayMs: 200,

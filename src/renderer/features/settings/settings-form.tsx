@@ -9,6 +9,7 @@ import {
   getSettings,
   hasApiKey,
   saveApiKey,
+  testLMStudioConnection,
   updateSettings,
 } from '@/actions/settings';
 import { reregisterShortcuts } from '@/actions/shortcuts';
@@ -19,6 +20,15 @@ import {
   AlertDescription,
   AlertTitle,
 } from '@/renderer/components/ui/alert';
+import {
+  Autocomplete,
+  AutocompleteGroup,
+  AutocompleteGroupLabel,
+  AutocompleteInput,
+  AutocompleteItem,
+  AutocompleteList,
+  AutocompletePopup,
+} from '@/renderer/components/ui/autocomplete';
 import { Button } from '@/renderer/components/ui/button';
 import {
   Card,
@@ -71,6 +81,10 @@ export default function SettingsForm() {
   const [isEncryptionAvailable, setIsEncryptionAvailable] = useState<
     boolean | null
   >(null);
+  const [lmstudioBaseURL, setLmstudioBaseURL] = useState(
+    'http://localhost:1234/v1',
+  );
+  const [isTestingConnection, setIsTestingConnection] = useState(false);
 
   const [fixSelection, setFixSelection] = useState('CommandOrControl+Shift+F');
   const [togglePopup, setTogglePopup] = useState('CommandOrControl+Shift+P');
@@ -103,6 +117,9 @@ export default function SettingsForm() {
       setRole(settings.ai.role);
       setReasoningEffort(settings.ai.reasoningEffort ?? 'medium');
       setTextVerbosity(settings.ai.textVerbosity ?? 'medium');
+      setLmstudioBaseURL(
+        settings.ai.lmstudioBaseURL ?? 'http://localhost:1234/v1',
+      );
       setFixSelection(settings.hotkeys.fixSelection);
       setTogglePopup(settings.hotkeys.togglePopup);
       setClipboardSyncDelayMs(settings.automation.clipboardSyncDelayMs);
@@ -209,6 +226,10 @@ export default function SettingsForm() {
   const handleProviderChange = (newProvider: AIProvider) => {
     setProvider(newProvider);
     setModel(getDefaultModel(newProvider));
+
+    if (newProvider === 'lmstudio' && !lmstudioBaseURL) {
+      setLmstudioBaseURL('http://localhost:1234/v1');
+    }
   };
 
   const handleSaveApiKey = async () => {
@@ -240,11 +261,47 @@ export default function SettingsForm() {
     }
   };
 
+  const handleTestLMStudioConnection = async () => {
+    if (!lmstudioBaseURL.trim()) {
+      addErrorToast(
+        'Test Connection Failed',
+        new Error('Base URL is required'),
+      );
+      return;
+    }
+
+    setIsTestingConnection(true);
+    try {
+      const result = await testLMStudioConnection(lmstudioBaseURL.trim());
+
+      if (result.success) {
+        addSuccessToast(result.message || 'Connection successful');
+      } else {
+        addErrorToast(
+          'Connection Failed',
+          new Error(result.error || 'Unknown error'),
+        );
+      }
+    } catch (error) {
+      addErrorToast('Connection Failed', error);
+    } finally {
+      setIsTestingConnection(false);
+    }
+  };
+
   const handleSaveSettings = async () => {
     setIsSaving(true);
     try {
       await updateSettings({
-        ai: { provider, model, role, reasoningEffort, textVerbosity },
+        ai: {
+          provider,
+          model,
+          role,
+          reasoningEffort,
+          textVerbosity,
+          lmstudioBaseURL:
+            provider === 'lmstudio' ? lmstudioBaseURL : undefined,
+        },
         hotkeys: { fixSelection, togglePopup },
         automation: { clipboardSyncDelayMs, selectionDelayMs },
       });
@@ -352,24 +409,58 @@ export default function SettingsForm() {
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="model">Model</Label>
-          <Select
-            value={model}
-            onValueChange={(value) => setModel(value as AIModel)}
-          >
-            <SelectTrigger id="model">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {getModelsForProvider(provider).map((m) => (
-                <SelectItem key={m.id} value={m.id}>
-                  {m.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {provider === 'lmstudio' ? (
+          <div className="space-y-2">
+            <Label htmlFor="model">Model</Label>
+            <Autocomplete
+              value={model}
+              onValueChange={(value) => setModel(value || '')}
+            >
+              <AutocompleteInput
+                id="model"
+                placeholder="Type model name or select from list"
+                showTrigger
+              />
+              <AutocompletePopup>
+                <AutocompleteList>
+                  <AutocompleteGroup>
+                    <AutocompleteGroupLabel>
+                      Popular Models
+                    </AutocompleteGroupLabel>
+                    {getModelsForProvider(provider).map((m) => (
+                      <AutocompleteItem key={m.id} value={m.id}>
+                        {m.name}
+                      </AutocompleteItem>
+                    ))}
+                  </AutocompleteGroup>
+                </AutocompleteList>
+              </AutocompletePopup>
+            </Autocomplete>
+            <p className="text-sm text-muted-foreground">
+              Select a model or type a custom model name (e.g., your downloaded
+              model name)
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Label htmlFor="model">Model</Label>
+            <Select
+              value={model}
+              onValueChange={(value) => setModel(value as AIModel)}
+            >
+              <SelectTrigger id="model">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {getModelsForProvider(provider).map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="role">Rewrite Mode</Label>
@@ -430,6 +521,42 @@ export default function SettingsForm() {
               </Select>
             </div>
           </>
+        )}
+
+        {provider === 'lmstudio' && (
+          <div className="space-y-2">
+            <Label htmlFor="lmstudioBaseURL">Base URL</Label>
+            <div className="flex gap-2">
+              <Input
+                id="lmstudioBaseURL"
+                type="url"
+                value={lmstudioBaseURL}
+                onChange={(e) => setLmstudioBaseURL(e.target.value)}
+                placeholder="http://localhost:1234/v1"
+                disabled={isSaving || isTestingConnection}
+              />
+              <Button
+                onClick={handleTestLMStudioConnection}
+                disabled={
+                  isSaving || isTestingConnection || !lmstudioBaseURL.trim()
+                }
+                variant="outline"
+              >
+                {isTestingConnection ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Spinner className="size-4" />
+                    Testing...
+                  </span>
+                ) : (
+                  'Test Connection'
+                )}
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              URL of your LM Studio local server (default:
+              http://localhost:1234/v1)
+            </p>
+          </div>
         )}
 
         <div className="space-y-2">

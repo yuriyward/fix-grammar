@@ -51,44 +51,51 @@ async function copyNodeModulePackage(
   packageName: string,
   platform: string,
   copied: Set<string>,
+  inProgress: Set<string>,
   isOptional: boolean,
 ): Promise<void> {
-  if (copied.has(packageName)) return;
+  if (copied.has(packageName) || inProgress.has(packageName)) return;
+  inProgress.add(packageName);
 
   const packagePathParts = packageName.split('/');
   const src = path.join(projectDir, 'node_modules', ...packagePathParts);
   const dest = path.join(buildPath, 'node_modules', ...packagePathParts);
 
   try {
-    await fs.stat(src);
-  } catch {
-    if (isOptional) return;
-    throw new Error(
-      `Missing runtime dependency ${JSON.stringify(packageName)} at ${JSON.stringify(src)}.`,
-    );
-  }
+    try {
+      await fs.stat(src);
+    } catch {
+      if (isOptional) return;
+      throw new Error(
+        `Missing runtime dependency ${JSON.stringify(packageName)} at ${JSON.stringify(src)}.`,
+      );
+    }
 
-  copied.add(packageName);
-  await fs.mkdir(path.dirname(dest), { recursive: true });
-  await copyDir(src, dest);
+    await fs.mkdir(path.dirname(dest), { recursive: true });
+    await copyDir(src, dest);
+    copied.add(packageName);
 
-  const packageJsonPath = path.join(src, 'package.json');
-  const packageJson = JSON.parse(
-    await fs.readFile(packageJsonPath, 'utf8'),
-  ) as PackageJson;
-  const deps = packageDepsToCopy(packageName, packageJson, platform);
-  await Promise.all(
-    deps.map(({ name, optional }) =>
-      copyNodeModulePackage(
-        projectDir,
-        buildPath,
-        name,
-        platform,
-        copied,
-        optional,
+    const packageJsonPath = path.join(src, 'package.json');
+    const packageJson = JSON.parse(
+      await fs.readFile(packageJsonPath, 'utf8'),
+    ) as PackageJson;
+    const deps = packageDepsToCopy(packageName, packageJson, platform);
+    await Promise.all(
+      deps.map(({ name, optional }) =>
+        copyNodeModulePackage(
+          projectDir,
+          buildPath,
+          name,
+          platform,
+          copied,
+          inProgress,
+          optional,
+        ),
       ),
-    ),
-  );
+    );
+  } finally {
+    inProgress.delete(packageName);
+  }
 }
 
 function nutNativeRuntimePackages(platform: string): readonly string[] {
@@ -116,6 +123,7 @@ export async function copyNativeModules(
 
   const projectDir = process.cwd();
   const copied = new Set<string>();
+  const inProgress = new Set<string>();
   await Promise.all(
     packages.map((packageName) =>
       copyNodeModulePackage(
@@ -124,6 +132,7 @@ export async function copyNativeModules(
         packageName,
         platform,
         copied,
+        inProgress,
         false,
       ),
     ),

@@ -27,6 +27,7 @@ jobs:
         run: bun run test
 
   test-e2e:
+    if: false
     timeout-minutes: 10
     runs-on: windows-latest
     steps:

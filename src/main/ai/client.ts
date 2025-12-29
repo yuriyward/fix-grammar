@@ -12,6 +12,7 @@ import { AI_STREAM_TIMEOUT_MS } from '@/shared/config/ai';
 import type { AIProvider } from '@/shared/config/ai-models';
 import type { RewriteRole } from '@/shared/types/ai';
 import type { ReasoningEffort, TextVerbosity } from '@/shared/types/settings';
+import { sanitizeLMStudioURL } from '@/shared/utils/url-validation';
 import { buildPrompt } from './prompts';
 
 /**
@@ -48,12 +49,17 @@ export async function rewriteText(
     xai: (apiKey, model) => createXai({ apiKey })(model),
     // openai() defaults to Responses API in AI SDK 5+
     openai: (apiKey, model) => createOpenAI({ apiKey })(model),
-    lmstudio: (apiKey, model, baseURL) =>
-      createOpenAICompatible({
+    lmstudio: (apiKey, model, baseURL) => {
+      const sanitizedURL = baseURL
+        ? sanitizeLMStudioURL(baseURL)
+        : 'http://localhost:1234/v1';
+
+      return createOpenAICompatible({
         name: 'lmstudio',
-        baseURL: baseURL || 'http://localhost:1234/v1',
+        baseURL: sanitizedURL,
         apiKey: apiKey || 'not-needed',
-      })(model),
+      })(model);
+    },
   };
 
   const modelInstance = providerFactories[provider](

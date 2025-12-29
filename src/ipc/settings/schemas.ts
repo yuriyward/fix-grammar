@@ -3,6 +3,7 @@
  */
 import { z } from 'zod';
 import { aiProviderSchema } from '@/shared/schemas/settings';
+import { sanitizeLMStudioURL } from '@/shared/utils/url-validation';
 
 // ============================================================================
 // IPC-only schemas
@@ -24,5 +25,18 @@ export const deleteApiKeyInputSchema = z.object({
 export const isEncryptionAvailableInputSchema = z.void();
 
 export const testLMStudioConnectionInputSchema = z.object({
-  baseURL: z.string().url(),
+  baseURL: z
+    .string()
+    .trim()
+    .transform((val, ctx) => {
+      try {
+        return sanitizeLMStudioURL(val);
+      } catch (error) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: error instanceof Error ? error.message : 'Invalid URL',
+        });
+        return z.NEVER;
+      }
+    }),
 });

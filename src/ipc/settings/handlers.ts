@@ -32,12 +32,7 @@ export const getSettings = os.handler(() => {
 export const updateSettings = os
   .input(appSettingsSchema)
   .handler(({ input }) => {
-    const hotkeys = {
-      fixSelection: input.hotkeys.fixSelection.trim(),
-      togglePopup: input.hotkeys.togglePopup.trim(),
-    };
-
-    store.set({ ...input, hotkeys });
+    store.set(input);
     return store.store;
   });
 

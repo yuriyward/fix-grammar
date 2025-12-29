@@ -304,7 +304,7 @@ registerProviderValidator('openai', validateOpenAIReasoningEffort);
 // Settings schemas
 // ============================================================================
 
-const hotkeyAcceleratorSchema = z.string();
+export const hotkeyAcceleratorSchema = z.string().trim();
 
 export const hotkeysSettingsSchema = z
   .object({

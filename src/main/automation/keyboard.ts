@@ -1,13 +1,13 @@
 /**
  * nut-js wrapper for keyboard automation
  */
-import { randomUUID } from 'node:crypto';
 import { Key, keyboard } from '@nut-tree-fork/nut-js';
 import {
   readClipboard,
   waitForClipboardTextToNotEqual,
   writeClipboard,
 } from '@/main/automation/clipboard';
+import { createClipboardSentinel } from '@/main/automation/sentinel';
 import { store } from '@/main/storage/settings';
 
 const isMac = process.platform === 'darwin';
@@ -42,7 +42,7 @@ export async function simulateCopy(): Promise<void> {
   const clipboardSyncDelayMs = getDelayMs('automation.clipboardSyncDelayMs');
   const previousClipboard = readClipboard();
 
-  const sentinel = `__grammar_copilot_copy_${randomUUID()}__`;
+  const sentinel = createClipboardSentinel('copy');
   if (clipboardSyncDelayMs > 0) {
     writeClipboard(sentinel);
   }

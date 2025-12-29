@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppNotification } from '@/shared/types/notifications';
 
 const {
+  mockAddNotification,
   mockListNotifications,
   mockMarkNotificationRead,
   mockMarkAllNotificationsRead,
@@ -16,6 +17,7 @@ const {
   mockWriteClipboard,
   mockSimulatePaste,
 } = vi.hoisted(() => {
+  const mockAddNotification = vi.fn();
   const mockListNotifications = vi.fn<[], AppNotification[]>();
   const mockMarkNotificationRead = vi.fn<[string], void>();
   const mockMarkAllNotificationsRead = vi.fn<[], void>();
@@ -27,6 +29,7 @@ const {
   const mockSimulatePaste = vi.fn();
 
   return {
+    mockAddNotification,
     mockListNotifications,
     mockMarkNotificationRead,
     mockMarkAllNotificationsRead,
@@ -40,6 +43,7 @@ const {
 });
 
 vi.mock('@/main/storage/notifications', () => ({
+  addNotification: mockAddNotification,
   listNotifications: mockListNotifications,
   markNotificationRead: mockMarkNotificationRead,
   markAllNotificationsRead: mockMarkAllNotificationsRead,
@@ -63,9 +67,21 @@ vi.mock('@/main/automation/keyboard', () => ({
   simulatePaste: mockSimulatePaste,
 }));
 
+vi.mock('@/main/windows/window-manager', () => ({
+  windowManager: {
+    broadcast: vi.fn(),
+  },
+}));
+
 describe('Notifications IPC handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAddNotification.mockImplementation((payload) => ({
+      id: 'test-id',
+      createdAt: Date.now(),
+      readAt: null,
+      ...payload,
+    }));
   });
 
   describe('listNotificationsHandler', () => {

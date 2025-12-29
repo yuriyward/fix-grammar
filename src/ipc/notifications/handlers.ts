@@ -16,7 +16,25 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from '@/main/storage/notifications';
+import { showNotification } from '@/main/utils/notifications';
+import { getModelLabel } from '@/shared/config/ai-models';
 import { applyFixSchema, notificationIdSchema } from './schemas';
+
+function formatDurationMs(durationMs: number): string {
+  const clampedMs = Math.max(0, durationMs);
+  if (clampedMs < 10_000) return `${(clampedMs / 1000).toFixed(1)}s`;
+
+  const totalSeconds = Math.round(clampedMs / 1000);
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes < 60) return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
+
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return `${hours}h ${String(remainingMinutes).padStart(2, '0')}m`;
+}
 
 export const listNotificationsHandler = os.handler(() => {
   return { notifications: listNotifications() };
@@ -82,6 +100,16 @@ export const applyFixHandler = os
         writeClipboard(clipboardBeforePaste);
       }
     }
+
+    const elapsedToPasteMs = Date.now() - context.startedAt;
+    const modelLabel = getModelLabel(context.provider, context.model);
+    showNotification({
+      type: 'success',
+      title: 'Grammar Copilot',
+      description: `Text rewritten and pasted (${modelLabel}, ${formatDurationMs(
+        elapsedToPasteMs,
+      )})`,
+    });
 
     // Mark notification as read
     markNotificationRead(input.contextId);

@@ -106,46 +106,74 @@ export const hotkeysSettingsSchema = z.object({
   togglePopup: hotkeyAcceleratorSchema,
 });
 
-export const aiSettingsSchema = z.object({
-  provider: aiProviderSchema,
-  model: aiModelSchema,
-  role: rewriteRoleSchema,
-});
+const reasoningEffortSchema = z.enum([
+  'none',
+  'minimal',
+  'low',
+  'medium',
+  'high',
+  'xhigh',
+]);
+const textVerbositySchema = z.enum(['low', 'medium', 'high']);
+
+export const aiSettingsSchema = z
+  .object({
+    provider: aiProviderSchema,
+    model: aiModelSchema,
+    role: rewriteRoleSchema,
+    reasoningEffort: reasoningEffortSchema.optional(),
+    textVerbosity: textVerbositySchema.optional(),
+  })
+  .superRefine(({ provider, model, reasoningEffort }, ctx) => {
+    if (!isValidModel(provider, model)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['model'],
+        message: `Model "${model}" is not valid for provider "${provider}"`,
+      });
+    }
+
+    if (reasoningEffort === 'none' && !model.startsWith('gpt-5.1')) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['reasoningEffort'],
+        message:
+          'Reasoning effort "none" is only supported by GPT-5.1 series models',
+      });
+    }
+
+    if (reasoningEffort === 'xhigh' && model !== 'gpt-5.1-codex-max') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['reasoningEffort'],
+        message:
+          'Reasoning effort "xhigh" is only supported by gpt-5.1-codex-max',
+      });
+    }
+  });
 
 export const automationSettingsSchema = z.object({
   clipboardSyncDelayMs: z.number().int().min(0).max(5_000),
   selectionDelayMs: z.number().int().min(0).max(5_000),
 });
 
-const aiSettingsSchemaWithValidation = aiSettingsSchema.superRefine(
-  ({ provider, model }, ctx) => {
-    if (isValidModel(provider, model)) return;
-
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['model'],
-      message: `Model "${model}" is not valid for provider "${provider}"`,
-    });
-  },
-);
-
 export const appSettingsSchema = z.object({
   hotkeys: hotkeysSettingsSchema,
-  ai: aiSettingsSchemaWithValidation,
+  ai: aiSettingsSchema,
   automation: automationSettingsSchema,
 });
 
 export const saveApiKeyInputSchema = z.object({
-  provider: z.string().min(1).trim(),
+  provider: aiProviderSchema,
   key: z.string().min(1).trim(),
 });
 
 export const hasApiKeyInputSchema = z.object({
-  provider: z.string(),
+  provider: aiProviderSchema,
 });
 
 export const deleteApiKeyInputSchema = z.object({
-  provider: z.string(),
+  provider: aiProviderSchema,
 });
 
 export const isEncryptionAvailableInputSchema = z.void();

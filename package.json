@@ -20,6 +20,7 @@
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "fix": "bun run check:fix && bun run check",
+    "typecheck": "tsc -p tsconfig.json --noEmit --skipLibCheck",
     "verify": "bun run fix && bun run test",
     "verify-full": "bun run fix && bun run test && bun run build && bun run docs",
     "analyze:bundle": "BUNDLE_ANALYZE=true BUNDLE_ANALYZE_OPEN=true bun run build",
@@ -71,6 +72,8 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.1",
+    "@ai-sdk/openai": "^3.0.1",
+    "@ai-sdk/xai": "^3.0.1",
     "@base-ui/react": "^1.0.0",
     "@icons-pack/react-simple-icons": "^13.8.0",
     "@nut-tree-fork/nut-js": "^4.2.6",

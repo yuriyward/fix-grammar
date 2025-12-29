@@ -2,6 +2,7 @@
  * In-memory edit context storage
  */
 import type { AppContext } from '@/main/shortcuts/app-context';
+import type { AIModel, AIProvider } from '@/shared/config/ai-models';
 
 /**
  * Stored context for a grammar fix operation
@@ -10,8 +11,10 @@ import type { AppContext } from '@/main/shortcuts/app-context';
 export interface EditContext {
   originalText: string;
   rewrittenText: string;
-  timestamp: number;
+  startedAt: number;
   role: string;
+  provider: AIProvider;
+  model: AIModel;
   sourceApp?: AppContext;
 }
 

@@ -29,7 +29,7 @@ const {
       },
       ai: {
         provider: 'google',
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3-flash-preview',
         role: 'grammar',
       },
       automation: {
@@ -80,7 +80,7 @@ describe('Settings IPC handlers', () => {
       },
       ai: {
         provider: 'google',
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3-flash-preview',
         role: 'grammar',
       },
       automation: {
@@ -108,7 +108,7 @@ describe('Settings IPC handlers', () => {
       },
       ai: {
         provider: 'google',
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3-flash-preview',
         role: 'grammar-tone',
       },
       automation: {
@@ -159,7 +159,7 @@ describe('Settings IPC handlers', () => {
       },
       ai: {
         provider: 'google',
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3-flash-preview',
         role: 'grammar',
       },
       automation: {

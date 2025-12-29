@@ -30,8 +30,12 @@ export async function rewriteText(
 
   const modelInstance = google(model);
 
+  const TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+
   return streamText({
     model: modelInstance,
     prompt,
+    maxRetries: 2,
+    abortSignal: AbortSignal.timeout(TIMEOUT_MS),
   });
 }

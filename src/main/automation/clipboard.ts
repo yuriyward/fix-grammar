@@ -25,3 +25,26 @@ export function readClipboard(): string {
 export function writeClipboard(text: string): void {
   clipboard.writeText(text);
 }
+
+async function sleep(ms: number): Promise<void> {
+  await new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Poll clipboard until its content differs from the given text or timeout is reached.
+ * Used to detect when a copy operation has completed.
+ */
+export async function waitForClipboardTextToNotEqual(
+  text: string,
+  timeoutMs: number,
+): Promise<void> {
+  if (timeoutMs <= 0) return;
+
+  const pollIntervalMs = 25;
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    if (readClipboard() !== text) return;
+    await sleep(Math.min(pollIntervalMs, Math.max(0, deadline - Date.now())));
+  }
+}

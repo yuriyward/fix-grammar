@@ -53,3 +53,13 @@ export const HOTKEY_NAMED_KEYS = new Set<string>([
   'mediaplaypause',
   'printscreen',
 ]);
+
+/**
+ * Default hotkey configurations
+ */
+export const DEFAULT_HOTKEYS = {
+  /** Default shortcut for selection fix */
+  fixSelection: 'CommandOrControl+Shift+D',
+  /** Default shortcut for popup toggle */
+  togglePopup: 'CommandOrControl+Shift+I',
+} as const;

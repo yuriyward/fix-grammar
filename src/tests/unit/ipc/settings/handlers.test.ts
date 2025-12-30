@@ -2,7 +2,8 @@
  * Settings IPC handlers tests
  */
 import { createProcedureClient } from '@orpc/server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_HOTKEYS } from '@/shared/config/hotkeys';
 import type { AppSettings } from '@/shared/types/settings';
 
 const {
@@ -18,14 +19,15 @@ const {
   const mockHasApiKey = vi.fn();
   const mockSaveApiKey = vi.fn();
 
+  // Use placeholder values here - will be overwritten in beforeEach with DEFAULT_HOTKEYS
   const mockStore: {
     store: AppSettings;
     set: (value: AppSettings) => void;
   } = {
     store: {
       hotkeys: {
-        fixSelection: 'CommandOrControl+Shift+F',
-        togglePopup: 'CommandOrControl+Shift+P',
+        fixSelection: '',
+        togglePopup: '',
       },
       ai: {
         provider: 'google',
@@ -75,8 +77,8 @@ describe('Settings IPC handlers', () => {
     vi.clearAllMocks();
     mockStore.store = {
       hotkeys: {
-        fixSelection: 'CommandOrControl+Shift+F',
-        togglePopup: 'CommandOrControl+Shift+P',
+        fixSelection: DEFAULT_HOTKEYS.fixSelection,
+        togglePopup: DEFAULT_HOTKEYS.togglePopup,
       },
       ai: {
         provider: 'google',
@@ -103,8 +105,8 @@ describe('Settings IPC handlers', () => {
 
     const next: AppSettings = {
       hotkeys: {
-        fixSelection: 'CommandOrControl+Shift+F',
-        togglePopup: 'CommandOrControl+Shift+P',
+        fixSelection: DEFAULT_HOTKEYS.fixSelection,
+        togglePopup: DEFAULT_HOTKEYS.togglePopup,
       },
       ai: {
         provider: 'google',
@@ -124,14 +126,14 @@ describe('Settings IPC handlers', () => {
     expect(mockStoreSet).toHaveBeenCalledWith(next);
   });
 
-  it('rejects settings when model is not valid for provider', async () => {
+  it('accepts custom model IDs for all providers', async () => {
     const { updateSettings } = await import('@/ipc/settings/handlers');
     const callUpdateSettings = createProcedureClient(updateSettings);
 
-    const invalid: AppSettings = {
+    const customModel: AppSettings = {
       hotkeys: {
-        fixSelection: 'CommandOrControl+Shift+F',
-        togglePopup: 'CommandOrControl+Shift+P',
+        fixSelection: DEFAULT_HOTKEYS.fixSelection,
+        togglePopup: DEFAULT_HOTKEYS.togglePopup,
       },
       ai: {
         provider: 'google',
@@ -144,8 +146,11 @@ describe('Settings IPC handlers', () => {
       },
     };
 
-    await expect(callUpdateSettings(invalid)).rejects.toBeInstanceOf(Error);
-    expect(mockStoreSet).not.toHaveBeenCalled();
+    await expect(callUpdateSettings(customModel)).resolves.toEqual({
+      ...mockStore.store,
+      ...customModel,
+    });
+    expect(mockStoreSet).toHaveBeenCalledWith(customModel);
   });
 
   it('rejects settings when a hotkey accelerator is invalid', async () => {
@@ -154,7 +159,7 @@ describe('Settings IPC handlers', () => {
 
     const invalid: AppSettings = {
       hotkeys: {
-        fixSelection: 'CommandOrControl+Shift+F',
+        fixSelection: DEFAULT_HOTKEYS.fixSelection,
         togglePopup: 'Not A Hotkey',
       },
       ai: {
@@ -218,5 +223,104 @@ describe('Settings IPC handlers', () => {
       success: true,
     });
     expect(mockDeleteApiKey).toHaveBeenCalledWith('google');
+  });
+
+  describe('fetchOpenRouterModels', () => {
+    const mockFetch = vi.fn();
+    const originalFetch = globalThis.fetch;
+
+    beforeEach(() => {
+      globalThis.fetch = mockFetch;
+      mockFetch.mockReset();
+    });
+
+    afterEach(() => {
+      globalThis.fetch = originalFetch;
+    });
+
+    it('fetches and caches OpenRouter models', async () => {
+      const mockModels = [
+        { id: 'openai/gpt-4', name: 'GPT-4' },
+        { id: 'anthropic/claude-3', name: 'Claude 3' },
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: mockModels }),
+      });
+
+      const { fetchOpenRouterModels } = await import('@/ipc/settings/handlers');
+      const callFetchOpenRouterModels = createProcedureClient(
+        fetchOpenRouterModels,
+      );
+
+      const result = await callFetchOpenRouterModels(undefined);
+
+      expect(result).toEqual({
+        success: true,
+        message: 'Fetched 2 models from OpenRouter',
+        models: mockModels,
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://openrouter.ai/api/v1/models',
+        expect.objectContaining({
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+      expect(mockStoreSet).toHaveBeenCalledWith('openrouterModelsCache', {
+        models: mockModels,
+        timestamp: expect.any(Number),
+      });
+    });
+
+    it('handles OpenRouter API errors', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+      });
+
+      const { fetchOpenRouterModels } = await import('@/ipc/settings/handlers');
+      const callFetchOpenRouterModels = createProcedureClient(
+        fetchOpenRouterModels,
+      );
+
+      const result = await callFetchOpenRouterModels(undefined);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'OpenRouter API responded with status 401',
+      });
+
+      expect(mockStoreSet).not.toHaveBeenCalledWith(
+        'openrouterModelsCache',
+        expect.anything(),
+      );
+    });
+
+    it('handles network timeout', async () => {
+      const timeoutError = new Error('The operation was aborted');
+      timeoutError.name = 'TimeoutError';
+      mockFetch.mockRejectedValueOnce(timeoutError);
+
+      const { fetchOpenRouterModels } = await import('@/ipc/settings/handlers');
+      const callFetchOpenRouterModels = createProcedureClient(
+        fetchOpenRouterModels,
+      );
+
+      const result = await callFetchOpenRouterModels(undefined);
+
+      expect(result).toEqual({
+        success: false,
+        error: 'The operation was aborted',
+      });
+
+      expect(mockStoreSet).not.toHaveBeenCalledWith(
+        'openrouterModelsCache',
+        expect.anything(),
+      );
+    });
   });
 });

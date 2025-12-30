@@ -10,6 +10,7 @@ import {
   focusFirstInvalidField,
 } from '@/renderer/lib/validation';
 import { type AIProvider, getDefaultModel } from '@/shared/config/ai-models';
+import { DEFAULT_HOTKEYS } from '@/shared/config/hotkeys';
 import { appSettingsSchema } from '@/shared/schemas/settings';
 import type { RewriteRole } from '@/shared/types/ai';
 import type {
@@ -32,6 +33,8 @@ export interface UseSettingsStateReturn {
   setTextVerbosity: (verbosity: TextVerbosity) => void;
   lmstudioBaseURL: string;
   setLmstudioBaseURL: (url: string) => void;
+  openrouterExtraParams: string;
+  setOpenrouterExtraParams: (params: string) => void;
 
   // Hotkey settings
   fixSelection: string;
@@ -64,8 +67,13 @@ export function useSettingsState(): UseSettingsStateReturn {
   const [lmstudioBaseURL, setLmstudioBaseURL] = useState(
     'http://localhost:1234/v1',
   );
-  const [fixSelection, setFixSelection] = useState('CommandOrControl+Shift+F');
-  const [togglePopup, setTogglePopup] = useState('CommandOrControl+Shift+P');
+  const [openrouterExtraParams, setOpenrouterExtraParams] = useState('');
+  const [fixSelection, setFixSelection] = useState<string>(
+    DEFAULT_HOTKEYS.fixSelection,
+  );
+  const [togglePopup, setTogglePopup] = useState<string>(
+    DEFAULT_HOTKEYS.togglePopup,
+  );
   const [clipboardSyncDelayMs, setClipboardSyncDelayMs] = useState(200);
   const [selectionDelayMs, setSelectionDelayMs] = useState(100);
   const [isSaving, setIsSaving] = useState(false);
@@ -82,6 +90,7 @@ export function useSettingsState(): UseSettingsStateReturn {
       setLmstudioBaseURL(
         settings.ai.lmstudioBaseURL ?? 'http://localhost:1234/v1',
       );
+      setOpenrouterExtraParams(settings.ai.openrouterExtraParams ?? '');
       setFixSelection(settings.hotkeys.fixSelection);
       setTogglePopup(settings.hotkeys.togglePopup);
       setClipboardSyncDelayMs(settings.automation.clipboardSyncDelayMs);
@@ -119,6 +128,17 @@ export function useSettingsState(): UseSettingsStateReturn {
           textVerbosity,
           lmstudioBaseURL:
             provider === 'lmstudio' ? lmstudioBaseURL : undefined,
+          openrouterExtraParams:
+            provider === 'openrouter' && openrouterExtraParams.trim()
+              ? (() => {
+                  try {
+                    JSON.parse(openrouterExtraParams.trim());
+                    return openrouterExtraParams.trim();
+                  } catch {
+                    return undefined;
+                  }
+                })()
+              : undefined,
         },
         hotkeys: { fixSelection, togglePopup },
         automation: { clipboardSyncDelayMs, selectionDelayMs },
@@ -156,6 +176,7 @@ export function useSettingsState(): UseSettingsStateReturn {
       reasoningEffort,
       textVerbosity,
       lmstudioBaseURL,
+      openrouterExtraParams,
       fixSelection,
       togglePopup,
       clipboardSyncDelayMs,
@@ -176,6 +197,8 @@ export function useSettingsState(): UseSettingsStateReturn {
     setTextVerbosity,
     lmstudioBaseURL,
     setLmstudioBaseURL,
+    openrouterExtraParams,
+    setOpenrouterExtraParams,
     fixSelection,
     setFixSelection,
     togglePopup,

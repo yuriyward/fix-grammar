@@ -6,7 +6,7 @@
 export interface ModelConfig {
   id: string;
   name: string;
-  provider: 'google' | 'xai' | 'openai' | 'lmstudio';
+  provider: 'google' | 'xai' | 'openai' | 'lmstudio' | 'openrouter';
 }
 
 export interface ProviderConfig {
@@ -139,6 +139,32 @@ export const AI_PROVIDERS = {
     ],
     defaultModel: 'google/gemma-3n-e4b',
   },
+  // OpenRouter model IDs use namespaced format (provider/model) because OpenRouter
+  // acts as a multi-provider aggregator, routing requests to different AI providers.
+  // Unlike direct provider integrations (google, xai, openai), OpenRouter requires the
+  // provider prefix to disambiguate between models from different providers.
+  openrouter: {
+    name: 'OpenRouter',
+    // Popular models - can be supplemented by fetching from API
+    models: [
+      {
+        id: 'openai/gpt-4o',
+        name: 'GPT-4o',
+        provider: 'openrouter' as const,
+      },
+      {
+        id: 'x-ai/grok-code-fast-1',
+        name: 'Grok Code Fast 1',
+        provider: 'openrouter' as const,
+      },
+      {
+        id: 'google/gemini-2.5-flash',
+        name: 'Gemini 2.5 Flash',
+        provider: 'openrouter' as const,
+      },
+    ],
+    defaultModel: 'openai/gpt-4o',
+  },
 } as const satisfies Record<string, ProviderConfig>;
 
 export type AIProvider = keyof typeof AI_PROVIDERS;
@@ -163,17 +189,6 @@ export function getModelsForProvider(provider: AIProvider): ModelConfig[] {
  */
 export function getProviderName(provider: AIProvider): string {
   return AI_PROVIDERS[provider].name;
-}
-
-/**
- * Validate if a model ID is valid for a provider
- * LM Studio accepts any model name since users can load custom models
- */
-export function isValidModel(provider: AIProvider, modelId: string): boolean {
-  if (provider === 'lmstudio') {
-    return true;
-  }
-  return AI_PROVIDERS[provider].models.some((m) => m.id === modelId);
 }
 
 /**

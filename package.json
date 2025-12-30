@@ -78,8 +78,6 @@
     "@base-ui/react": "^1.0.0",
     "@icons-pack/react-simple-icons": "^13.8.0",
     "@nut-tree-fork/nut-js": "^4.2.6",
-    "@openrouter/ai-sdk-provider": "^1.5.4",
-    "@openrouter/sdk": "^0.3.11",
     "@orpc/client": "^1.12.3",
     "@orpc/server": "^1.12.3",
     "@tailwindcss/vite": "^4.1.18",

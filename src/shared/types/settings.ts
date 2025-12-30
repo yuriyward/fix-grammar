@@ -25,6 +25,7 @@ export interface AISettings {
   reasoningEffort?: ReasoningEffort;
   textVerbosity?: TextVerbosity;
   lmstudioBaseURL?: string;
+  openrouterExtraParams?: string;
 }
 
 export interface AutomationSettings {
@@ -32,8 +33,14 @@ export interface AutomationSettings {
   selectionDelayMs: number;
 }
 
+export interface OpenRouterModelsCache {
+  models: Array<{ id: string; name: string }>;
+  timestamp: number;
+}
+
 export interface AppSettings {
   hotkeys: HotkeysSettings;
   ai: AISettings;
   automation: AutomationSettings;
+  openrouterModelsCache?: OpenRouterModelsCache;
 }

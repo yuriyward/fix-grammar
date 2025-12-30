@@ -46,3 +46,12 @@ export async function testLMStudioConnection(baseURL: string): Promise<{
 }> {
   return ipc.client.settings.testLMStudioConnection({ baseURL });
 }
+
+export async function fetchOpenRouterModels(): Promise<{
+  success: boolean;
+  message?: string;
+  error?: string;
+  models?: Array<{ id: string; name: string }>;
+}> {
+  return ipc.client.settings.fetchOpenRouterModels();
+}

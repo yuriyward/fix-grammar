@@ -163,7 +163,7 @@ ipc/ # 3 files, 10 directories
   └─ router.ts # Root oRPC router combining all domains
 main/ # 1 files, 7 directories
   ├─ ai/ # 3 files
-  │ ├─ client.ts # Multi-provider AI client (Google Gemini, xAI Grok, OpenAI, LM Studio)
+  │ ├─ client.ts # Multi-provider AI client (Google Gemini, xAI Grok, OpenAI, LM Studio, OpenRouter)
   │ ├─ error-handler.ts # AI error handling utilities
   │ └─ prompts.ts # Role-based prompt templates
   ├─ automation/ # 3 files
@@ -250,10 +250,11 @@ renderer/ # 1 files, 5 directories
   │ └─ toggle-theme.tsx # Theme toggle button component
   ├─ features/ # 1 directory
   │ └─ settings/ # 1 files, 2 directories
-  │   ├─ hooks/ # 4 files
+  │   ├─ hooks/ # 5 files
   │   │ ├─ use-api-key.ts # API key management hook
   │   │ ├─ use-calibration.ts # Automation calibration hook
   │   │ ├─ use-lmstudio-models.ts # LM Studio model discovery hook
+  │   │ ├─ use-openrouter-models.ts # OpenRouter model discovery hook
   │   │ └─ use-settings-state.ts # Settings state management hook
   │   ├─ sections/ # 4 files
   │   │ ├─ ai-provider-section.tsx # AI Provider settings section Provider, model, role, and API key configuration UI

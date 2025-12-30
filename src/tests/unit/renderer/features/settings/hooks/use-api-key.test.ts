@@ -53,17 +53,29 @@ describe('useApiKey', () => {
     it('should initialize with empty apiKey', async () => {
       const { result } = renderHook(() => useApiKey(defaultProvider));
 
+      await waitFor(() => {
+        expect(mockHasApiKey).toHaveBeenCalled();
+      });
+
       expect(result.current.apiKey).toBe('');
     });
 
     it('should initialize with empty apiKeyPreview', async () => {
       const { result } = renderHook(() => useApiKey(defaultProvider));
 
+      await waitFor(() => {
+        expect(mockHasApiKey).toHaveBeenCalled();
+      });
+
       expect(result.current.apiKeyPreview).toBe('');
     });
 
     it('should initialize with hasKey=false', async () => {
       const { result } = renderHook(() => useApiKey(defaultProvider));
+
+      await waitFor(() => {
+        expect(mockHasApiKey).toHaveBeenCalled();
+      });
 
       expect(result.current.hasKey).toBe(false);
     });

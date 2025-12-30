@@ -65,7 +65,7 @@ ipc/ # 3 files, 10 directories
   └─ router.ts # Root oRPC router combining all domains
 main/ # 1 files, 7 directories
   ├─ ai/ # 3 files
-  │ ├─ client.ts # Multi-provider AI client (Google Gemini, xAI Grok, OpenAI, LM Studio)
+  │ ├─ client.ts # Multi-provider AI client (Google Gemini, xAI Grok, OpenAI, LM Studio, OpenRouter)
   │ ├─ error-handler.ts # AI error handling utilities
   │ └─ prompts.ts # Role-based prompt templates
   ├─ automation/ # 3 files
@@ -152,10 +152,11 @@ renderer/ # 1 files, 5 directories
   │ └─ toggle-theme.tsx # Theme toggle button component
   ├─ features/ # 1 directory
   │ └─ settings/ # 1 files, 2 directories
-  │   ├─ hooks/ # 4 files
+  │   ├─ hooks/ # 5 files
   │   │ ├─ use-api-key.ts # API key management hook
   │   │ ├─ use-calibration.ts # Automation calibration hook
   │   │ ├─ use-lmstudio-models.ts # LM Studio model discovery hook
+  │   │ ├─ use-openrouter-models.ts # OpenRouter model discovery hook
   │   │ └─ use-settings-state.ts # Settings state management hook
   │   ├─ sections/ # 4 files
   │   │ ├─ ai-provider-section.tsx # AI Provider settings section Provider, model, role, and API key configuration UI
@@ -265,6 +266,7 @@ routeTree.gen.ts # 6 exports
 
 **Exports**:
 - `export deleteApiKey` - item implementation
+- `export fetchOpenRouterModels` - item implementation
 - `export getSettings` - Settings IPC wrappers for renderer
 - `export hasApiKey` - item implementation
 - `export isEncryptionAvailable` - item implementation
@@ -443,6 +445,7 @@ routeTree.gen.ts # 6 exports
 
 **Exports**:
 - `export deleteApiKeyHandler` - item implementation
+- `export fetchOpenRouterModels` - item implementation
 - `export getSettings` - item implementation
 - `export hasApiKeyHandler` - item implementation
 - `export isEncryptionAvailableHandler` - item implementation
@@ -552,7 +555,7 @@ routeTree.gen.ts # 6 exports
 *No exports found*
 
 ### main/ai/client.ts
-**Purpose**: Multi-provider AI client (Google Gemini, xAI Grok, OpenAI, LM Studio)
+**Purpose**: Multi-provider AI client (Google Gemini, xAI Grok, OpenAI, LM Studio, OpenRouter)
 
 **Exports**:
 - `export rewriteText` - Streams a rewritten version of the given text using the c...
@@ -674,7 +677,6 @@ Used to apply ...
 
 **Exports**:
 - `export store` - electron-store instance for persistent settings
-- `export initializeSettingsStore` - item implementation
 
 ### main/tray/tray-manager.ts
 **Purpose**: System tray lifecycle management
@@ -1335,8 +1337,17 @@ Used to apply ...
 **Purpose**: LM Studio model discovery hook
 
 **Exports**:
+- `export LMStudioModelGroup` - item implementation
 - `export UseLMStudioModelsReturn` - item implementation
 - `export useLMStudioModels` - item implementation
+
+### renderer/features/settings/hooks/use-openrouter-models.ts
+**Purpose**: OpenRouter model discovery hook
+
+**Exports**:
+- `export ModelGroup` - item implementation
+- `export UseOpenRouterModelsReturn` - item implementation
+- `export useOpenRouterModels` - item implementation
 
 ### renderer/features/settings/hooks/use-settings-state.ts
 **Purpose**: Settings state management hook
@@ -1495,8 +1506,6 @@ This is the single sou...
 - `export getModelLabel` - Get user-friendly model label for display in notification...
 - `export getModelsForProvider` - Get all models for a specific provider
 - `export getProviderName` - Get provider name
-- `export isValidModel` - Validate if a model ID is valid for a provider
-LM Studio ...
 
 ### shared/config/ai.ts
 **Purpose**: AI streaming timeout (5 minutes)
@@ -1508,6 +1517,7 @@ LM Studio ...
 **Purpose**: Hotkey configuration constants
 
 **Exports**:
+- `export DEFAULT_HOTKEYS` - Default hotkey configurations
 - `export HOTKEY_MODIFIERS` - Valid hotkey modifier keys (case-insensitive)
 These can a...
 - `export HOTKEY_NAMED_KEYS` - Valid named keys (case-insensitive)
@@ -1546,6 +1556,7 @@ These can appear as t...
 - `export automationSettingsSchema` - item implementation
 - `export hotkeyAcceleratorSchema` - item implementation
 - `export hotkeysSettingsSchema` - item implementation
+- `export openrouterModelsCacheSchema` - item implementation
 - `export isValidHotkeyAccelerator` - item implementation
 - `export registerProviderValidator` - Register a validation function for a specific provider
 
@@ -1583,6 +1594,7 @@ These can appear as t...
 - `export AppSettings` - item implementation
 - `export AutomationSettings` - item implementation
 - `export HotkeysSettings` - Settings schema types
+- `export OpenRouterModelsCache` - item implementation
 - `export ReasoningEffort` - item implementation
 - `export TextVerbosity` - item implementation
 

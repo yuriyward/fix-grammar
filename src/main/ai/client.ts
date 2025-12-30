@@ -87,10 +87,18 @@ export async function rewriteText(
 
   // Build provider-specific options for OpenRouter
   const openrouterOptions = openrouterExtraParams?.trim()
-    ? JSON.parse(openrouterExtraParams)
+    ? (() => {
+        try {
+          return JSON.parse(openrouterExtraParams);
+        } catch {
+          return {};
+        }
+      })()
     : {};
 
   // Determine which provider options to use
+  // Note: This conditional logic is intentionally kept simple for now (2 providers).
+  // Consider extracting to a helper function if 3+ providers need special options.
   const providerOptions =
     provider === 'openai' && Object.keys(openaiOptions).length > 0
       ? { openai: openaiOptions }

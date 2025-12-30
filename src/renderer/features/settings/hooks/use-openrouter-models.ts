@@ -4,13 +4,23 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchOpenRouterModels, getSettings } from '@/actions/settings';
 import { toastManager } from '@/renderer/components/ui/toast';
+import { OPENROUTER_CACHE_DURATION_MS } from '@/shared/config/ai';
 import {
   type AIProvider,
   getModelsForProvider,
   type ModelConfig,
 } from '@/shared/config/ai-models';
 
-const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
+/**
+ * Deduplicates models by filtering out fetched models that are already in the popular list
+ */
+function deduplicateModels(
+  popularModels: ModelConfig[],
+  fetchedModels: ModelConfig[],
+): ModelConfig[] {
+  const popularIds = new Set(popularModels.map((m) => m.id));
+  return fetchedModels.filter((m) => !popularIds.has(m.id));
+}
 
 export interface ModelGroup {
   value: string;
@@ -36,9 +46,7 @@ export function useOpenRouterModels(
   const popularModels = useMemo(() => getModelsForProvider('openrouter'), []);
 
   const allModels = useMemo(() => {
-    // Deduplicate: if a fetched model is in popular list, only show in popular
-    const popularIds = new Set(popularModels.map((m) => m.id));
-    const uniqueFetched = fetchedModels.filter((m) => !popularIds.has(m.id));
+    const uniqueFetched = deduplicateModels(popularModels, fetchedModels);
     return [...popularModels, ...uniqueFetched];
   }, [popularModels, fetchedModels]);
 
@@ -52,8 +60,7 @@ export function useOpenRouterModels(
 
     // Only add "Other Models" group if we have fetched models
     if (fetchedModels.length > 0) {
-      const popularIds = new Set(popularModels.map((m) => m.id));
-      const uniqueFetched = fetchedModels.filter((m) => !popularIds.has(m.id));
+      const uniqueFetched = deduplicateModels(popularModels, fetchedModels);
       if (uniqueFetched.length > 0) {
         groups.push({
           value: `Other Models (${uniqueFetched.length})`,
@@ -84,7 +91,7 @@ export function useOpenRouterModels(
         const age = now - cache.timestamp;
 
         // Only use cache if it's less than 24 hours old
-        if (age < CACHE_DURATION_MS) {
+        if (age < OPENROUTER_CACHE_DURATION_MS) {
           const models = cache.models.map((m) => ({
             id: m.id,
             name: m.name,
@@ -93,8 +100,16 @@ export function useOpenRouterModels(
           setFetchedModels(models);
         }
       } catch (error) {
-        // Silently fail - user can still fetch models manually
+        // Show toast if cache is corrupted, fallback to popular models only
         console.error('Failed to load cached OpenRouter models:', error);
+        toastManager.add({
+          type: 'warning',
+          title: 'Cache Load Failed',
+          description:
+            'Using popular models only. You can fetch the full list manually.',
+        });
+        // Explicitly set to empty to ensure we fall back to popular models
+        setFetchedModels([]);
       }
     };
 

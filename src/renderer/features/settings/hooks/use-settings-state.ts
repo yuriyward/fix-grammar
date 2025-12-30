@@ -10,6 +10,7 @@ import {
   focusFirstInvalidField,
 } from '@/renderer/lib/validation';
 import { type AIProvider, getDefaultModel } from '@/shared/config/ai-models';
+import { DEFAULT_HOTKEYS } from '@/shared/config/hotkeys';
 import { appSettingsSchema } from '@/shared/schemas/settings';
 import type { RewriteRole } from '@/shared/types/ai';
 import type {
@@ -67,8 +68,12 @@ export function useSettingsState(): UseSettingsStateReturn {
     'http://localhost:1234/v1',
   );
   const [openrouterExtraParams, setOpenrouterExtraParams] = useState('');
-  const [fixSelection, setFixSelection] = useState('CommandOrControl+Shift+F');
-  const [togglePopup, setTogglePopup] = useState('CommandOrControl+Shift+P');
+  const [fixSelection, setFixSelection] = useState<string>(
+    DEFAULT_HOTKEYS.fixSelection,
+  );
+  const [togglePopup, setTogglePopup] = useState<string>(
+    DEFAULT_HOTKEYS.togglePopup,
+  );
   const [clipboardSyncDelayMs, setClipboardSyncDelayMs] = useState(200);
   const [selectionDelayMs, setSelectionDelayMs] = useState(100);
   const [isSaving, setIsSaving] = useState(false);
@@ -125,7 +130,14 @@ export function useSettingsState(): UseSettingsStateReturn {
             provider === 'lmstudio' ? lmstudioBaseURL : undefined,
           openrouterExtraParams:
             provider === 'openrouter' && openrouterExtraParams.trim()
-              ? openrouterExtraParams.trim()
+              ? (() => {
+                  try {
+                    JSON.parse(openrouterExtraParams.trim());
+                    return openrouterExtraParams.trim();
+                  } catch {
+                    return undefined;
+                  }
+                })()
               : undefined,
         },
         hotkeys: { fixSelection, togglePopup },

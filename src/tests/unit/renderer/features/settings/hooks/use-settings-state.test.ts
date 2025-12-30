@@ -3,6 +3,7 @@
  */
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_HOTKEYS } from '@/shared/config/hotkeys';
 import type { AppSettings } from '@/shared/types/settings';
 
 // Use vi.hoisted to define mocks before they're used in vi.mock
@@ -83,8 +84,8 @@ const createMockSettings = (
     ...overrides?.ai,
   },
   hotkeys: {
-    fixSelection: 'CommandOrControl+Shift+F',
-    togglePopup: 'CommandOrControl+Shift+P',
+    fixSelection: DEFAULT_HOTKEYS.fixSelection,
+    togglePopup: DEFAULT_HOTKEYS.togglePopup,
     ...overrides?.hotkeys,
   },
   automation: {
@@ -165,8 +166,8 @@ describe('useSettingsState', () => {
     it('should initialize with default hotkeys', () => {
       const { result } = renderHook(() => useSettingsState());
 
-      expect(result.current.fixSelection).toBe('CommandOrControl+Shift+F');
-      expect(result.current.togglePopup).toBe('CommandOrControl+Shift+P');
+      expect(result.current.fixSelection).toBe(DEFAULT_HOTKEYS.fixSelection);
+      expect(result.current.togglePopup).toBe(DEFAULT_HOTKEYS.togglePopup);
     });
 
     it('should initialize with default automation delays', () => {
@@ -244,8 +245,8 @@ describe('useSettingsState', () => {
           // reasoningEffort, textVerbosity, lmstudioBaseURL are missing
         },
         hotkeys: {
-          fixSelection: 'CommandOrControl+Shift+F',
-          togglePopup: 'CommandOrControl+Shift+P',
+          fixSelection: DEFAULT_HOTKEYS.fixSelection,
+          togglePopup: DEFAULT_HOTKEYS.togglePopup,
         },
         automation: {
           clipboardSyncDelayMs: 200,

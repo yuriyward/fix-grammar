@@ -3,6 +3,7 @@
  */
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_HOTKEYS } from '@/shared/config/hotkeys';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
 import type {
   AutomationCalibrationFocusRequest,
@@ -52,8 +53,8 @@ const createFailedCalibrationResult = (reason: string) => ({
 
 const createDefaultSettings = () => ({
   hotkeys: {
-    fixSelection: 'CommandOrControl+Shift+F',
-    togglePopup: 'CommandOrControl+Shift+P',
+    fixSelection: DEFAULT_HOTKEYS.fixSelection,
+    togglePopup: DEFAULT_HOTKEYS.togglePopup,
   },
   ai: {
     provider: 'google' as const,

@@ -139,6 +139,10 @@ export const AI_PROVIDERS = {
     ],
     defaultModel: 'google/gemma-3n-e4b',
   },
+  // OpenRouter model IDs use namespaced format (provider/model) because OpenRouter
+  // acts as a multi-provider aggregator, routing requests to different AI providers.
+  // Unlike direct provider integrations (google, xai, openai), OpenRouter requires the
+  // provider prefix to disambiguate between models from different providers.
   openrouter: {
     name: 'OpenRouter',
     // Popular models - can be supplemented by fetching from API

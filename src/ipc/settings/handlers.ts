@@ -11,6 +11,7 @@ import {
 } from '@/main/storage/api-keys';
 import { store } from '@/main/storage/settings';
 import { appSettingsSchema } from '@/shared/schemas/settings';
+import type { AppSettings } from '@/shared/types/settings';
 import {
   deleteApiKeyInputSchema,
   hasApiKeyInputSchema,
@@ -33,7 +34,7 @@ export const getSettings = os.handler(() => {
 export const updateSettings = os
   .input(appSettingsSchema)
   .handler(({ input }) => {
-    store.set(input);
+    store.set(input as AppSettings);
     return store.store;
   });
 

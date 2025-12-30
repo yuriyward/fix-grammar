@@ -25,11 +25,11 @@ function Slider({
   return (
     <SliderPrimitive.Root
       className="data-[orientation=horizontal]:w-full"
-      defaultValue={defaultValue}
+      {...(defaultValue !== undefined && { defaultValue })}
       max={max}
       min={min}
       thumbAlignment="edge"
-      value={value}
+      {...(value !== undefined && { value })}
       {...props}
     >
       {children}

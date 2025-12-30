@@ -18,30 +18,23 @@ class FixStateManager {
   };
 
   /**
-   * Check if a new fix can be started
-   * Returns false if a fix is already in progress
+   * Atomically try to acquire the fix lock.
+   * Returns true if lock was acquired, false if already processing.
+   * This prevents TOCTOU race conditions between check and start.
    */
-  canStartFix(): boolean {
-    return !this.state.isProcessing;
+  tryAcquire(): boolean {
+    const wasProcessing = this.state.isProcessing;
+    this.state.isProcessing = true;
+    return !wasProcessing;
   }
 
   /**
-   * Start a new fix operation
-   * Should only be called after canStartFix() returns true
-   * @throws {Error} If a fix is already in progress
+   * Set context data for the current fix operation.
+   * Must be called after tryAcquire() returns true.
    */
-  startFix(contextId: string, sourceApp: AppContext | null): void {
-    if (this.state.isProcessing) {
-      throw new Error(
-        'Cannot start new fix: a fix operation is already in progress',
-      );
-    }
-
-    this.state = {
-      isProcessing: true,
-      contextId,
-      sourceApp,
-    };
+  setContext(contextId: string, sourceApp: AppContext | null): void {
+    this.state.contextId = contextId;
+    this.state.sourceApp = sourceApp;
   }
 
   /**

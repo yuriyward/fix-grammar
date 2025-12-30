@@ -10,10 +10,24 @@ import { getApiKey } from '@/main/storage/api-keys';
 import { store } from '@/main/storage/settings';
 import { AI_STREAM_TIMEOUT_MS } from '@/shared/config/ai';
 import type { AIProvider } from '@/shared/config/ai-models';
+import { openrouterExtraParamsSchema } from '@/shared/schemas/ai';
 import type { RewriteRole } from '@/shared/types/ai';
 import type { ReasoningEffort, TextVerbosity } from '@/shared/types/settings';
 import { sanitizeLMStudioURL } from '@/shared/utils/url-validation';
 import { buildPrompt } from './prompts';
+
+/**
+ * JSON-compatible object type for AI SDK provider options.
+ * Matches the internal JSONObject type expected by the AI SDK.
+ */
+type JSONValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: JSONValue | undefined }
+  | JSONValue[];
+type JSONObject = { [key: string]: JSONValue | undefined };
 
 /**
  * Streams a rewritten version of the given text using the configured AI provider and model.
@@ -85,12 +99,26 @@ export async function rewriteText(
     ...(textVerbosity && { textVerbosity }),
   };
 
-  // Build provider-specific options for OpenRouter
-  const openrouterOptions = openrouterExtraParams?.trim()
+  // Build provider-specific options for OpenRouter with Zod validation
+  // Cast to JSONObject for AI SDK compatibility - Zod validates the structure
+  const openrouterOptions: JSONObject = openrouterExtraParams?.trim()
     ? (() => {
         try {
-          return JSON.parse(openrouterExtraParams);
+          const parsed: unknown = JSON.parse(openrouterExtraParams);
+          const result = openrouterExtraParamsSchema.safeParse(parsed);
+          if (!result.success) {
+            console.warn(
+              '[AI Client] Invalid OpenRouter extra params, using empty object:',
+              result.error.flatten().fieldErrors,
+            );
+            return {};
+          }
+          // Safe cast: Zod validates this is a plain object with JSON-compatible values
+          return result.data as JSONObject;
         } catch {
+          console.warn(
+            '[AI Client] Failed to parse OpenRouter extra params JSON, using empty object',
+          );
           return {};
         }
       })()

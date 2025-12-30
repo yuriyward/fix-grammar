@@ -18,7 +18,7 @@ export function showNotification(payload: AppNotificationPayload): void {
   const stored = addNotification(payload);
   const osNotification = new Notification({
     title: stored.title,
-    body: stored.description,
+    ...(stored.description && { body: stored.description }),
   });
   osNotification.show();
   sendInAppNotification(stored);

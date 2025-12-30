@@ -19,7 +19,7 @@ function Label({
   return useRender({
     defaultTagName: 'label',
     props: mergeProps<'label'>(defaultProps, props),
-    render,
+    ...(render !== undefined && { render }),
   });
 }
 

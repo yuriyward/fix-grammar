@@ -29,7 +29,7 @@ function MenuPopup({
     <MenuPrimitive.Portal>
       <MenuPrimitive.Positioner
         align={align}
-        alignOffset={alignOffset}
+        {...(alignOffset !== undefined && { alignOffset })}
         className="z-50"
         data-slot="menu-positioner"
         side={side}
@@ -87,7 +87,7 @@ function MenuCheckboxItem({
 }: MenuPrimitive.CheckboxItem.Props) {
   return (
     <MenuPrimitive.CheckboxItem
-      checked={checked}
+      checked={checked ?? false}
       className={cn(
         "grid min-h-8 in-data-[side=none]:min-w-[calc(var(--anchor-width)+1.25rem)] cursor-default grid-cols-[1rem_1fr] items-center gap-2 rounded-sm py-1 ps-2 pe-4 text-base outline-none data-disabled:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-64 sm:min-h-7 sm:text-sm [&_svg:not([class*='size-'])]:size-4.5 sm:[&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className,
@@ -238,12 +238,15 @@ function MenuSubPopup({
   alignOffset?: MenuPrimitive.Positioner.Props['alignOffset'];
 }) {
   const defaultAlignOffset = align !== 'center' ? -5 : undefined;
+  const resolvedAlignOffset = alignOffset ?? defaultAlignOffset;
 
   return (
     <MenuPopup
       align={align}
-      alignOffset={alignOffset ?? defaultAlignOffset}
-      className={className}
+      {...(resolvedAlignOffset !== undefined && {
+        alignOffset: resolvedAlignOffset,
+      })}
+      {...(className !== undefined && { className })}
       data-slot="menu-sub-content"
       side="inline-end"
       sideOffset={sideOffset}

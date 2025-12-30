@@ -19,13 +19,24 @@ import { store } from '@/main/storage/settings';
 import { trayManager } from '@/main/tray/tray-manager';
 import { showNotification } from '@/main/utils/notifications';
 import { windowManager } from '@/main/windows/window-manager';
+import type { AIModel, AIProvider } from '@/shared/config/ai-models';
 import { getModelLabel } from '@/shared/config/ai-models';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
+import type { RewriteRole } from '@/shared/types/ai';
 import type { AppNotification } from '@/shared/types/notifications';
 import { type AppContext, getFrontmostApp, isSameApp } from './app-context';
 import { fixStateManager } from './fix-state';
 
-const activeOsNotifications = new Set<Notification>();
+const activeOsNotifications = new Map<Notification, NodeJS.Timeout>();
+
+/** OS notifications auto-dismiss after ~5s, but we add buffer for slow systems */
+const OS_NOTIFICATION_CLEANUP_MS = 30_000;
+
+function cleanupOsNotification(notification: Notification): void {
+  const timeout = activeOsNotifications.get(notification);
+  if (timeout) clearTimeout(timeout);
+  activeOsNotifications.delete(notification);
+}
 
 function sendInAppNotification(notification: AppNotification): void {
   windowManager.broadcast(IPC_CHANNELS.NOTIFY, notification);
@@ -133,12 +144,17 @@ function showPersistentFixNotification(
   // OS notification (non-actionable, just for awareness)
   const osNotification = new Notification({
     title: notification.title,
-    body: notification.description,
+    ...(notification.description && { body: notification.description }),
   });
-  activeOsNotifications.add(osNotification);
-  osNotification.on('close', () => {
-    activeOsNotifications.delete(osNotification);
-  });
+
+  // Track with timeout cleanup (OS may auto-dismiss without 'close' event)
+  const cleanupTimeout = setTimeout(
+    () => cleanupOsNotification(osNotification),
+    OS_NOTIFICATION_CLEANUP_MS,
+  );
+  activeOsNotifications.set(osNotification, cleanupTimeout);
+
+  osNotification.on('close', () => cleanupOsNotification(osNotification));
   osNotification.on('click', () => {
     windowManager.openNotificationCenter();
   });
@@ -162,9 +178,9 @@ async function processFixAsync(
 
   try {
     // Get AI configuration for metadata
-    const provider = store.get('ai.provider');
-    const role = store.get('ai.role');
-    const model = store.get('ai.model');
+    const provider = store.get('ai.provider') as AIProvider;
+    const role = store.get('ai.role') as RewriteRole;
+    const model = store.get('ai.model') as AIModel;
     const modelLabel = getModelLabel(provider, model);
 
     // AI rewriting using unified function
@@ -175,15 +191,16 @@ async function processFixAsync(
     );
 
     // Save context
-    saveEditContext(contextId, {
+    const editContext = {
       originalText,
       rewrittenText,
       startedAt: fixStartedAt,
       role,
       provider,
       model,
-      sourceApp: sourceApp ?? undefined,
-    });
+      ...(sourceApp && { sourceApp }),
+    };
+    saveEditContext(contextId, editContext);
 
     // Smart completion: check if user is still in same app
     const currentApp = await getFrontmostApp();
@@ -245,8 +262,8 @@ async function processFixAsync(
  * the fix is pasted automatically. Otherwise, a persistent notification is shown.
  */
 export async function handleFixSelection(): Promise<void> {
-  // Guard: reject if already processing
-  if (!fixStateManager.canStartFix()) {
+  // Atomic acquire: prevents TOCTOU race between check and start
+  if (!fixStateManager.tryAcquire()) {
     showNotification({
       type: 'warning',
       title: 'Grammar Copilot',
@@ -271,12 +288,13 @@ export async function handleFixSelection(): Promise<void> {
         title: 'Grammar Copilot',
         description: 'No text selected',
       });
+      fixStateManager.completeFix();
       return;
     }
 
     // 3. Start async processing (fire and forget)
     const contextId = randomUUID();
-    fixStateManager.startFix(contextId, sourceApp);
+    fixStateManager.setContext(contextId, sourceApp);
 
     processFixAsync(contextId, originalText, sourceApp, fixStartedAt)
       .catch((error) => {

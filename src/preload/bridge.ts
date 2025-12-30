@@ -74,6 +74,8 @@ export function setupBridge() {
     if (event.data === IPC_CHANNELS.START_ORPC_SERVER) {
       const [serverPort] = event.ports;
 
+      if (!serverPort) return;
+
       ipcRenderer.postMessage(IPC_CHANNELS.START_ORPC_SERVER, null, [
         serverPort,
       ]);

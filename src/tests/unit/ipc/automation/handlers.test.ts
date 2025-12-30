@@ -41,6 +41,7 @@ const {
   };
 
   const ipcMainListeners = new Map<string, Set<unknown>>();
+  const ipcMainOnceListeners = new Map<string, Set<unknown>>();
 
   const mockIpcMain = {
     on: vi.fn((channel: string, listener: unknown) => {
@@ -49,25 +50,46 @@ const {
       ipcMainListeners.set(channel, set);
       return mockIpcMain;
     }),
+    once: vi.fn((channel: string, listener: unknown) => {
+      const set = ipcMainOnceListeners.get(channel) ?? new Set();
+      set.add(listener);
+      ipcMainOnceListeners.set(channel, set);
+      return mockIpcMain;
+    }),
     removeListener: vi.fn((channel: string, listener: unknown) => {
       ipcMainListeners.get(channel)?.delete(listener);
+      ipcMainOnceListeners.get(channel)?.delete(listener);
       return mockIpcMain;
     }),
   };
 
   const emitIpcMain = (channel: string, ...args: unknown[]) => {
+    // Emit to regular listeners
     const listeners = ipcMainListeners.get(channel);
-    if (!listeners) return;
-    for (const listener of listeners) {
-      if (typeof listener === 'function') {
-        listener(...args);
+    if (listeners) {
+      for (const listener of listeners) {
+        if (typeof listener === 'function') {
+          listener(...args);
+        }
       }
+    }
+    // Emit to once listeners and remove them after firing
+    const onceListeners = ipcMainOnceListeners.get(channel);
+    if (onceListeners) {
+      for (const listener of onceListeners) {
+        if (typeof listener === 'function') {
+          listener(...args);
+        }
+      }
+      ipcMainOnceListeners.delete(channel);
     }
   };
 
   const resetIpcMainListeners = () => {
     ipcMainListeners.clear();
+    ipcMainOnceListeners.clear();
     mockIpcMain.on.mockClear();
+    mockIpcMain.once.mockClear();
     mockIpcMain.removeListener.mockClear();
   };
 

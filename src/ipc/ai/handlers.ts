@@ -15,23 +15,36 @@ export const rewriteTextHandler = os
     const result = await rewriteTextWithSettings(input.text, input.role);
 
     let fullText = '';
+    let streamError: Error | null = null;
+
     try {
       for await (const chunk of result.textStream) {
         fullText += chunk;
       }
     } catch (error) {
-      console.error('AI rewrite stream failed:', error);
+      streamError = error instanceof Error ? error : new Error(String(error));
+    }
 
-      const errorDetails = parseAIError(error);
+    // If stream failed at any point, treat as complete failure
+    if (streamError) {
+      console.error('AI rewrite stream failed:', streamError);
+
+      const errorDetails = parseAIError(streamError);
       showNotification({
         type: 'error',
         title: errorDetails.title,
         description: errorDetails.message,
       });
 
-      if (fullText.length === 0) {
-        throw new Error(`AI rewrite failed: ${errorDetails.message}`);
-      }
+      // Include partial content length in error for debugging
+      const partialInfo =
+        fullText.length > 0
+          ? ` (${fullText.length} chars received before failure)`
+          : '';
+
+      throw new Error(
+        `AI rewrite failed: ${errorDetails.message}${partialInfo}`,
+      );
     }
 
     return { content: fullText };

@@ -46,6 +46,8 @@ async function setupORPC() {
     const [serverPort] = event.ports;
     const senderWindow = BrowserWindow.fromWebContents(event.sender);
 
+    if (!serverPort) return;
+
     serverPort.start();
     rpcHandler.upgrade(serverPort, {
       context: {
@@ -75,7 +77,7 @@ async function initializeWindows() {
 export function initializeApp() {
   // Hide dock icon on macOS for tray-only app
   if (process.platform === 'darwin') {
-    app.dock.hide();
+    app.dock?.hide();
   }
 
   app
@@ -97,7 +99,7 @@ export function initializeApp() {
   app.on('activate', () => {
     // macOS: Show main window and dock icon when activated
     if (process.platform === 'darwin') {
-      app.dock.show();
+      app.dock?.show();
     }
     windowManager.showMainWindow();
   });

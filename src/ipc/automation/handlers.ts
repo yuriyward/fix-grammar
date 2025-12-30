@@ -108,7 +108,7 @@ async function focusAndSelectCalibrationTextarea(
         resolve(payload);
       }
 
-      ipcMain.on(
+      ipcMain.once(
         IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_RESPONSE,
         onResponse,
       );

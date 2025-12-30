@@ -175,7 +175,7 @@ function CommandGroup({
 }: React.ComponentProps<typeof AutocompleteGroup>) {
   return (
     <AutocompleteGroup
-      className={className}
+      {...(className !== undefined && { className })}
       data-slot="command-group"
       {...props}
     />
@@ -188,7 +188,7 @@ function CommandGroupLabel({
 }: React.ComponentProps<typeof AutocompleteGroupLabel>) {
   return (
     <AutocompleteGroupLabel
-      className={className}
+      {...(className !== undefined && { className })}
       data-slot="command-group-label"
       {...props}
     />

@@ -99,7 +99,7 @@ describe('AI IPC handlers', () => {
     });
   });
 
-  it('shows notification and returns partial text when stream fails after some chunks', async () => {
+  it('shows notification and throws when stream fails after some chunks (discards partial content)', async () => {
     mockRewriteTextWithSettings.mockResolvedValue({
       textStream: textStream(['Partial', 'Ignored'], 1),
     });
@@ -109,15 +109,32 @@ describe('AI IPC handlers', () => {
 
     await expect(
       callRewrite({ text: 'Original', role: 'grammar' }),
-    ).resolves.toEqual({
-      content: 'Partial',
-    });
+    ).rejects.toThrow(
+      'AI rewrite failed: Test message (7 chars received before failure)',
+    );
 
     expect(mockShowNotification).toHaveBeenCalledWith({
       type: 'error',
       title: 'Test Error',
       description: 'Test message',
     });
+  });
+
+  it('returns full content when stream completes successfully', async () => {
+    mockRewriteTextWithSettings.mockResolvedValue({
+      textStream: textStream(['Hello', ' ', 'World']),
+    });
+
+    const { rewriteTextHandler } = await import('@/ipc/ai/handlers');
+    const callRewrite = createProcedureClient(rewriteTextHandler);
+
+    await expect(
+      callRewrite({ text: 'Test input', role: 'grammar' }),
+    ).resolves.toEqual({
+      content: 'Hello World',
+    });
+
+    expect(mockShowNotification).not.toHaveBeenCalled();
   });
 
   it('validates input schema and rejects empty text', async () => {

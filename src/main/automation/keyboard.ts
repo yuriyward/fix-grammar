@@ -1,7 +1,7 @@
 /**
  * nut-js wrapper for keyboard automation
  */
-import { Key, keyboard } from '@nut-tree-fork/nut-js';
+import { Key, keyboard, sleep } from '@nut-tree-fork/nut-js';
 import {
   readClipboard,
   waitForClipboardTextToNotEqual,

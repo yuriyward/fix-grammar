@@ -42,7 +42,7 @@ export class WindowManager {
         !details.url.startsWith('http://') &&
         !details.url.startsWith('https://')
       ) {
-        callback({ responseHeaders: details.responseHeaders });
+        callback({ responseHeaders: details.responseHeaders ?? {} });
         return;
       }
 
@@ -50,7 +50,7 @@ export class WindowManager {
         details.resourceType !== 'mainFrame' &&
         details.resourceType !== 'subFrame'
       ) {
-        callback({ responseHeaders: details.responseHeaders });
+        callback({ responseHeaders: details.responseHeaders ?? {} });
         return;
       }
 
@@ -131,8 +131,9 @@ export class WindowManager {
 
   createMainWindow(): BrowserWindow {
     const preload = path.join(__dirname, 'preload.js');
+    const isMacOS = process.platform === 'darwin';
 
-    this.mainWindow = new BrowserWindow({
+    const windowOptions: Electron.BrowserWindowConstructorOptions = {
       width: 800,
       height: 600,
       show: false, // Hidden by default for tray-first app
@@ -144,10 +145,14 @@ export class WindowManager {
         sandbox: true,
         preload: preload,
       },
-      titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
-      trafficLightPosition:
-        process.platform === 'darwin' ? { x: 5, y: 5 } : undefined,
-    });
+      titleBarStyle: isMacOS ? 'hiddenInset' : 'hidden',
+    };
+
+    if (isMacOS) {
+      windowOptions.trafficLightPosition = { x: 5, y: 5 };
+    }
+
+    this.mainWindow = new BrowserWindow(windowOptions);
 
     this.ensureCsp(this.mainWindow.webContents.session);
 
@@ -185,7 +190,7 @@ export class WindowManager {
     }
     // Show dock icon when showing main window on macOS
     if (process.platform === 'darwin') {
-      app.dock.show();
+      app.dock?.show();
     }
     this.mainWindow?.show();
     this.mainWindow?.focus();
@@ -195,7 +200,7 @@ export class WindowManager {
     this.mainWindow?.hide();
     // Hide dock icon when hiding main window on macOS
     if (process.platform === 'darwin') {
-      app.dock.hide();
+      app.dock?.hide();
     }
   }
 

@@ -19,7 +19,7 @@
     "format:write": "biome format --write .",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "fix": "bun run check:fix && bun run check",
+    "fix": "bun run check:fix && bun run check && bun run typecheck",
     "typecheck": "tsc -p tsconfig.json --noEmit --skipLibCheck",
     "verify": "bun run fix && bun run test",
     "verify-full": "bun run fix && bun run test && bun run build && bun run docs",

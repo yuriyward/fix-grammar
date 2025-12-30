@@ -5,7 +5,7 @@
 import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import { os } from '@orpc/server';
-import type { BrowserWindow } from 'electron';
+import { type BrowserWindow, type IpcMainEvent, ipcMain } from 'electron';
 import { ipcContext } from '@/ipc/context';
 import {
   backupClipboard,
@@ -20,6 +20,8 @@ import {
   simulateSelectAll,
 } from '@/main/automation/keyboard';
 import { store } from '@/main/storage/settings';
+import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
+import type { AutomationCalibrationFocusResponse } from '@/shared/types/automation';
 import {
   calibrateDelaysInputSchema,
   captureTextInputSchema,
@@ -76,25 +78,57 @@ async function focusAndSelectCalibrationTextarea(
   window: BrowserWindow,
   expectedText: string,
 ): Promise<void> {
-  const result = (await window.webContents.executeJavaScript(
-    `
-      (() => {
-        const el = document.getElementById('calibrationText');
-        if (!(el instanceof HTMLTextAreaElement)) {
-          return { ok: false, reason: 'Calibration field not found.' };
-        }
-        if (el.value !== ${JSON.stringify(expectedText)}) {
-          return { ok: false, reason: 'Calibration text mismatch.' };
-        }
-        el.focus();
-        el.select();
-        const active = document.activeElement;
-        const ok = active === el;
-        return { ok, reason: ok ? null : 'Calibration field not focused.' };
-      })();
-    `,
-    true,
-  )) as { ok: boolean; reason: string | null };
+  const requestId = randomUUID();
+  const timeoutMs = 1_000;
+
+  const result = await new Promise<AutomationCalibrationFocusResponse>(
+    (resolve, reject) => {
+      let done = false;
+      let timeout: NodeJS.Timeout | null = null;
+
+      function cleanup(): void {
+        if (timeout) clearTimeout(timeout);
+        timeout = null;
+        ipcMain.removeListener(
+          IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_RESPONSE,
+          onResponse,
+        );
+      }
+
+      function onResponse(
+        event: IpcMainEvent,
+        payload: AutomationCalibrationFocusResponse,
+      ): void {
+        if (done) return;
+        if (event.sender.id !== window.webContents.id) return;
+        if (payload?.requestId !== requestId) return;
+
+        done = true;
+        cleanup();
+        resolve(payload);
+      }
+
+      ipcMain.on(
+        IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_RESPONSE,
+        onResponse,
+      );
+
+      timeout = setTimeout(() => {
+        if (done) return;
+        done = true;
+        cleanup();
+        reject(new Error('Timed out waiting for calibration field focus.'));
+      }, timeoutMs);
+
+      window.webContents.send(
+        IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_REQUEST,
+        {
+          requestId,
+          expectedText,
+        },
+      );
+    },
+  );
 
   if (!result.ok) {
     throw new Error(result.reason ?? 'Failed to focus calibration field.');

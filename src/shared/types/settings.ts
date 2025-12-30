@@ -20,10 +20,11 @@ export type TextVerbosity = 'low' | 'medium' | 'high';
 
 export interface AISettings {
   provider: AIProvider;
-  model: AIModel;
+  model: AIModel | string;
   role: RewriteRole;
   reasoningEffort?: ReasoningEffort;
   textVerbosity?: TextVerbosity;
+  lmstudioBaseURL?: string;
 }
 
 export interface AutomationSettings {

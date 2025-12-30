@@ -4,18 +4,22 @@
 
 ## Tree Overview
 
-actions/ # 10 files
+actions/ # 11 files
   ├─ ai.ts # AI IPC wrappers for renderer
   ├─ app.ts # App info IPC wrappers for renderer
   ├─ automation.ts # Automation IPC wrappers for renderer
   ├─ language.ts # Language preference management for renderer
   ├─ notifications.ts # Notifications IPC wrappers for renderer
+  ├─ permissions.ts # Permissions IPC wrappers for renderer
   ├─ settings.ts # Settings IPC wrappers for renderer
   ├─ shell.ts # Shell operations IPC wrapper for renderer
   ├─ shortcuts.ts # Shortcuts IPC wrappers for renderer
   ├─ theme.ts # Theme mode management for renderer
   └─ window.ts # Window control IPC wrappers for renderer
-ipc/ # 3 files, 9 directories
+build/ # 2 files
+  ├─ dependency-utils.ts # 1 export
+  └─ file-utils.ts # 2 exports
+ipc/ # 3 files, 10 directories
   ├─ ai/ # 3 files
   │ ├─ handlers.ts # AI IPC handlers
   │ ├─ router.ts # AI domain router
@@ -32,6 +36,10 @@ ipc/ # 3 files, 9 directories
   │ ├─ handlers.ts # Notifications IPC handlers
   │ ├─ router.ts # Notifications domain router
   │ └─ schemas.ts # Zod schemas for notifications IPC
+  ├─ permissions/ # 3 files
+  │ ├─ handlers.ts # Permissions IPC handlers
+  │ ├─ router.ts # Permissions domain router
+  │ └─ schemas.ts # Zod schemas for permissions IPC
   ├─ settings/ # 3 files
   │ ├─ handlers.ts # Settings IPC handlers
   │ ├─ router.ts # Settings domain router
@@ -55,16 +63,19 @@ ipc/ # 3 files, 9 directories
   ├─ context.ts # IPC context with main window reference and window manager
   ├─ handler.ts # oRPC handler for main process
   └─ router.ts # Root oRPC router combining all domains
-main/ # 1 files, 6 directories
+main/ # 1 files, 7 directories
   ├─ ai/ # 3 files
-  │ ├─ client.ts # Google Gemini AI client
+  │ ├─ client.ts # Multi-provider AI client (Google Gemini, xAI Grok, OpenAI, LM Studio)
   │ ├─ error-handler.ts # AI error handling utilities
   │ └─ prompts.ts # Role-based prompt templates
-  ├─ automation/ # 2 files
+  ├─ automation/ # 3 files
   │ ├─ clipboard.ts # Clipboard backup/restore utilities
-  │ └─ keyboard.ts # nut-js wrapper for keyboard automation
-  ├─ shortcuts/ # 2 files
-  │ ├─ handlers.ts # Fix selection/field orchestration handlers
+  │ ├─ keyboard.ts # nut-js wrapper for keyboard automation
+  │ └─ sentinel.ts # Clipboard sentinel value generation
+  ├─ shortcuts/ # 4 files
+  │ ├─ app-context.ts # macOS app context utilities for tracking frontmost application
+  │ ├─ fix-state.ts # State manager for grammar fix operations Prevents concurrent fix requests (one at a time)
+  │ ├─ handlers.ts # Fix selection orchestration handlers
   │ └─ manager.ts # Global shortcut registration manager
   ├─ storage/ # 4 files
   │ ├─ api-keys.ts # safeStorage wrapper for API key encryption
@@ -73,6 +84,8 @@ main/ # 1 files, 6 directories
   │ └─ settings.ts # electron-store instance for persistent settings
   ├─ tray/ # 1 file
   │ └─ tray-manager.ts # System tray lifecycle management
+  ├─ utils/ # 1 file
+  │ └─ notifications.ts # Notification utilities for main process
   ├─ windows/ # 1 file
   │ └─ window-manager.ts # Centralized window lifecycle management
   └─ app.ts # Main process lifecycle and initialization
@@ -138,38 +151,58 @@ renderer/ # 1 files, 5 directories
   │ ├─ notification-center.tsx # 1 export
   │ └─ toggle-theme.tsx # Theme toggle button component
   ├─ features/ # 1 directory
-  │ └─ settings/ # 1 file
-  │   └─ settings-form.tsx # Settings form component
+  │ └─ settings/ # 1 files, 2 directories
+  │   ├─ hooks/ # 4 files
+  │   │ ├─ use-api-key.ts # API key management hook
+  │   │ ├─ use-calibration.ts # Automation calibration hook
+  │   │ ├─ use-lmstudio-models.ts # LM Studio model discovery hook
+  │   │ └─ use-settings-state.ts # Settings state management hook
+  │   ├─ sections/ # 4 files
+  │   │ ├─ ai-provider-section.tsx # AI Provider settings section Provider, model, role, and API key configuration UI
+  │   │ ├─ appearance-section.tsx # Appearance settings section Theme and language toggle UI
+  │   │ ├─ automation-section.tsx # Automation settings section Calibration and delay configuration UI
+  │   │ └─ hotkeys-section.tsx # Hotkeys settings section Global shortcuts configuration UI
+  │   └─ settings-form.tsx # Settings form component Orchestrates hooks and section components for settings management
   ├─ hooks/ # 2 files
   │ ├─ use-mobile.ts # 1 export
   │ └─ use-notification-listener.ts # 1 export
   ├─ layouts/ # 1 file
   │ └─ base-layout.tsx # Base layout with title bar region
-  ├─ lib/ # 6 files
+  ├─ lib/ # 7 files
   │ ├─ i18n.ts # i18next configuration and translations
   │ ├─ ipc-manager.ts # IPC client manager for renderer process
   │ ├─ langs.ts # Supported language definitions
   │ ├─ language.ts # Language type definition
   │ ├─ routes.ts # TanStack Router configuration Uses hash history to support multiple Electron windows with independent routes. Each window can load with a different hash (e.g., #/popup, #/settings) and the router will initialize to that route automatically. Memory history would force all windows to start at the same initial route.
-  │ └─ tailwind.ts # Tailwind CSS class merging utility
+  │ ├─ tailwind.ts # Tailwind CSS class merging utility
+  │ └─ validation.ts # Form validation helper utilities
   └─ app.tsx # React application root and mounting
-routes/ # 3 files
+routes/ # 4 files
   ├─ __root.tsx # Root route with base layout wrapper
   ├─ index.tsx # Dashboard page route component
+  ├─ onboarding.tsx # Onboarding / permissions page route component
   ├─ popup.tsx # Popup chat route component
   └─ settings.tsx # Settings page route component
-shared/ # 3 directories
-  ├─ config/ # 1 file
-  │ └─ ai-models.ts # Centralized AI model configuration This is the single source of truth for all available models
+shared/ # 5 directories
+  ├─ config/ # 4 files
+  │ ├─ ai-models.ts # Centralized AI model configuration This is the single source of truth for all available models
+  │ ├─ ai.ts # AI streaming timeout (5 minutes)
+  │ ├─ hotkeys.ts # Hotkey configuration constants
+  │ └─ native-deps.ts # 2 exports
   ├─ contracts/ # 1 file
   │ └─ ipc-channels.ts # IPC channel names and storage keys
-  └─ types/ # 6 files
-    ├─ ai.ts # AI types
-    ├─ automation.ts # Automation types
-    ├─ notifications.ts # 3 exports
-    ├─ settings.ts # Settings schema types
-    ├─ shortcuts.ts # Hotkey types
-    └─ theme.ts # Theme mode type definition
+  ├─ schemas/ # 2 files
+  │ ├─ ai.ts # Shared AI-related Zod schemas
+  │ └─ settings.ts # Shared settings validation schemas
+  ├─ types/ # 6 files
+  │ ├─ ai.ts # AI types
+  │ ├─ automation.ts # Automation types
+  │ ├─ notifications.ts # 4 exports
+  │ ├─ settings.ts # Settings schema types
+  │ ├─ shortcuts.ts # Hotkey types
+  │ └─ theme.ts # Theme mode type definition
+  └─ utils/ # 1 file
+    └─ url-validation.ts # URL validation utilities for preventing SSRF attacks
 tests/ # 1 directory
   └─ unit/ # 1 file
     └─ setup.ts # Vitest setup with jest-dom matchers
@@ -212,10 +245,20 @@ routeTree.gen.ts # 6 exports
 **Purpose**: Notifications IPC wrappers for renderer
 
 **Exports**:
+- `export applyFix` - item implementation
 - `export clearNotifications` - item implementation
 - `export listNotifications` - Notifications IPC wrappers for renderer
 - `export markAllNotificationsRead` - item implementation
 - `export markNotificationRead` - item implementation
+
+### actions/permissions.ts
+**Purpose**: Permissions IPC wrappers for renderer
+
+**Exports**:
+- `export PermissionsStatus` - Permissions IPC wrappers for renderer
+- `export getPermissionsStatus` - item implementation
+- `export requestAccessibilityAccess` - item implementation
+- `export showTestNotification` - item implementation
 
 ### actions/settings.ts
 **Purpose**: Settings IPC wrappers for renderer
@@ -226,6 +269,7 @@ routeTree.gen.ts # 6 exports
 - `export hasApiKey` - item implementation
 - `export isEncryptionAvailable` - item implementation
 - `export saveApiKey` - item implementation
+- `export testLMStudioConnection` - item implementation
 - `export updateSettings` - item implementation
 
 ### actions/shell.ts
@@ -259,11 +303,24 @@ routeTree.gen.ts # 6 exports
 - `export maximizeWindow` - Window control IPC wrappers for renderer
 - `export minimizeWindow` - Window control IPC wrappers for renderer
 
+### build/dependency-utils.ts
+**Purpose**: 1 export
+
+**Exports**:
+- `export copyNativeModules` - item implementation
+
+### build/file-utils.ts
+**Purpose**: 2 exports
+
+**Exports**:
+- `export copyDir` - item implementation
+- `export signMacOSBundle` - item implementation
+
 ### ipc/ai/handlers.ts
 **Purpose**: AI IPC handlers
 
 **Exports**:
-- `export rewriteTextHandler` - AI IPC handlers
+- `export rewriteTextHandler` - item implementation
 
 ### ipc/ai/router.ts
 **Purpose**: AI domain router
@@ -276,7 +333,6 @@ routeTree.gen.ts # 6 exports
 
 **Exports**:
 - `export rewriteInputSchema` - Zod schemas for AI IPC
-- `export rewriteRoleSchema` - Zod schemas for AI IPC
 
 ### ipc/app/handlers.ts
 **Purpose**: App info IPC handlers
@@ -337,6 +393,7 @@ routeTree.gen.ts # 6 exports
 **Purpose**: Notifications IPC handlers
 
 **Exports**:
+- `export applyFixHandler` - item implementation
 - `export clearNotificationsHandler` - item implementation
 - `export listNotificationsHandler` - item implementation
 - `export markAllNotificationsReadHandler` - item implementation
@@ -352,7 +409,28 @@ routeTree.gen.ts # 6 exports
 **Purpose**: Zod schemas for notifications IPC
 
 **Exports**:
+- `export applyFixSchema` - Zod schemas for notifications IPC
 - `export notificationIdSchema` - Zod schemas for notifications IPC
+
+### ipc/permissions/handlers.ts
+**Purpose**: Permissions IPC handlers
+
+**Exports**:
+- `export getPermissionsStatusHandler` - item implementation
+- `export requestAccessibilityAccessHandler` - item implementation
+- `export showTestNotificationHandler` - item implementation
+
+### ipc/permissions/router.ts
+**Purpose**: Permissions domain router
+
+**Exports**:
+- `export permissions` - Permissions domain router
+
+### ipc/permissions/schemas.ts
+**Purpose**: Zod schemas for permissions IPC
+
+**Exports**:
+- `export requestAccessibilityAccessSchema` - Zod schemas for permissions IPC
 
 ### ipc/router.ts
 **Purpose**: Root oRPC router combining all domains
@@ -369,6 +447,7 @@ routeTree.gen.ts # 6 exports
 - `export hasApiKeyHandler` - item implementation
 - `export isEncryptionAvailableHandler` - item implementation
 - `export saveApiKeyHandler` - item implementation
+- `export testLMStudioConnection` - item implementation
 - `export updateSettings` - item implementation
 
 ### ipc/settings/router.ts
@@ -381,17 +460,11 @@ routeTree.gen.ts # 6 exports
 **Purpose**: Zod schemas for settings IPC
 
 **Exports**:
-- `export aiModelSchema` - item implementation
-- `export aiProviderSchema` - item implementation
-- `export aiSettingsSchema` - item implementation
-- `export appSettingsSchema` - item implementation
-- `export automationSettingsSchema` - item implementation
 - `export deleteApiKeyInputSchema` - item implementation
 - `export hasApiKeyInputSchema` - item implementation
-- `export hotkeysSettingsSchema` - item implementation
 - `export isEncryptionAvailableInputSchema` - item implementation
 - `export saveApiKeyInputSchema` - item implementation
-- `export isValidHotkeyAccelerator` - item implementation
+- `export testLMStudioConnectionInputSchema` - item implementation
 
 ### ipc/shell/handlers.ts
 **Purpose**: Shell operations IPC handlers
@@ -428,7 +501,7 @@ routeTree.gen.ts # 6 exports
 **Purpose**: Zod schemas for shortcuts IPC
 
 **Exports**:
-- `export registerShortcutInputSchema` - item implementation
+- `export registerShortcutInputSchema` - Zod schemas for shortcuts IPC
 - `export shortcutActionSchema` - Zod schemas for shortcuts IPC
 
 ### ipc/theme/handlers.ts
@@ -479,10 +552,11 @@ routeTree.gen.ts # 6 exports
 *No exports found*
 
 ### main/ai/client.ts
-**Purpose**: Google Gemini AI client
+**Purpose**: Multi-provider AI client (Google Gemini, xAI Grok, OpenAI, LM Studio)
 
 **Exports**:
 - `export rewriteText` - Streams a rewritten version of the given text using the c...
+- `export rewriteTextWithSettings` - Unified wrapper that reads settings from the store and ca...
 
 ### main/ai/error-handler.ts
 **Purpose**: AI error handling utilities
@@ -507,9 +581,11 @@ routeTree.gen.ts # 6 exports
 **Purpose**: Clipboard backup/restore utilities
 
 **Exports**:
-- `export backupClipboard` - Clipboard backup/restore utilities
+- `export SAFE_RESTORE_WINDOW_MS` - Prevent clipboard restoration during slow pastes
+- `export backupClipboard` - Poll clipboard until its content differs from the given t...
 - `export readClipboard` - item implementation
-- `export restoreClipboard` - item implementation
+- `export restoreClipboard` - Poll clipboard until its content differs from the given t...
+- `export waitForClipboardTextToNotEqual` - Poll clipboard until its content differs from the given t...
 - `export writeClipboard` - item implementation
 
 ### main/automation/keyboard.ts
@@ -523,13 +599,34 @@ routeTree.gen.ts # 6 exports
 - `export simulatePaste` - item implementation
 - `export simulateSelectAll` - item implementation
 
-### main/shortcuts/handlers.ts
-**Purpose**: Fix selection/field orchestration handlers
+### main/automation/sentinel.ts
+**Purpose**: Clipboard sentinel value generation
 
 **Exports**:
-- `export handleFixField` - Global shortcut handler that rewrites the entire active i...
+- `export createClipboardSentinel` - Clipboard sentinel value generation
+
+### main/shortcuts/app-context.ts
+**Purpose**: macOS app context utilities for tracking frontmost application
+
+**Exports**:
+- `export AppContext` - item implementation
+- `export getFrontmostApp` - Get the currently frontmost (focused) application on macO...
+- `export isSameApp` - Compare two app contexts for equality
+Matches on app name...
+- `export switchToApp` - Switch to (activate) the specified app on macOS
+Uses Appl...
+
+### main/shortcuts/fix-state.ts
+**Purpose**: State manager for grammar fix operations Prevents concurrent fix requests (one at a time)
+
+**Exports**:
+- `export fixStateManager` - Get current state (read-only)
+
+### main/shortcuts/handlers.ts
+**Purpose**: Fix selection orchestration handlers
+
+**Exports**:
 - `export handleFixSelection` - Global shortcut handler that rewrites the current selecti...
-- `export handleOpenSettings` - Global shortcut handler that opens the Settings page in t...
 - `export handleTogglePopup` - Global shortcut handler that opens the popup window near ...
 - `export preserveTrailingNewlines` - item implementation
 
@@ -537,7 +634,7 @@ routeTree.gen.ts # 6 exports
 **Purpose**: Global shortcut registration manager
 
 **Exports**:
-- `export ShortcutManager` - item implementation
+- `export ShortcutManager` - Global shortcut registration manager
 - `export shortcutManager` - item implementation
 
 ### main/storage/api-keys.ts
@@ -555,7 +652,8 @@ routeTree.gen.ts # 6 exports
 **Purpose**: In-memory edit context storage
 
 **Exports**:
-- `export EditContext` - In-memory edit context storage
+- `export EditContext` - Stored context for a grammar fix operation
+Used to apply ...
 - `export clearEditContexts` - item implementation
 - `export getEditContext` - item implementation
 - `export getLastEditContext` - item implementation
@@ -584,6 +682,12 @@ routeTree.gen.ts # 6 exports
 **Exports**:
 - `export TrayManager` - System tray lifecycle management
 - `export trayManager` - item implementation
+
+### main/utils/notifications.ts
+**Purpose**: Notification utilities for main process
+
+**Exports**:
+- `export showNotification` - item implementation
 
 ### main/windows/window-manager.ts
 **Purpose**: Centralized window lifecycle management
@@ -1213,11 +1317,66 @@ routeTree.gen.ts # 6 exports
 - `export TooltipTrigger` - item implementation
 - `export TooltipContent` - item implementation
 
-### renderer/features/settings/settings-form.tsx
-**Purpose**: Settings form component
+### renderer/features/settings/hooks/use-api-key.ts
+**Purpose**: API key management hook
 
 **Exports**:
-- `export default` - item implementation
+- `export UseApiKeyReturn` - item implementation
+- `export useApiKey` - item implementation
+
+### renderer/features/settings/hooks/use-calibration.ts
+**Purpose**: Automation calibration hook
+
+**Exports**:
+- `export UseCalibrationReturn` - item implementation
+- `export useCalibration` - item implementation
+
+### renderer/features/settings/hooks/use-lmstudio-models.ts
+**Purpose**: LM Studio model discovery hook
+
+**Exports**:
+- `export UseLMStudioModelsReturn` - item implementation
+- `export useLMStudioModels` - item implementation
+
+### renderer/features/settings/hooks/use-settings-state.ts
+**Purpose**: Settings state management hook
+
+**Exports**:
+- `export UseSettingsStateReturn` - item implementation
+- `export useSettingsState` - item implementation
+
+### renderer/features/settings/sections/ai-provider-section.tsx
+**Purpose**: AI Provider settings section Provider, model, role, and API key configuration UI
+
+**Exports**:
+- `export AIProviderSectionProps` - item implementation
+- `export AIProviderSection` - AI Provider section component for configuring AI settings
+
+### renderer/features/settings/sections/appearance-section.tsx
+**Purpose**: Appearance settings section Theme and language toggle UI
+
+**Exports**:
+- `export AppearanceSection` - Appearance section component for theme and language settings
+
+### renderer/features/settings/sections/automation-section.tsx
+**Purpose**: Automation settings section Calibration and delay configuration UI
+
+**Exports**:
+- `export AutomationSectionProps` - item implementation
+- `export AutomationSection` - Automation section component for calibration and delay se...
+
+### renderer/features/settings/sections/hotkeys-section.tsx
+**Purpose**: Hotkeys settings section Global shortcuts configuration UI
+
+**Exports**:
+- `export HotkeysSectionProps` - Hotkeys settings section
+- `export HotkeysSection` - Hotkeys section component for configuring global shortcuts
+
+### renderer/features/settings/settings-form.tsx
+**Purpose**: Settings form component Orchestrates hooks and section components for settings management
+
+**Exports**:
+- `export default` - Settings form component that composes all settings sections
 
 ### renderer/hooks/use-mobile.ts
 **Purpose**: 1 export
@@ -1272,6 +1431,15 @@ routeTree.gen.ts # 6 exports
 **Exports**:
 - `export cn` - Tailwind CSS class merging utility
 
+### renderer/lib/validation.ts
+**Purpose**: Form validation helper utilities
+
+**Exports**:
+- `export extractFieldErrors` - Extract field-level errors from a Zod validation error
+Re...
+- `export focusFirstInvalidField` - Focus the first invalid field in the form
+Uses requestAni...
+
 ### routeTree.gen.ts
 **Purpose**: 6 exports
 
@@ -1291,6 +1459,12 @@ routeTree.gen.ts # 6 exports
 
 ### routes/index.tsx
 **Purpose**: Dashboard page route component
+
+**Exports**:
+- `export Route` - item implementation
+
+### routes/onboarding.tsx
+**Purpose**: Onboarding / permissions page route component
 
 **Exports**:
 - `export Route` - item implementation
@@ -1318,9 +1492,33 @@ This is the single sou...
 - `export AIProvider` - item implementation
 - `export AI_PROVIDERS` - item implementation
 - `export getDefaultModel` - Get the default model for a provider
+- `export getModelLabel` - Get user-friendly model label for display in notification...
 - `export getModelsForProvider` - Get all models for a specific provider
 - `export getProviderName` - Get provider name
 - `export isValidModel` - Validate if a model ID is valid for a provider
+LM Studio ...
+
+### shared/config/ai.ts
+**Purpose**: AI streaming timeout (5 minutes)
+
+**Exports**:
+- `export AI_STREAM_TIMEOUT_MS` - AI streaming timeout (5 minutes)
+
+### shared/config/hotkeys.ts
+**Purpose**: Hotkey configuration constants
+
+**Exports**:
+- `export HOTKEY_MODIFIERS` - Valid hotkey modifier keys (case-insensitive)
+These can a...
+- `export HOTKEY_NAMED_KEYS` - Valid named keys (case-insensitive)
+These can appear as t...
+
+### shared/config/native-deps.ts
+**Purpose**: 2 exports
+
+**Exports**:
+- `export NATIVE_DEPS` - item implementation
+- `export NATIVE_EXTERNAL_DEPS` - item implementation
 
 ### shared/contracts/ipc-channels.ts
 **Purpose**: IPC channel names and storage keys
@@ -1328,6 +1526,28 @@ This is the single sou...
 **Exports**:
 - `export IPC_CHANNELS` - IPC channel names and storage keys
 - `export LOCAL_STORAGE_KEYS` - IPC channel names and storage keys
+
+### shared/schemas/ai.ts
+**Purpose**: Shared AI-related Zod schemas
+
+**Exports**:
+- `export rewriteRoleSchema` - Shared AI-related Zod schemas
+
+### shared/schemas/settings.ts
+**Purpose**: Shared settings validation schemas
+
+**Exports**:
+- `export AISettingsData` - item implementation
+- `export ProviderValidator` - item implementation
+- `export aiModelSchema` - item implementation
+- `export aiProviderSchema` - item implementation
+- `export aiSettingsSchema` - item implementation
+- `export appSettingsSchema` - item implementation
+- `export automationSettingsSchema` - item implementation
+- `export hotkeyAcceleratorSchema` - item implementation
+- `export hotkeysSettingsSchema` - item implementation
+- `export isValidHotkeyAccelerator` - item implementation
+- `export registerProviderValidator` - Register a validation function for a specific provider
 
 ### shared/types/ai.ts
 **Purpose**: AI types
@@ -1341,16 +1561,19 @@ This is the single sou...
 
 **Exports**:
 - `export CaptureResult` - Automation types
+- `export AutomationCalibrationFocusRequest` - item implementation
+- `export AutomationCalibrationFocusResponse` - item implementation
 - `export AutomationCalibrationResult` - item implementation
 - `export CaptureMode` - Automation types
 
 ### shared/types/notifications.ts
-**Purpose**: 3 exports
+**Purpose**: 4 exports
 
 **Exports**:
 - `export AppNotification` - item implementation
 - `export AppNotificationPayload` - item implementation
 - `export AppNotificationType` - item implementation
+- `export NotificationAction` - item implementation
 
 ### shared/types/settings.ts
 **Purpose**: Settings schema types
@@ -1360,6 +1583,8 @@ This is the single sou...
 - `export AppSettings` - item implementation
 - `export AutomationSettings` - item implementation
 - `export HotkeysSettings` - Settings schema types
+- `export ReasoningEffort` - item implementation
+- `export TextVerbosity` - item implementation
 
 ### shared/types/shortcuts.ts
 **Purpose**: Hotkey types
@@ -1372,6 +1597,12 @@ This is the single sou...
 
 **Exports**:
 - `export ThemeMode` - Theme mode type definition
+
+### shared/utils/url-validation.ts
+**Purpose**: URL validation utilities for preventing SSRF attacks
+
+**Exports**:
+- `export sanitizeLMStudioURL` - Sanitizes and validates an LM Studio base URL
 
 ### tests/unit/setup.ts
 **Purpose**: Vitest setup with jest-dom matchers

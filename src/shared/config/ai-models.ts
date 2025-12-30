@@ -6,7 +6,7 @@
 export interface ModelConfig {
   id: string;
   name: string;
-  provider: 'google' | 'xai' | 'openai';
+  provider: 'google' | 'xai' | 'openai' | 'lmstudio';
 }
 
 export interface ProviderConfig {
@@ -15,6 +15,10 @@ export interface ProviderConfig {
   defaultModel: string;
 }
 
+// Model ID formats: @ai-sdk/google accepts both 'model-name' and 'models/model-name'.
+// The SDK normalizes these internally to the Google API's expected 'models/' format.
+// While the prefix is technically optional in @ai-sdk/google, both formats work correctly.
+// See: https://sdk.vercel.ai/providers/ai-sdk-providers/google-generative-ai
 export const AI_PROVIDERS = {
   google: {
     name: 'Google Gemini',
@@ -25,22 +29,17 @@ export const AI_PROVIDERS = {
         provider: 'google' as const,
       },
       {
-        id: 'gemini-2.5-flash',
-        name: 'Gemini 2.5 Flash',
-        provider: 'google' as const,
-      },
-      {
-        id: 'models/gemini-2.5-pro',
+        id: 'gemini-2.5-pro',
         name: 'Gemini 2.5 Pro',
         provider: 'google' as const,
       },
       {
-        id: 'models/gemini-flash-latest',
+        id: 'gemini-flash-latest',
         name: 'Gemini Flash (Latest)',
         provider: 'google' as const,
       },
       {
-        id: 'models/gemini-flash-lite-latest',
+        id: 'gemini-flash-lite-latest',
         name: 'Gemini Flash Lite (Latest)',
         provider: 'google' as const,
       },
@@ -99,6 +98,47 @@ export const AI_PROVIDERS = {
     ],
     defaultModel: 'gpt-5.1',
   },
+  lmstudio: {
+    name: 'LM Studio',
+    models: [
+      {
+        id: 'google/gemma-3n-e4b',
+        name: 'Google Gemma 3n E4B',
+        provider: 'lmstudio' as const,
+      },
+      {
+        id: 'openai/gpt-oss-20b',
+        name: 'OpenAI GPT OSS 20B',
+        provider: 'lmstudio' as const,
+      },
+      {
+        id: 'gemma-3-12b-instruct',
+        name: 'Gemma 3 12B Instruct',
+        provider: 'lmstudio' as const,
+      },
+      {
+        id: 'qwen3-30b-instruct',
+        name: 'Qwen 3 30B Instruct',
+        provider: 'lmstudio' as const,
+      },
+      {
+        id: 'ministral-3-8b',
+        name: 'Ministral 3 8B',
+        provider: 'lmstudio' as const,
+      },
+      {
+        id: 'gemma-3-4b-instruct',
+        name: 'Gemma 3 4B Instruct',
+        provider: 'lmstudio' as const,
+      },
+      {
+        id: 'qwen3-8b-instruct',
+        name: 'Qwen 3 8B Instruct',
+        provider: 'lmstudio' as const,
+      },
+    ],
+    defaultModel: 'google/gemma-3n-e4b',
+  },
 } as const satisfies Record<string, ProviderConfig>;
 
 export type AIProvider = keyof typeof AI_PROVIDERS;
@@ -127,8 +167,12 @@ export function getProviderName(provider: AIProvider): string {
 
 /**
  * Validate if a model ID is valid for a provider
+ * LM Studio accepts any model name since users can load custom models
  */
 export function isValidModel(provider: AIProvider, modelId: string): boolean {
+  if (provider === 'lmstudio') {
+    return true;
+  }
   return AI_PROVIDERS[provider].models.some((m) => m.id === modelId);
 }
 

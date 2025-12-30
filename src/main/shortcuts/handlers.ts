@@ -12,6 +12,7 @@ import {
   writeClipboard,
 } from '@/main/automation/clipboard';
 import { pressCopyShortcut, simulatePaste } from '@/main/automation/keyboard';
+import { createClipboardSentinel } from '@/main/automation/sentinel';
 import { saveEditContext } from '@/main/storage/context';
 import { addNotification } from '@/main/storage/notifications';
 import { store } from '@/main/storage/settings';
@@ -56,7 +57,7 @@ function getClipboardSyncDelayMs(): number {
 
 async function captureSelectionText(): Promise<string | null> {
   const clipboardBeforeCopy = readClipboard();
-  const sentinel = `__grammar_copilot_selection_${randomUUID()}__`;
+  const sentinel = createClipboardSentinel('selection');
 
   try {
     writeClipboard(sentinel);

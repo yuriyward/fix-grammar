@@ -3,6 +3,10 @@
  */
 import { ipcRenderer } from 'electron';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
+import type {
+  AutomationCalibrationFocusRequest,
+  AutomationCalibrationFocusResponse,
+} from '@/shared/types/automation';
 import type { AppNotification } from '@/shared/types/notifications';
 
 /**
@@ -39,6 +43,32 @@ export function setupBridge() {
       new CustomEvent<void>(IPC_CHANNELS.OPEN_NOTIFICATIONS),
     );
   });
+
+  ipcRenderer.on(
+    IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_REQUEST,
+    (_event, payload: AutomationCalibrationFocusRequest) => {
+      window.dispatchEvent(
+        new CustomEvent<AutomationCalibrationFocusRequest>(
+          IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_REQUEST,
+          {
+            detail: payload,
+          },
+        ),
+      );
+    },
+  );
+
+  window.addEventListener(
+    IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_RESPONSE,
+    (event) => {
+      const payload = (event as CustomEvent<AutomationCalibrationFocusResponse>)
+        .detail;
+      ipcRenderer.send(
+        IPC_CHANNELS.AUTOMATION_CALIBRATION_FOCUS_RESPONSE,
+        payload,
+      );
+    },
+  );
 
   window.addEventListener('message', (event) => {
     if (event.data === IPC_CHANNELS.START_ORPC_SERVER) {

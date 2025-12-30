@@ -16,6 +16,7 @@ export interface UseCalibrationReturn {
   isCalibrating: boolean;
   calibration: AutomationCalibrationResult | null;
   calibrationText: string;
+  calibrationStatus: string;
   setCalibrationText: (text: string) => void;
   calibrationFieldRef: React.RefObject<HTMLTextAreaElement | null>;
   handleCalibrate: () => Promise<void>;
@@ -32,6 +33,7 @@ export function useCalibration(
   const [calibrationText, setCalibrationText] = useState(
     'The quick brown fox jumps over the lazy dog. 1234567890',
   );
+  const [calibrationStatus, setCalibrationStatus] = useState('');
   const calibrationFieldRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Handle calibration focus requests from main process
@@ -104,14 +106,17 @@ export function useCalibration(
     if (isSaving || isCalibrating) return;
 
     setIsCalibrating(true);
+    setCalibrationStatus('Starting calibration...');
     try {
       calibrationFieldRef.current?.focus();
       calibrationFieldRef.current?.select();
 
+      setCalibrationStatus('Measuring clipboard timing. Please wait...');
       const result = await calibrateDelays(calibrationText);
       setCalibration(result);
 
       if (!result.success) {
+        setCalibrationStatus(`Calibration failed: ${result.reason}`);
         toastManager.add({
           type: 'error',
           title: 'Calibration failed',
@@ -135,12 +140,16 @@ export function useCalibration(
         },
       });
 
+      setCalibrationStatus(
+        `Calibration successful. Recommended delays: clipboard ${nextClipboardSyncDelayMs}ms, selection ${nextSelectionDelayMs}ms`,
+      );
       toastManager.add({
         type: 'success',
         title: 'Automation calibrated and saved',
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      setCalibrationStatus(`Calibration error: ${message}`);
       toastManager.add({
         type: 'error',
         title: 'Calibration failed',
@@ -161,6 +170,7 @@ export function useCalibration(
     isCalibrating,
     calibration,
     calibrationText,
+    calibrationStatus,
     setCalibrationText,
     calibrationFieldRef,
     handleCalibrate,

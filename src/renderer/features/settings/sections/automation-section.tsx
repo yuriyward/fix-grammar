@@ -35,6 +35,7 @@ export interface AutomationSectionProps {
   isCalibrating: boolean;
   calibration: AutomationCalibrationResult | null;
   calibrationText: string;
+  calibrationStatus: string;
   calibrationFieldRef: RefObject<HTMLTextAreaElement | null>;
   onCalibrationTextChange: (text: string) => void;
   onCalibrate: () => Promise<void>;
@@ -53,6 +54,7 @@ export function AutomationSection({
   isCalibrating,
   calibration,
   calibrationText,
+  calibrationStatus,
   calibrationFieldRef,
   onCalibrationTextChange,
   onCalibrate,
@@ -105,6 +107,12 @@ export function AutomationSection({
             </p>
           )}
         </CardPanel>
+        {/* Accessibility: aria-live region for calibration status */}
+        {calibrationStatus && (
+          <output aria-live="polite" aria-atomic="true" className="sr-only">
+            {calibrationStatus}
+          </output>
+        )}
       </Card>
 
       {/* Clipboard Sync Delay */}

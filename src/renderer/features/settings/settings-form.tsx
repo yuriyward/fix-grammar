@@ -103,6 +103,7 @@ export default function SettingsForm() {
           isCalibrating={calibrationState.isCalibrating}
           calibration={calibrationState.calibration}
           calibrationText={calibrationState.calibrationText}
+          calibrationStatus={calibrationState.calibrationStatus}
           calibrationFieldRef={calibrationState.calibrationFieldRef}
           onCalibrationTextChange={calibrationState.setCalibrationText}
           onCalibrate={calibrationState.handleCalibrate}

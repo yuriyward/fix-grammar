@@ -124,11 +124,11 @@ describe('Settings IPC handlers', () => {
     expect(mockStoreSet).toHaveBeenCalledWith(next);
   });
 
-  it('rejects settings when model is not valid for provider', async () => {
+  it('accepts custom model IDs for all providers', async () => {
     const { updateSettings } = await import('@/ipc/settings/handlers');
     const callUpdateSettings = createProcedureClient(updateSettings);
 
-    const invalid: AppSettings = {
+    const customModel: AppSettings = {
       hotkeys: {
         fixSelection: 'CommandOrControl+Shift+F',
         togglePopup: 'CommandOrControl+Shift+P',
@@ -144,8 +144,11 @@ describe('Settings IPC handlers', () => {
       },
     };
 
-    await expect(callUpdateSettings(invalid)).rejects.toBeInstanceOf(Error);
-    expect(mockStoreSet).not.toHaveBeenCalled();
+    await expect(callUpdateSettings(customModel)).resolves.toEqual({
+      ...mockStore.store,
+      ...customModel,
+    });
+    expect(mockStoreSet).toHaveBeenCalledWith(customModel);
   });
 
   it('rejects settings when a hotkey accelerator is invalid', async () => {

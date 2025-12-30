@@ -3,11 +3,7 @@
  */
 import { z } from 'zod';
 import type { AIModel, AIProvider } from '@/shared/config/ai-models';
-import {
-  AI_PROVIDERS,
-  getProviderName,
-  isValidModel,
-} from '@/shared/config/ai-models';
+import { AI_PROVIDERS } from '@/shared/config/ai-models';
 import { HOTKEY_MODIFIERS, HOTKEY_NAMED_KEYS } from '@/shared/config/hotkeys';
 import { rewriteRoleSchema } from './ai';
 
@@ -170,6 +166,7 @@ export type AISettingsData = {
   model: string;
   reasoningEffort?: string | undefined;
   lmstudioBaseURL?: string | undefined;
+  openrouterExtraParams?: string | undefined;
 };
 
 // Provider-specific validator function type
@@ -213,26 +210,6 @@ function runProviderValidators(
     for (const validator of validators) {
       validator(data, ctx);
     }
-  }
-}
-
-// ============================================================================
-// Common validation (applies to all providers)
-// ============================================================================
-
-// Validates model for non-LM Studio providers
-function validateAIModel(data: AISettingsData, ctx: z.RefinementCtx): void {
-  const { provider, model } = data;
-
-  // LM Studio accepts any model name since users can load custom models
-  if (provider === 'lmstudio') return;
-
-  if (!isValidModel(provider, model)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['model'],
-      message: `"${model}" is not available for ${getProviderName(provider)}. Please select a valid model.`,
-    });
   }
 }
 
@@ -301,6 +278,35 @@ function validateOpenAIReasoningEffort(
 registerProviderValidator('openai', validateOpenAIReasoningEffort);
 
 // ============================================================================
+// OpenRouter provider validation
+// ============================================================================
+
+function validateOpenRouterExtraParams(
+  data: AISettingsData,
+  ctx: z.RefinementCtx,
+): void {
+  const { openrouterExtraParams } = data;
+
+  if (!openrouterExtraParams || openrouterExtraParams.trim() === '') {
+    return;
+  }
+
+  try {
+    JSON.parse(openrouterExtraParams);
+  } catch {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['openrouterExtraParams'],
+      message:
+        'Invalid JSON format. Please enter valid JSON (e.g., {"temperature": 0.7})',
+    });
+  }
+}
+
+// Register OpenRouter validators
+registerProviderValidator('openrouter', validateOpenRouterExtraParams);
+
+// ============================================================================
 // Settings schemas
 // ============================================================================
 
@@ -334,10 +340,9 @@ export const aiSettingsSchema = z
     reasoningEffort: reasoningEffortSchema.optional(),
     textVerbosity: textVerbositySchema.optional(),
     lmstudioBaseURL: z.string().optional(),
+    openrouterExtraParams: z.string().optional(),
   })
   .superRefine((data, ctx) => {
-    // Common validation for all providers
-    validateAIModel(data, ctx);
     // Provider-specific validations from registry
     runProviderValidators(data, ctx);
   });
@@ -347,8 +352,19 @@ export const automationSettingsSchema = z.object({
   selectionDelayMs: z.number().int().min(0).max(5_000),
 });
 
+export const openrouterModelsCacheSchema = z.object({
+  models: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+    }),
+  ),
+  timestamp: z.number(),
+});
+
 export const appSettingsSchema = z.object({
   hotkeys: hotkeysSettingsSchema,
   ai: aiSettingsSchema,
   automation: automationSettingsSchema,
+  openrouterModelsCache: openrouterModelsCacheSchema.optional(),
 });

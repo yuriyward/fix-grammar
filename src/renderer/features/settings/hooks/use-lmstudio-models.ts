@@ -1,7 +1,7 @@
 /**
  * LM Studio model discovery hook
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { testLMStudioConnection } from '@/actions/settings';
 import { toastManager } from '@/renderer/components/ui/toast';
 import {
@@ -10,11 +10,17 @@ import {
   type ModelConfig,
 } from '@/shared/config/ai-models';
 
+export interface LMStudioModelGroup {
+  value: string;
+  items: Array<{ id: string; name: string }>;
+}
+
 export interface UseLMStudioModelsReturn {
   isTestingConnection: boolean;
   discoveredModels: string[];
   popularModels: ModelConfig[];
   extraModels: string[];
+  groupedModels: LMStudioModelGroup[];
   handleFetchModels: () => Promise<void>;
   resetModels: () => void;
 }
@@ -27,12 +33,32 @@ export function useLMStudioModels(
   const [discoveredModels, setDiscoveredModels] = useState<string[]>([]);
   const [modelsBaseURL, setModelsBaseURL] = useState<string | null>(null);
 
-  const popularModels = getModelsForProvider('lmstudio');
+  const popularModels = getModelsForProvider(provider);
 
   const extraModels = (() => {
     const known = new Set(popularModels.map((entry) => entry.id));
     return discoveredModels.filter((id) => !known.has(id));
   })();
+
+  const groupedModels = useMemo(() => {
+    const groups: LMStudioModelGroup[] = [];
+
+    // Add "Discovered Models" group if we have extra models
+    if (extraModels.length > 0) {
+      groups.push({
+        value: 'Discovered Models',
+        items: extraModels.map((id) => ({ id, name: id })),
+      });
+    }
+
+    // Always add "Popular Models" group
+    groups.push({
+      value: 'Popular Models',
+      items: popularModels.map((m) => ({ id: m.id, name: m.name })),
+    });
+
+    return groups;
+  }, [extraModels, popularModels]);
 
   const resetModels = useCallback(() => {
     setDiscoveredModels([]);
@@ -95,6 +121,7 @@ export function useLMStudioModels(
     discoveredModels,
     popularModels,
     extraModels,
+    groupedModels,
     handleFetchModels,
     resetModels,
   };

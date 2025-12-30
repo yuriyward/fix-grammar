@@ -7,6 +7,7 @@ import { Form } from '@/renderer/components/ui/form';
 import { useApiKey } from './hooks/use-api-key';
 import { useCalibration } from './hooks/use-calibration';
 import { useLMStudioModels } from './hooks/use-lmstudio-models';
+import { useOpenRouterModels } from './hooks/use-openrouter-models';
 import { useSettingsState } from './hooks/use-settings-state';
 import { AIProviderSection } from './sections/ai-provider-section';
 import { AppearanceSection } from './sections/appearance-section';
@@ -30,6 +31,9 @@ export default function SettingsForm() {
     settingsState.lmstudioBaseURL,
   );
 
+  // OpenRouter model discovery
+  const openRouterModels = useOpenRouterModels(settingsState.provider);
+
   // Calibration logic
   const calibrationState = useCalibration(
     settingsState.isSaving,
@@ -43,6 +47,7 @@ export default function SettingsForm() {
   ) => {
     settingsState.handleProviderChange(provider);
     lmStudioModels.resetModels();
+    openRouterModels.resetModels();
   };
 
   return (
@@ -64,6 +69,7 @@ export default function SettingsForm() {
           reasoningEffort={settingsState.reasoningEffort}
           textVerbosity={settingsState.textVerbosity}
           lmstudioBaseURL={settingsState.lmstudioBaseURL}
+          openrouterExtraParams={settingsState.openrouterExtraParams}
           isSaving={settingsState.isSaving}
           onProviderChange={handleProviderChange}
           onModelChange={settingsState.setModel}
@@ -71,6 +77,7 @@ export default function SettingsForm() {
           onReasoningEffortChange={settingsState.setReasoningEffort}
           onTextVerbosityChange={settingsState.setTextVerbosity}
           onLmstudioBaseURLChange={settingsState.setLmstudioBaseURL}
+          onOpenrouterExtraParamsChange={settingsState.setOpenrouterExtraParams}
           apiKey={apiKeyState.apiKey}
           hasKey={apiKeyState.hasKey}
           isEncryptionAvailable={apiKeyState.isEncryptionAvailable}
@@ -80,9 +87,13 @@ export default function SettingsForm() {
           onDeleteApiKey={apiKeyState.handleDeleteApiKey}
           isTestingConnection={lmStudioModels.isTestingConnection}
           discoveredModels={lmStudioModels.discoveredModels}
-          popularModels={lmStudioModels.popularModels}
-          extraModels={lmStudioModels.extraModels}
-          onFetchModels={lmStudioModels.handleFetchModels}
+          lmstudioGroupedModels={lmStudioModels.groupedModels}
+          onFetchLMStudioModels={lmStudioModels.handleFetchModels}
+          isLoadingOpenRouterModels={openRouterModels.isLoadingModels}
+          openrouterFetchedModels={openRouterModels.fetchedModels}
+          openrouterGroupedModels={openRouterModels.groupedModels}
+          openrouterAllModels={openRouterModels.allModels}
+          onFetchOpenRouterModels={openRouterModels.handleFetchModels}
         />
 
         {/* Hotkeys Section */}

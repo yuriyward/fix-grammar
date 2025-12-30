@@ -20,6 +20,7 @@ import {
 } from './schemas';
 
 const LM_STUDIO_CONNECTION_TIMEOUT_MS = 5000;
+const OPENROUTER_API_TIMEOUT_MS = 10000;
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Unknown error';
@@ -100,3 +101,50 @@ export const testLMStudioConnection = os
       };
     }
   });
+
+export const fetchOpenRouterModels = os.handler(async () => {
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/models', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(OPENROUTER_API_TIMEOUT_MS),
+    });
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: `OpenRouter API responded with status ${response.status}`,
+      };
+    }
+
+    const data = (await response.json()) as {
+      data: Array<{
+        id: string;
+        name: string;
+      }>;
+    };
+
+    const models = data.data.map((m) => ({
+      id: m.id,
+      name: m.name,
+    }));
+
+    const cache = {
+      models,
+      timestamp: Date.now(),
+    };
+
+    store.set('openrouterModelsCache', cache);
+
+    return {
+      success: true,
+      message: `Fetched ${models.length} models from OpenRouter`,
+      models,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: getErrorMessage(error),
+    };
+  }
+});

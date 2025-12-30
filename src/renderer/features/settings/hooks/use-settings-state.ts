@@ -32,6 +32,8 @@ export interface UseSettingsStateReturn {
   setTextVerbosity: (verbosity: TextVerbosity) => void;
   lmstudioBaseURL: string;
   setLmstudioBaseURL: (url: string) => void;
+  openrouterExtraParams: string;
+  setOpenrouterExtraParams: (params: string) => void;
 
   // Hotkey settings
   fixSelection: string;
@@ -64,6 +66,7 @@ export function useSettingsState(): UseSettingsStateReturn {
   const [lmstudioBaseURL, setLmstudioBaseURL] = useState(
     'http://localhost:1234/v1',
   );
+  const [openrouterExtraParams, setOpenrouterExtraParams] = useState('');
   const [fixSelection, setFixSelection] = useState('CommandOrControl+Shift+F');
   const [togglePopup, setTogglePopup] = useState('CommandOrControl+Shift+P');
   const [clipboardSyncDelayMs, setClipboardSyncDelayMs] = useState(200);
@@ -82,6 +85,7 @@ export function useSettingsState(): UseSettingsStateReturn {
       setLmstudioBaseURL(
         settings.ai.lmstudioBaseURL ?? 'http://localhost:1234/v1',
       );
+      setOpenrouterExtraParams(settings.ai.openrouterExtraParams ?? '');
       setFixSelection(settings.hotkeys.fixSelection);
       setTogglePopup(settings.hotkeys.togglePopup);
       setClipboardSyncDelayMs(settings.automation.clipboardSyncDelayMs);
@@ -119,6 +123,10 @@ export function useSettingsState(): UseSettingsStateReturn {
           textVerbosity,
           lmstudioBaseURL:
             provider === 'lmstudio' ? lmstudioBaseURL : undefined,
+          openrouterExtraParams:
+            provider === 'openrouter' && openrouterExtraParams.trim()
+              ? openrouterExtraParams.trim()
+              : undefined,
         },
         hotkeys: { fixSelection, togglePopup },
         automation: { clipboardSyncDelayMs, selectionDelayMs },
@@ -156,6 +164,7 @@ export function useSettingsState(): UseSettingsStateReturn {
       reasoningEffort,
       textVerbosity,
       lmstudioBaseURL,
+      openrouterExtraParams,
       fixSelection,
       togglePopup,
       clipboardSyncDelayMs,
@@ -176,6 +185,8 @@ export function useSettingsState(): UseSettingsStateReturn {
     setTextVerbosity,
     lmstudioBaseURL,
     setLmstudioBaseURL,
+    openrouterExtraParams,
+    setOpenrouterExtraParams,
     fixSelection,
     setFixSelection,
     togglePopup,

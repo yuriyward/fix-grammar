@@ -3,24 +3,18 @@
  * Provider, model, role, and API key configuration UI
  */
 
-import { Combobox as BaseUiCombobox } from '@base-ui/react/combobox';
+import { useMemo } from 'react';
+import {
+  ModelCombobox,
+  type ModelGroup,
+  type ModelItem,
+} from '@/renderer/components/model-combobox';
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from '@/renderer/components/ui/alert';
 import { Button } from '@/renderer/components/ui/button';
-import {
-  Combobox,
-  ComboboxCollection,
-  ComboboxEmpty,
-  ComboboxGroup,
-  ComboboxGroupLabel,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-  ComboboxPopup,
-} from '@/renderer/components/ui/combobox';
 import {
   Field,
   FieldDescription,
@@ -47,7 +41,7 @@ import {
 import type { RewriteRole } from '@/shared/types/ai';
 import type { ReasoningEffort, TextVerbosity } from '@/shared/types/settings';
 import type { LMStudioModelGroup } from '../hooks/use-lmstudio-models';
-import type { ModelGroup } from '../hooks/use-openrouter-models';
+import type { ModelGroup as OpenRouterModelGroup } from '../hooks/use-openrouter-models';
 
 export interface AIProviderSectionProps {
   // From useSettingsState
@@ -85,7 +79,7 @@ export interface AIProviderSectionProps {
   // From useOpenRouterModels
   isLoadingOpenRouterModels: boolean;
   openrouterFetchedModels: ModelConfig[];
-  openrouterGroupedModels: ModelGroup[];
+  openrouterGroupedModels: OpenRouterModelGroup[];
   openrouterAllModels: ModelConfig[];
   onFetchOpenRouterModels: () => Promise<void>;
 }
@@ -127,8 +121,6 @@ export function AIProviderSection({
   openrouterAllModels,
   onFetchOpenRouterModels,
 }: AIProviderSectionProps) {
-  const { contains } = BaseUiCombobox.useFilter();
-
   const providerOptions = Object.keys(AI_PROVIDERS) as AIProvider[];
 
   const providerSelectItems = providerOptions.map((p) => ({
@@ -138,10 +130,30 @@ export function AIProviderSection({
 
   const providerModels = getModelsForProvider(provider);
 
-  const modelSelectItems = providerModels.map((entry) => ({
-    value: entry.id,
-    label: entry.name,
-  }));
+  // Convert provider models to ModelCombobox format (single group)
+  const defaultProviderGroups = useMemo((): ModelGroup<ModelItem>[] => {
+    const items = providerModels.map((entry) => ({
+      id: entry.id,
+      name: entry.name,
+    }));
+    return [{ value: 'Models', items }];
+  }, [providerModels]);
+
+  // Convert LM Studio groups to ModelCombobox format
+  const lmstudioGroups = useMemo((): ModelGroup<ModelItem>[] => {
+    return lmstudioGroupedModels.map((group) => ({
+      value: group.value,
+      items: group.items.map((item) => ({ id: item.id, name: item.name })),
+    }));
+  }, [lmstudioGroupedModels]);
+
+  // Convert OpenRouter groups to ModelCombobox format
+  const openrouterGroups = useMemo((): ModelGroup<ModelItem>[] => {
+    return openrouterGroupedModels.map((group) => ({
+      value: group.value,
+      items: group.items.map((item) => ({ id: item.id, name: item.name })),
+    }));
+  }, [openrouterGroupedModels]);
 
   const rewriteModeSelectItems: ReadonlyArray<{
     value: RewriteRole;
@@ -171,73 +183,6 @@ export function AIProviderSection({
     { value: 'medium', label: 'Medium (Balanced)' },
     { value: 'high', label: 'High (Verbose)' },
   ];
-
-  const normalizedModel = model.trim();
-
-  const providerModelCustomItem =
-    normalizedModel.length > 0 &&
-    !modelSelectItems.some((item) => item.value === normalizedModel)
-      ? { value: normalizedModel, label: normalizedModel }
-      : null;
-  const providerModelItemsForView = providerModelCustomItem
-    ? [providerModelCustomItem, ...modelSelectItems]
-    : modelSelectItems;
-  const selectedProviderModelItem =
-    modelSelectItems.find((item) => item.value === normalizedModel) ??
-    providerModelCustomItem ??
-    null;
-
-  // Find the currently selected item for LM Studio
-  const lmstudioFlatItems = lmstudioGroupedModels.flatMap(
-    (group) => group.items,
-  );
-  const lmstudioCustomItem =
-    normalizedModel.length > 0 &&
-    !lmstudioFlatItems.some((item) => item.id === normalizedModel)
-      ? { id: normalizedModel, name: normalizedModel }
-      : null;
-  const lmstudioItemsForView = lmstudioCustomItem
-    ? [
-        { value: 'Custom', items: [lmstudioCustomItem] },
-        ...lmstudioGroupedModels,
-      ]
-    : lmstudioGroupedModels;
-  const selectedLMStudioItem =
-    lmstudioFlatItems.find((item) => item.id === normalizedModel) ??
-    lmstudioCustomItem ??
-    null;
-
-  const lmstudioInputValue = selectedLMStudioItem
-    ? selectedLMStudioItem.name
-    : normalizedModel;
-
-  // Find the currently selected item for OpenRouter
-  const openrouterFlatItems = openrouterGroupedModels.flatMap(
-    (group) => group.items,
-  );
-  const openrouterCustomItem =
-    normalizedModel.length > 0 &&
-    !openrouterFlatItems.some((item) => item.id === normalizedModel)
-      ? ({
-          id: normalizedModel,
-          name: normalizedModel,
-          provider: 'openrouter',
-        } satisfies ModelConfig)
-      : null;
-  const openrouterItemsForView = openrouterCustomItem
-    ? [
-        { value: 'Custom', items: [openrouterCustomItem] },
-        ...openrouterGroupedModels,
-      ]
-    : openrouterGroupedModels;
-  const selectedOpenRouterItem =
-    openrouterFlatItems.find((item) => item.id === normalizedModel) ??
-    openrouterCustomItem ??
-    null;
-
-  const openrouterInputValue = selectedOpenRouterItem
-    ? selectedOpenRouterItem.name
-    : normalizedModel;
 
   return (
     <div className="space-y-4">
@@ -310,62 +255,14 @@ export function AIProviderSection({
       {provider === 'lmstudio' ? (
         <Field name="ai.model">
           <FieldLabel>Model</FieldLabel>
-          <Combobox
-            name="ai.model"
-            value={selectedLMStudioItem ?? null}
-            inputValue={lmstudioInputValue}
-            onInputValueChange={(value, details) => {
-              if (
-                details.reason === 'input-change' ||
-                details.reason === 'input-clear'
-              ) {
-                onModelChange(value.trim());
-              }
-            }}
-            onValueChange={(value: { id: string; name: string } | null) => {
-              if (value) {
-                onModelChange(value.id);
-              } else {
-                onModelChange('');
-              }
-            }}
-            items={lmstudioItemsForView}
-            filter={(item: { id: string; name: string }, query: string) => {
-              const trimmed = query.trim();
-              if (trimmed.length === 0) return true;
-              return contains(item.id, trimmed) || contains(item.name, trimmed);
-            }}
-            isItemEqualToValue={(
-              item: { id: string },
-              selected: { id: string },
-            ) => item.id === selected.id}
-            itemToStringLabel={(item: { id: string; name: string }) =>
-              item.name
-            }
-            itemToStringValue={(item: { id: string; name: string }) => item.id}
-          >
-            <ComboboxInput
-              placeholder="Type model name or select from list"
-              showTrigger
-            />
-            <ComboboxPopup>
-              <ComboboxEmpty>No models found.</ComboboxEmpty>
-              <ComboboxList>
-                {(group: LMStudioModelGroup) => (
-                  <ComboboxGroup key={group.value} items={group.items}>
-                    <ComboboxGroupLabel>{group.value}</ComboboxGroupLabel>
-                    <ComboboxCollection>
-                      {(item: { id: string; name: string }) => (
-                        <ComboboxItem key={item.id} value={item}>
-                          {item.name}
-                        </ComboboxItem>
-                      )}
-                    </ComboboxCollection>
-                  </ComboboxGroup>
-                )}
-              </ComboboxList>
-            </ComboboxPopup>
-          </Combobox>
+          <ModelCombobox
+            value={model}
+            onChange={onModelChange}
+            groups={lmstudioGroups}
+            placeholder="Type model name or select from list"
+            allowCustom
+            disabled={isSaving}
+          />
           <FieldError />
           <FieldDescription>
             Select a model or type a custom model name (e.g., your downloaded
@@ -376,61 +273,14 @@ export function AIProviderSection({
         <>
           <Field name="ai.model">
             <FieldLabel>Model</FieldLabel>
-            <Combobox
-              name="ai.model"
-              value={selectedOpenRouterItem ?? null}
-              inputValue={openrouterInputValue}
-              onInputValueChange={(value, details) => {
-                if (
-                  details.reason === 'input-change' ||
-                  details.reason === 'input-clear'
-                ) {
-                  onModelChange(value.trim());
-                }
-              }}
-              onValueChange={(value: ModelConfig | null) => {
-                if (value) {
-                  onModelChange(value.id);
-                } else {
-                  onModelChange('');
-                }
-              }}
-              items={openrouterItemsForView}
-              filter={(item: ModelConfig, query: string) => {
-                const trimmed = query.trim();
-                if (trimmed.length === 0) return true;
-                return (
-                  contains(item.id, trimmed) || contains(item.name, trimmed)
-                );
-              }}
-              isItemEqualToValue={(item: ModelConfig, selected: ModelConfig) =>
-                item.id === selected.id
-              }
-              itemToStringLabel={(item: ModelConfig) => item.name}
-              itemToStringValue={(item: ModelConfig) => item.id}
-            >
-              <ComboboxInput
-                placeholder="Type model ID or select from list"
-                showTrigger
-              />
-              <ComboboxPopup>
-                <ComboboxEmpty>No models found.</ComboboxEmpty>
-                <ComboboxList>
-                  {(group: ModelGroup) => (
-                    <ComboboxGroup key={group.value} items={group.items}>
-                      <ComboboxGroupLabel>{group.value}</ComboboxGroupLabel>
-                      <ComboboxCollection>
-                        {(item: ModelConfig) => (
-                          <ComboboxItem key={item.id} value={item}>
-                            {item.name}
-                          </ComboboxItem>
-                        )}
-                      </ComboboxCollection>
-                    </ComboboxGroup>
-                  )}
-                </ComboboxList>
-              </ComboboxPopup>
-            </Combobox>
+            <ModelCombobox
+              value={model}
+              onChange={onModelChange}
+              groups={openrouterGroups}
+              placeholder="Type model ID or select from list"
+              allowCustom
+              disabled={isSaving}
+            />
             <FieldError />
             <FieldDescription>
               Select a model or type any OpenRouter model ID (e.g.,
@@ -461,63 +311,14 @@ export function AIProviderSection({
       ) : (
         <Field name="ai.model">
           <FieldLabel>Model</FieldLabel>
-          <Combobox
-            name="ai.model"
-            value={selectedProviderModelItem}
-            inputValue={
-              selectedProviderModelItem
-                ? selectedProviderModelItem.label
-                : normalizedModel
-            }
-            onInputValueChange={(value, details) => {
-              if (
-                details.reason === 'input-change' ||
-                details.reason === 'input-clear'
-              ) {
-                onModelChange(value.trim());
-              }
-            }}
-            onValueChange={(value: { value: string; label: string } | null) => {
-              if (value) {
-                onModelChange(value.value);
-              } else {
-                onModelChange('');
-              }
-            }}
-            items={providerModelItemsForView}
-            filter={(item: { value: string; label: string }, query: string) => {
-              const trimmed = query.trim();
-              if (trimmed.length === 0) return true;
-              return (
-                contains(item.value, trimmed) || contains(item.label, trimmed)
-              );
-            }}
-            isItemEqualToValue={(
-              item: { value: string },
-              selected: { value: string },
-            ) => item.value === selected.value}
-            itemToStringLabel={(item: { value: string; label: string }) =>
-              item.label
-            }
-            itemToStringValue={(item: { value: string; label: string }) =>
-              item.value
-            }
-          >
-            <ComboboxInput
-              placeholder="Select from list or type custom model ID"
-              showTrigger
-            />
-            <ComboboxPopup>
-              <ComboboxEmpty>No models found.</ComboboxEmpty>
-              <ComboboxList>
-                {(item: { value: string; label: string }) => (
-                  <ComboboxItem key={item.value} value={item}>
-                    {item.label}
-                  </ComboboxItem>
-                )}
-              </ComboboxList>
-            </ComboboxPopup>
-          </Combobox>
+          <ModelCombobox
+            value={model}
+            onChange={onModelChange}
+            groups={defaultProviderGroups}
+            placeholder="Select from list or type custom model ID"
+            allowCustom
+            disabled={isSaving}
+          />
           <FieldError />
           <FieldDescription>
             Select a model or type a custom model ID

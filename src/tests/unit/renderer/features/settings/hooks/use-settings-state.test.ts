@@ -127,64 +127,104 @@ describe('useSettingsState', () => {
   });
 
   describe('Initial State', () => {
-    it('should initialize with default provider=google', () => {
+    it('should initialize with default provider=google', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       expect(result.current.provider).toBe('google');
     });
 
-    it('should initialize with default model for google', () => {
+    it('should initialize with default model for google', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       expect(result.current.model).toBe('gemini-3-flash-preview');
     });
 
-    it('should initialize with default role=grammar', () => {
+    it('should initialize with default role=grammar', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       expect(result.current.role).toBe('grammar');
     });
 
-    it('should initialize with default reasoningEffort=medium', () => {
+    it('should initialize with default reasoningEffort=medium', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       expect(result.current.reasoningEffort).toBe('medium');
     });
 
-    it('should initialize with default textVerbosity=medium', () => {
+    it('should initialize with default textVerbosity=medium', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       expect(result.current.textVerbosity).toBe('medium');
     });
 
-    it('should initialize with default lmstudioBaseURL', () => {
+    it('should initialize with default lmstudioBaseURL', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       expect(result.current.lmstudioBaseURL).toBe('http://localhost:1234/v1');
     });
 
-    it('should initialize with default hotkeys', () => {
+    it('should initialize with default hotkeys', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       expect(result.current.fixSelection).toBe(DEFAULT_HOTKEYS.fixSelection);
       expect(result.current.togglePopup).toBe(DEFAULT_HOTKEYS.togglePopup);
     });
 
-    it('should initialize with default automation delays', () => {
+    it('should initialize with default automation delays', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       expect(result.current.clipboardSyncDelayMs).toBe(200);
       expect(result.current.selectionDelayMs).toBe(100);
     });
 
-    it('should initialize with isSaving=false', () => {
+    it('should initialize with isSaving=false', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       expect(result.current.isSaving).toBe(false);
     });
 
-    it('should initialize with empty fieldErrors', () => {
+    it('should initialize with empty fieldErrors', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       expect(result.current.fieldErrors).toEqual({});
     });
@@ -306,6 +346,10 @@ describe('useSettingsState', () => {
     it('should update provider state', async () => {
       const { result } = renderHook(() => useSettingsState());
 
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
+
       act(() => {
         result.current.handleProviderChange('openai');
       });
@@ -315,6 +359,10 @@ describe('useSettingsState', () => {
 
     it('should reset model to default for new provider', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       act(() => {
         result.current.handleProviderChange('xai');
@@ -326,6 +374,10 @@ describe('useSettingsState', () => {
 
     it('should set default lmstudioBaseURL when switching to lmstudio', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       // First clear the lmstudioBaseURL
       act(() => {
@@ -344,6 +396,10 @@ describe('useSettingsState', () => {
 
     it('should preserve existing lmstudioBaseURL if already set', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       // Set a custom URL
       act(() => {
@@ -767,8 +823,12 @@ describe('useSettingsState', () => {
   });
 
   describe('State Setters', () => {
-    it('should update provider via setProvider', () => {
+    it('should update provider via setProvider', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       act(() => {
         result.current.setProvider('xai');
@@ -777,8 +837,12 @@ describe('useSettingsState', () => {
       expect(result.current.provider).toBe('xai');
     });
 
-    it('should update model via setModel', () => {
+    it('should update model via setModel', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       act(() => {
         result.current.setModel('custom-model');
@@ -787,8 +851,12 @@ describe('useSettingsState', () => {
       expect(result.current.model).toBe('custom-model');
     });
 
-    it('should update role via setRole', () => {
+    it('should update role via setRole', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       act(() => {
         result.current.setRole('grammar-tone');
@@ -797,8 +865,12 @@ describe('useSettingsState', () => {
       expect(result.current.role).toBe('grammar-tone');
     });
 
-    it('should update reasoningEffort via setReasoningEffort', () => {
+    it('should update reasoningEffort via setReasoningEffort', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       act(() => {
         result.current.setReasoningEffort('high');
@@ -807,8 +879,12 @@ describe('useSettingsState', () => {
       expect(result.current.reasoningEffort).toBe('high');
     });
 
-    it('should update textVerbosity via setTextVerbosity', () => {
+    it('should update textVerbosity via setTextVerbosity', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       act(() => {
         result.current.setTextVerbosity('high');
@@ -817,8 +893,12 @@ describe('useSettingsState', () => {
       expect(result.current.textVerbosity).toBe('high');
     });
 
-    it('should update lmstudioBaseURL via setLmstudioBaseURL', () => {
+    it('should update lmstudioBaseURL via setLmstudioBaseURL', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       act(() => {
         result.current.setLmstudioBaseURL('http://custom:9000/v1');
@@ -827,8 +907,12 @@ describe('useSettingsState', () => {
       expect(result.current.lmstudioBaseURL).toBe('http://custom:9000/v1');
     });
 
-    it('should update fixSelection via setFixSelection', () => {
+    it('should update fixSelection via setFixSelection', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       act(() => {
         result.current.setFixSelection('CommandOrControl+Alt+X');
@@ -837,8 +921,12 @@ describe('useSettingsState', () => {
       expect(result.current.fixSelection).toBe('CommandOrControl+Alt+X');
     });
 
-    it('should update togglePopup via setTogglePopup', () => {
+    it('should update togglePopup via setTogglePopup', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       act(() => {
         result.current.setTogglePopup('CommandOrControl+Alt+Y');
@@ -847,8 +935,12 @@ describe('useSettingsState', () => {
       expect(result.current.togglePopup).toBe('CommandOrControl+Alt+Y');
     });
 
-    it('should update clipboardSyncDelayMs via setClipboardSyncDelayMs', () => {
+    it('should update clipboardSyncDelayMs via setClipboardSyncDelayMs', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       act(() => {
         result.current.setClipboardSyncDelayMs(500);
@@ -857,8 +949,12 @@ describe('useSettingsState', () => {
       expect(result.current.clipboardSyncDelayMs).toBe(500);
     });
 
-    it('should update selectionDelayMs via setSelectionDelayMs', () => {
+    it('should update selectionDelayMs via setSelectionDelayMs', async () => {
       const { result } = renderHook(() => useSettingsState());
+
+      await waitFor(() => {
+        expect(mockGetSettings).toHaveBeenCalled();
+      });
 
       act(() => {
         result.current.setSelectionDelayMs(250);

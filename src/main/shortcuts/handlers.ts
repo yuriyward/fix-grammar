@@ -19,8 +19,10 @@ import { store } from '@/main/storage/settings';
 import { trayManager } from '@/main/tray/tray-manager';
 import { showNotification } from '@/main/utils/notifications';
 import { windowManager } from '@/main/windows/window-manager';
+import type { AIModel, AIProvider } from '@/shared/config/ai-models';
 import { getModelLabel } from '@/shared/config/ai-models';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
+import type { RewriteRole } from '@/shared/types/ai';
 import type { AppNotification } from '@/shared/types/notifications';
 import { type AppContext, getFrontmostApp, isSameApp } from './app-context';
 import { fixStateManager } from './fix-state';
@@ -133,7 +135,7 @@ function showPersistentFixNotification(
   // OS notification (non-actionable, just for awareness)
   const osNotification = new Notification({
     title: notification.title,
-    body: notification.description,
+    ...(notification.description && { body: notification.description }),
   });
   activeOsNotifications.add(osNotification);
   osNotification.on('close', () => {
@@ -162,9 +164,9 @@ async function processFixAsync(
 
   try {
     // Get AI configuration for metadata
-    const provider = store.get('ai.provider');
-    const role = store.get('ai.role');
-    const model = store.get('ai.model');
+    const provider = store.get('ai.provider') as AIProvider;
+    const role = store.get('ai.role') as RewriteRole;
+    const model = store.get('ai.model') as AIModel;
     const modelLabel = getModelLabel(provider, model);
 
     // AI rewriting using unified function
@@ -175,15 +177,16 @@ async function processFixAsync(
     );
 
     // Save context
-    saveEditContext(contextId, {
+    const editContext = {
       originalText,
       rewrittenText,
       startedAt: fixStartedAt,
       role,
       provider,
       model,
-      sourceApp: sourceApp ?? undefined,
-    });
+      ...(sourceApp && { sourceApp }),
+    };
+    saveEditContext(contextId, editContext);
 
     // Smart completion: check if user is still in same app
     const currentApp = await getFrontmostApp();

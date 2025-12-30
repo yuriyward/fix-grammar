@@ -66,7 +66,7 @@ describe('Notifications storage', () => {
       );
       const list = listNotifications();
       expect(list).toHaveLength(1);
-      expect(list[0].type).toBe('info');
+      expect(list[0]?.type).toBe('info');
     });
 
     it('generates ID if missing', async () => {
@@ -75,9 +75,9 @@ describe('Notifications storage', () => {
         '@/main/storage/notifications'
       );
       const list = listNotifications();
-      expect(list[0].id).toBeDefined();
-      expect(typeof list[0].id).toBe('string');
-      expect(list[0].id.length).toBeGreaterThan(0);
+      expect(list[0]?.id).toBeDefined();
+      expect(typeof list[0]?.id).toBe('string');
+      expect(list[0]?.id.length).toBeGreaterThan(0);
     });
 
     it('validates timestamps', async () => {
@@ -90,8 +90,8 @@ describe('Notifications storage', () => {
       );
       const list = listNotifications();
       // Should fallback to Date.now() or similar, definitely a number
-      expect(typeof list[0].createdAt).toBe('number');
-      expect(typeof list[1].createdAt).toBe('number');
+      expect(typeof list[0]?.createdAt).toBe('number');
+      expect(typeof list[1]?.createdAt).toBe('number');
     });
 
     it('preserves valid descriptions', async () => {
@@ -176,7 +176,7 @@ describe('Notifications storage', () => {
 
       const list = listNotifications();
       expect(list).toHaveLength(1);
-      expect(list[0].title).toBe('New');
+      expect(list[0]?.title).toBe('New');
 
       // Check store persistence
       const stored = mockStoreMap.get('notifications');
@@ -199,8 +199,8 @@ describe('Notifications storage', () => {
 
       markNotificationRead('1');
       const list = listNotifications();
-      expect(list[0].readAt).not.toBeNull();
-      expect(typeof list[0].readAt).toBe('number');
+      expect(list[0]?.readAt).not.toBeNull();
+      expect(typeof list[0]?.readAt).toBe('number');
     });
 
     it('markAllNotificationsRead updates all null readAt', async () => {
@@ -243,8 +243,8 @@ describe('Notifications storage', () => {
       );
       const list = listNotifications();
 
-      expect(list[0].title).toBe('New');
-      expect(list[1].title).toBe('Old');
+      expect(list[0]?.title).toBe('New');
+      expect(list[1]?.title).toBe('Old');
     });
   });
 });

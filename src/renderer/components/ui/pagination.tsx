@@ -67,7 +67,7 @@ function PaginationLink({
   return useRender({
     defaultTagName: 'a',
     props: mergeProps<'a'>(defaultProps, props),
-    render,
+    ...(render !== undefined && { render }),
   });
 }
 

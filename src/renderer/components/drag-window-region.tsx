@@ -46,7 +46,10 @@ export default function DragWindowRegion({ title }: DragWindowRegionProps) {
             </div>
           )}
         </div>
-        <div className="pr-4 pl-2 py-1" style={{ WebkitAppRegion: 'no-drag' }}>
+        <div
+          className="pr-4 pl-2 py-1"
+          style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+        >
           <NotificationCenterButton />
         </div>
       </div>

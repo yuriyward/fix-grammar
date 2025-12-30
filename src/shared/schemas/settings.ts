@@ -138,7 +138,7 @@ function validateHotkeyUniqueness(
 
 const allowedProviderIds = new Set<string>(Object.keys(AI_PROVIDERS));
 
-export const aiProviderSchema: z.ZodType<AIProvider> = z
+export const aiProviderSchema = z
   .string()
   .refine((value): value is AIProvider => allowedProviderIds.has(value), {
     message: 'Invalid AI provider',
@@ -150,7 +150,7 @@ const allowedModelIds = new Set<string>(
   ),
 );
 
-export const aiModelSchema: z.ZodType<AIModel> = z
+export const aiModelSchema = z
   .string()
   .refine((value): value is AIModel => allowedModelIds.has(value), {
     message: 'Invalid AI model',
@@ -344,7 +344,8 @@ export const aiSettingsSchema = z
   })
   .superRefine((data, ctx) => {
     // Provider-specific validations from registry
-    runProviderValidators(data, ctx);
+    // Cast is safe because aiProviderSchema validates the provider
+    runProviderValidators(data as AISettingsData, ctx);
   });
 
 export const automationSettingsSchema = z.object({

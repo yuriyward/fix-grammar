@@ -100,16 +100,25 @@ function normalizeNotification(
   const readAt = validateReadAt(record.readAt, type, createdAt, persistent);
   const id = generateId(record.id);
 
-  return {
+  const result: AppNotification = {
     id,
     type,
     title,
-    description,
     createdAt,
     readAt,
-    persistent,
-    action,
   };
+
+  if (description !== undefined) {
+    result.description = description;
+  }
+  if (persistent !== undefined) {
+    result.persistent = persistent;
+  }
+  if (action !== undefined) {
+    result.action = action;
+  }
+
+  return result;
 }
 
 function getAll(): AppNotification[] {

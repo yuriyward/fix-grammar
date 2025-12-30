@@ -12,10 +12,10 @@ const {
   mockMarkAllNotificationsRead,
   mockClearNotifications,
 } = vi.hoisted(() => {
-  const mockListNotifications = vi.fn<[], Promise<AppNotification[]>>();
-  const mockMarkNotificationRead = vi.fn<[string], Promise<void>>();
-  const mockMarkAllNotificationsRead = vi.fn<[], Promise<void>>();
-  const mockClearNotifications = vi.fn<[], Promise<void>>();
+  const mockListNotifications = vi.fn<() => Promise<AppNotification[]>>();
+  const mockMarkNotificationRead = vi.fn<(id: string) => Promise<void>>();
+  const mockMarkAllNotificationsRead = vi.fn<() => Promise<void>>();
+  const mockClearNotifications = vi.fn<() => Promise<void>>();
 
   return {
     mockListNotifications,

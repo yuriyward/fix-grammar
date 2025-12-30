@@ -65,7 +65,7 @@ function Toggle({
 
   return (
     <ToggleComponent
-      className={className}
+      {...(className !== undefined && { className })}
       data-size={resolvedSize}
       data-variant={resolvedVariant}
       size={resolvedSize}
@@ -85,7 +85,11 @@ function ToggleGroupSeparator({
   className?: string;
 } & React.ComponentProps<typeof Separator>) {
   return (
-    <Separator className={className} orientation={orientation} {...props} />
+    <Separator
+      {...(className !== undefined && { className })}
+      orientation={orientation}
+      {...props}
+    />
   );
 }
 

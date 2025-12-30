@@ -18,10 +18,10 @@ const {
   mockSimulatePaste,
 } = vi.hoisted(() => {
   const mockAddNotification = vi.fn();
-  const mockListNotifications = vi.fn<[], AppNotification[]>();
-  const mockMarkNotificationRead = vi.fn<[string], void>();
-  const mockMarkAllNotificationsRead = vi.fn<[], void>();
-  const mockClearNotifications = vi.fn<[], void>();
+  const mockListNotifications = vi.fn<() => AppNotification[]>();
+  const mockMarkNotificationRead = vi.fn<(id: string) => void>();
+  const mockMarkAllNotificationsRead = vi.fn<() => void>();
+  const mockClearNotifications = vi.fn<() => void>();
   const mockGetEditContext = vi.fn();
   const mockSwitchToApp = vi.fn();
   const mockReadClipboard = vi.fn();

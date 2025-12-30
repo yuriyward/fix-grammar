@@ -4,11 +4,11 @@
 import { type ClientContext, createORPCClient } from '@orpc/client';
 import { RPCLink } from '@orpc/client/message-port';
 import type { RouterClient } from '@orpc/server';
+// Type-only import: no runtime dependency, erased during compilation
 import type { router } from '@/ipc/router';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
 
-type RouterType = typeof router;
-type Client = RouterClient<RouterType, ClientContext>;
+type Client = RouterClient<typeof router, ClientContext>;
 
 class IPCManager {
   private readonly clientPort: MessagePort;

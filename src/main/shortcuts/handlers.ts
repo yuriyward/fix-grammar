@@ -27,7 +27,16 @@ import type { AppNotification } from '@/shared/types/notifications';
 import { type AppContext, getFrontmostApp, isSameApp } from './app-context';
 import { fixStateManager } from './fix-state';
 
-const activeOsNotifications = new Set<Notification>();
+const activeOsNotifications = new Map<Notification, NodeJS.Timeout>();
+
+/** OS notifications auto-dismiss after ~5s, but we add buffer for slow systems */
+const OS_NOTIFICATION_CLEANUP_MS = 30_000;
+
+function cleanupOsNotification(notification: Notification): void {
+  const timeout = activeOsNotifications.get(notification);
+  if (timeout) clearTimeout(timeout);
+  activeOsNotifications.delete(notification);
+}
 
 function sendInAppNotification(notification: AppNotification): void {
   windowManager.broadcast(IPC_CHANNELS.NOTIFY, notification);
@@ -137,10 +146,15 @@ function showPersistentFixNotification(
     title: notification.title,
     ...(notification.description && { body: notification.description }),
   });
-  activeOsNotifications.add(osNotification);
-  osNotification.on('close', () => {
-    activeOsNotifications.delete(osNotification);
-  });
+
+  // Track with timeout cleanup (OS may auto-dismiss without 'close' event)
+  const cleanupTimeout = setTimeout(
+    () => cleanupOsNotification(osNotification),
+    OS_NOTIFICATION_CLEANUP_MS,
+  );
+  activeOsNotifications.set(osNotification, cleanupTimeout);
+
+  osNotification.on('close', () => cleanupOsNotification(osNotification));
   osNotification.on('click', () => {
     windowManager.openNotificationCenter();
   });
@@ -248,8 +262,8 @@ async function processFixAsync(
  * the fix is pasted automatically. Otherwise, a persistent notification is shown.
  */
 export async function handleFixSelection(): Promise<void> {
-  // Guard: reject if already processing
-  if (!fixStateManager.canStartFix()) {
+  // Atomic acquire: prevents TOCTOU race between check and start
+  if (!fixStateManager.tryAcquire()) {
     showNotification({
       type: 'warning',
       title: 'Grammar Copilot',
@@ -274,12 +288,13 @@ export async function handleFixSelection(): Promise<void> {
         title: 'Grammar Copilot',
         description: 'No text selected',
       });
+      fixStateManager.completeFix();
       return;
     }
 
     // 3. Start async processing (fire and forget)
     const contextId = randomUUID();
-    fixStateManager.startFix(contextId, sourceApp);
+    fixStateManager.setContext(contextId, sourceApp);
 
     processFixAsync(contextId, originalText, sourceApp, fixStartedAt)
       .catch((error) => {

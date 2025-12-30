@@ -23,12 +23,9 @@ class FixStateManager {
    * This prevents TOCTOU race conditions between check and start.
    */
   tryAcquire(): boolean {
-    if (this.state.isProcessing) {
-      return false;
-    }
-
+    const wasProcessing = this.state.isProcessing;
     this.state.isProcessing = true;
-    return true;
+    return !wasProcessing;
   }
 
   /**

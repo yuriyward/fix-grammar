@@ -2,6 +2,51 @@
  * URL validation utilities for preventing SSRF attacks
  */
 
+type ValidationResult = { isValid: true } | { isValid: false; error: string };
+
+const PRIVATE_IP_RANGES = [
+  /^127\./, // 127.0.0.0/8 loopback
+  /^10\./, // 10.0.0.0/8 private
+  /^172\.(1[6-9]|2\d|3[01])\./, // 172.16.0.0/12 private
+  /^192\.168\./, // 192.168.0.0/16 private
+  /^169\.254\./, // 169.254.0.0/16 link-local
+  /^0\./, // 0.0.0.0/8
+];
+
+const BLOCKED_HOSTNAMES = ['localhost', '[::1]', '::1'];
+
+function isPrivateHost(hostname: string): boolean {
+  const lower = hostname.toLowerCase();
+  if (BLOCKED_HOSTNAMES.includes(lower)) return true;
+  return PRIVATE_IP_RANGES.some((range) => range.test(hostname));
+}
+
+/**
+ * Validates a URL for external use (shell.openExternal).
+ * Blocks internal IPs/localhost to prevent SSRF attacks.
+ */
+export function validateExternalUrl(input: string): ValidationResult {
+  let url: URL;
+  try {
+    url = new URL(input);
+  } catch {
+    return { isValid: false, error: 'Invalid URL format' };
+  }
+
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return { isValid: false, error: 'URL must use http: or https: protocol' };
+  }
+
+  if (isPrivateHost(url.hostname)) {
+    return {
+      isValid: false,
+      error: 'URLs to internal/private addresses are not allowed',
+    };
+  }
+
+  return { isValid: true };
+}
+
 /**
  * Sanitizes and validates an LM Studio base URL.
  * - Automatically prepends http:// for localhost addresses without a protocol

@@ -175,7 +175,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   },
 
   _handleConversationsChanged: () => {
+    const { selectedConversationId } = get();
     get().fetchConversations();
+    // Also refresh current conversation's messages if one is selected
+    if (selectedConversationId) {
+      get().selectConversation(selectedConversationId, { broadcast: false });
+    }
   },
 
   _handleConversationSelected: (id) => {

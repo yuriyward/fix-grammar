@@ -1,10 +1,11 @@
 /**
- * Chat input component with textarea and send button
+ * Chat input component using AI SDK Elements
  */
-import { Send } from 'lucide-react';
-import { useState } from 'react';
-import { Button } from '@/renderer/components/ui/button';
-import { Textarea } from '@/renderer/components/ui/textarea';
+import {
+  PromptInput,
+  PromptInputSubmit,
+  PromptInputTextarea,
+} from '@/renderer/components/ai-elements/prompt-input';
 import { cn } from '@/renderer/lib/tailwind';
 
 interface ChatInputProps {
@@ -20,39 +21,24 @@ export function ChatInput({
   placeholder = 'Type a message...',
   className,
 }: ChatInputProps) {
-  const [value, setValue] = useState('');
-
-  const handleSubmit = () => {
-    if (!value.trim() || isLoading) return;
-    onSend(value.trim());
-    setValue('');
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
-
   return (
-    <div className={cn('flex gap-2 border-t bg-background p-4', className)}>
-      <Textarea
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={handleKeyDown}
+    <PromptInput
+      onSubmit={(message) => {
+        if (message.text.trim()) {
+          onSend(message.text.trim());
+        }
+      }}
+      className={cn('border-t bg-background p-4', className)}
+    >
+      <PromptInputTextarea
         placeholder={placeholder}
         disabled={isLoading}
-        className="min-h-10 flex-1 resize-none"
+        className="min-h-10"
       />
-      <Button
-        onClick={handleSubmit}
-        disabled={isLoading || !value.trim()}
-        size="icon"
-        className="shrink-0 self-end"
-      >
-        <Send className="size-4" />
-      </Button>
-    </div>
+      <PromptInputSubmit
+        status={isLoading ? 'streaming' : 'ready'}
+        className="absolute bottom-2 right-2"
+      />
+    </PromptInput>
   );
 }

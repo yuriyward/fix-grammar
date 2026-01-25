@@ -217,6 +217,9 @@ export const sendMessage = os
       };
       windowManager.broadcast(IPC_CHANNELS.CHAT_STREAM, completeChunk);
 
+      // Notify all windows that conversations changed (updatedAt timestamp)
+      windowManager.broadcast(IPC_CHANNELS.CHAT_CONVERSATIONS_CHANGED);
+
       return {
         userMessageId: userMessage.id,
         assistantMessageId: assistantMessage.id,

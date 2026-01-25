@@ -203,6 +203,9 @@ async function processFixAsync(
     addMessageToConversation(conversation.id, 'user', originalText);
     addMessageToConversation(conversation.id, 'assistant', rewrittenText);
 
+    // Notify all windows about the new conversation
+    windowManager.broadcast(IPC_CHANNELS.CHAT_CONVERSATIONS_CHANGED);
+
     // Save context with conversation ID
     const editContext = {
       originalText,

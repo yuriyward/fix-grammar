@@ -61,14 +61,22 @@ export function ChatSidebar({
             </div>
           ) : (
             conversations.map((conv) => (
-              <button
+              // biome-ignore lint/a11y/useSemanticElements: Using div with role="button" to allow nested interactive content (delete button)
+              <div
                 key={conv.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 className={cn(
                   'group flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   selectedId === conv.id && 'bg-accent',
                 )}
                 onClick={() => onSelect(conv.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onSelect(conv.id);
+                  }
+                }}
               >
                 <MessageSquare className="size-4 shrink-0 text-muted-foreground" />
                 <div className="flex-1 overflow-hidden">
@@ -88,7 +96,7 @@ export function ChatSidebar({
                 >
                   <Trash2 className="size-3" />
                 </Button>
-              </button>
+              </div>
             ))
           )}
         </div>

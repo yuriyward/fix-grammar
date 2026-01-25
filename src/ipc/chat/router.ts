@@ -5,6 +5,7 @@ import {
   broadcastSelection,
   createConversation,
   deleteConversation,
+  editMessage,
   getConversation,
   getLastConversationIdHandler,
   listConversationsHandler,
@@ -18,5 +19,6 @@ export const chat = {
   getLastConversationId: getLastConversationIdHandler,
   deleteConversation,
   sendMessage,
+  editMessage,
   broadcastSelection,
 };

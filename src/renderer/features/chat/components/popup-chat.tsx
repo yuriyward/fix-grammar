@@ -27,8 +27,18 @@ export function PopupChat({
     }
   }, [initialConversationId]);
 
-  const { messages, context, isLoading, error, send, loadConversation } =
-    useChat(conversationId ? { conversationId } : {});
+  const {
+    messages,
+    context,
+    isLoading,
+    error,
+    editingMessageId,
+    send,
+    loadConversation,
+    startEdit,
+    cancelEdit,
+    submitEdit,
+  } = useChat(conversationId ? { conversationId } : {});
 
   // Load conversation when ID changes
   useEffect(() => {
@@ -44,6 +54,10 @@ export function PopupChat({
         context={context}
         isLoading={isLoading}
         className="flex-1"
+        editingMessageId={editingMessageId}
+        onStartEdit={startEdit}
+        onCancelEdit={cancelEdit}
+        onSubmitEdit={submitEdit}
       />
 
       {error && (

@@ -20,6 +20,7 @@ interface UseChatReturn {
   error: string | null;
   conversationId: string | null;
   conversations: ConversationSummary[];
+  editingMessageId: string | null;
   send: (content: string) => Promise<void>;
   loadConversation: (id: string) => Promise<void>;
   newConversation: (options?: {
@@ -29,6 +30,9 @@ interface UseChatReturn {
   }) => Promise<string>;
   clearConversation: () => void;
   refreshConversations: () => Promise<void>;
+  startEdit: (messageId: string) => void;
+  cancelEdit: () => void;
+  submitEdit: (content: string) => Promise<void>;
 }
 
 export function useChat(options: UseChatOptions = {}): UseChatReturn {
@@ -68,10 +72,14 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     error: store.error,
     conversationId: store.selectedConversationId,
     conversations: store.conversations,
+    editingMessageId: store.editingMessageId,
     send: store.sendMessage,
     loadConversation,
     newConversation: store.createConversation,
     clearConversation,
     refreshConversations: store.fetchConversations,
+    startEdit: store.startEditMessage,
+    cancelEdit: store.cancelEditMessage,
+    submitEdit: store.submitEditMessage,
   };
 }

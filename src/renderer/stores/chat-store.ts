@@ -6,6 +6,7 @@ import {
   broadcastSelection,
   createConversation as createConversationAction,
   deleteConversation as deleteConversationAction,
+  editMessage as editMessageAction,
   getConversation,
   listConversations,
   sendMessage as sendMessageAction,
@@ -32,6 +33,7 @@ interface ChatStore {
   isLoading: boolean;
   error: string | null;
   streamingContent: Map<string, string>;
+  editingMessageId: string | null;
 
   fetchConversations: () => Promise<void>;
   selectConversation: (
@@ -46,6 +48,9 @@ interface ChatStore {
   deleteConversation: (id: string) => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
   handleStreamChunk: (chunk: ChatStreamChunk) => void;
+  startEditMessage: (messageId: string) => void;
+  cancelEditMessage: () => void;
+  submitEditMessage: (content: string) => Promise<void>;
 
   _handleConversationsChanged: () => void;
   _handleConversationSelected: (id: string | null) => void;
@@ -59,6 +64,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   isLoading: false,
   error: null,
   streamingContent: new Map(),
+  editingMessageId: null,
 
   fetchConversations: async () => {
     const convs = await listConversations();
@@ -135,8 +141,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
     set({ isLoading: true, error: null });
 
+    const tempId = `temp-user-${Date.now()}`;
     const optimisticUserMessage: ChatMessage = {
-      id: `temp-user-${Date.now()}`,
+      id: tempId,
       role: 'user',
       content,
       createdAt: Date.now(),
@@ -144,7 +151,16 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     set((s) => ({ messages: [...s.messages, optimisticUserMessage] }));
 
     try {
-      await sendMessageAction(conversationId, content);
+      const { userMessageId } = await sendMessageAction(
+        conversationId,
+        content,
+      );
+      // Update temp ID with real ID from server
+      set((s) => ({
+        messages: s.messages.map((m) =>
+          m.id === tempId ? { ...m, id: userMessageId } : m,
+        ),
+      }));
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : 'Failed to send message';
@@ -192,6 +208,53 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     } else if (chunk.type === 'error') {
       streamingContent.delete(chunk.messageId);
       set({ error: chunk.content, isLoading: false });
+    }
+  },
+
+  startEditMessage: (messageId: string) => {
+    set({ editingMessageId: messageId, error: null });
+  },
+
+  cancelEditMessage: () => {
+    set({ editingMessageId: null });
+  },
+
+  submitEditMessage: async (content) => {
+    const state = get();
+    const { selectedConversationId, editingMessageId } = state;
+
+    if (!selectedConversationId || !editingMessageId) return;
+
+    set({ isLoading: true, error: null, editingMessageId: null });
+
+    set((s) => {
+      const messageIndex = s.messages.findIndex(
+        (m) => m.id === editingMessageId,
+      );
+      if (messageIndex === -1) return s;
+
+      const existingMessage = s.messages[messageIndex];
+      if (!existingMessage) return s;
+
+      const updatedMessages = s.messages.slice(0, messageIndex + 1);
+      updatedMessages[messageIndex] = {
+        ...existingMessage,
+        content,
+      };
+
+      return { messages: updatedMessages };
+    });
+
+    try {
+      await editMessageAction(
+        selectedConversationId,
+        editingMessageId,
+        content,
+      );
+    } catch (err) {
+      const errorMsg =
+        err instanceof Error ? err.message : 'Failed to edit message';
+      set({ error: errorMsg, isLoading: false });
     }
   },
 

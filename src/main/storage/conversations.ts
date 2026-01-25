@@ -171,3 +171,32 @@ export function clearAllConversations(): void {
   store.set('conversations', {});
   store.set('order', []);
 }
+
+export function editMessageAndTruncate(
+  conversationId: string,
+  messageId: string,
+  newContent: string,
+): { success: boolean; truncatedCount: number } | null {
+  const conversations = store.get('conversations');
+  const conversation = conversations[conversationId];
+
+  if (!conversation) return null;
+
+  const messageIndex = conversation.messages.findIndex(
+    (m) => m.id === messageId,
+  );
+  if (messageIndex === -1) return null;
+
+  const message = conversation.messages[messageIndex];
+  if (!message || message.role !== 'user') return null;
+
+  message.content = newContent;
+
+  const truncatedCount = conversation.messages.length - messageIndex - 1;
+  conversation.messages = conversation.messages.slice(0, messageIndex + 1);
+  conversation.updatedAt = Date.now();
+
+  store.set('conversations', conversations);
+
+  return { success: true, truncatedCount };
+}

@@ -18,10 +18,14 @@ export function ChatLayout() {
     error,
     conversationId,
     conversations,
+    editingMessageId,
     send,
     loadConversation,
     clearConversation,
     refreshConversations,
+    startEdit,
+    cancelEdit,
+    submitEdit,
   } = useChat();
 
   // Auto-load the latest conversation on mount
@@ -65,6 +69,10 @@ export function ChatLayout() {
           messages={messages}
           context={context}
           isLoading={isLoading}
+          editingMessageId={editingMessageId}
+          onStartEdit={startEdit}
+          onCancelEdit={cancelEdit}
+          onSubmitEdit={submitEdit}
         />
 
         {error && (

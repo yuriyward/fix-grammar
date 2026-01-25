@@ -45,3 +45,15 @@ export async function broadcastSelection(
 ): Promise<{ success: boolean }> {
   return ipc.client.chat.broadcastSelection({ conversationId });
 }
+
+export async function editMessage(
+  conversationId: string,
+  messageId: string,
+  content: string,
+): Promise<{
+  editedMessageId: string;
+  assistantMessageId: string;
+  truncatedCount: number;
+}> {
+  return ipc.client.chat.editMessage({ conversationId, messageId, content });
+}

@@ -3,6 +3,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import ElectronStore from 'electron-store';
+import type { RewriteRole } from '@/shared/types/ai';
 import type {
   ChatMessage,
   Conversation,
@@ -34,6 +35,7 @@ export function createConversation(
   firstMessage?: string,
   sourceApp?: string,
   sourceText?: string,
+  sourceRole?: RewriteRole,
 ): Conversation {
   const id = randomUUID();
   const now = Date.now();
@@ -46,6 +48,7 @@ export function createConversation(
     updatedAt: now,
     ...(sourceApp && { sourceApp }),
     ...(sourceText && { sourceText }),
+    ...(sourceRole && { sourceRole }),
   };
 
   const conversations = store.get('conversations');

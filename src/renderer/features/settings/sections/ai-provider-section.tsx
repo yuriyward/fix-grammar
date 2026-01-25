@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from '@/renderer/components/ui/select';
 import { Spinner } from '@/renderer/components/ui/spinner';
+import { Switch } from '@/renderer/components/ui/switch';
 import { Textarea } from '@/renderer/components/ui/textarea';
 import {
   AI_PROVIDERS,
@@ -52,6 +53,7 @@ export interface AIProviderSectionProps {
   textVerbosity: TextVerbosity;
   lmstudioBaseURL: string;
   openrouterExtraParams: string;
+  includeOriginalPromptInChat: boolean;
   isSaving: boolean;
   onProviderChange: (provider: AIProvider) => void;
   onModelChange: (model: string) => void;
@@ -60,6 +62,7 @@ export interface AIProviderSectionProps {
   onTextVerbosityChange: (verbosity: TextVerbosity) => void;
   onLmstudioBaseURLChange: (url: string) => void;
   onOpenrouterExtraParamsChange: (params: string) => void;
+  onIncludeOriginalPromptInChatChange: (include: boolean) => void;
 
   // From useApiKey
   apiKey: string;
@@ -96,6 +99,7 @@ export function AIProviderSection({
   textVerbosity,
   lmstudioBaseURL,
   openrouterExtraParams,
+  includeOriginalPromptInChat,
   isSaving,
   onProviderChange,
   onModelChange,
@@ -104,6 +108,7 @@ export function AIProviderSection({
   onTextVerbosityChange,
   onLmstudioBaseURLChange,
   onOpenrouterExtraParamsChange,
+  onIncludeOriginalPromptInChatChange,
   apiKey,
   hasKey,
   isEncryptionAvailable,
@@ -376,6 +381,21 @@ export function AIProviderSection({
         </Select>
         <FieldError />
       </Field>
+
+      {/* Include Original Context in Chat */}
+      <div className="flex items-center justify-between rounded-lg border px-4 py-3">
+        <div className="space-y-0.5">
+          <div className="text-sm font-medium">Include context in chat</div>
+          <div className="text-xs text-muted-foreground">
+            Send original text as context for follow-up messages
+          </div>
+        </div>
+        <Switch
+          checked={includeOriginalPromptInChat}
+          onCheckedChange={onIncludeOriginalPromptInChatChange}
+          disabled={isSaving}
+        />
+      </div>
 
       {/* OpenAI-specific fields */}
       {provider === 'openai' && (

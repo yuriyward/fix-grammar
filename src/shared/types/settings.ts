@@ -27,6 +27,7 @@ export interface AISettings {
   textVerbosity?: TextVerbosity;
   lmstudioBaseURL?: string;
   openrouterExtraParams?: string;
+  includeOriginalPromptInChat?: boolean;
 }
 
 export interface AutomationSettings {

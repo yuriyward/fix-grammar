@@ -27,9 +27,8 @@ export function PopupChat({
     }
   }, [initialConversationId]);
 
-  const { messages, isLoading, error, send, loadConversation } = useChat(
-    conversationId ? { conversationId } : {},
-  );
+  const { messages, context, isLoading, error, send, loadConversation } =
+    useChat(conversationId ? { conversationId } : {});
 
   // Load conversation when ID changes
   useEffect(() => {
@@ -42,6 +41,7 @@ export function PopupChat({
     <div className="flex h-full flex-col">
       <ChatMessages
         messages={messages}
+        context={context}
         isLoading={isLoading}
         className="flex-1"
       />

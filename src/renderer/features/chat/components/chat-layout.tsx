@@ -13,6 +13,7 @@ export function ChatLayout() {
   const navigate = useNavigate();
   const {
     messages,
+    context,
     isLoading,
     error,
     conversationId,
@@ -60,7 +61,11 @@ export function ChatLayout() {
       />
 
       <div className="flex flex-1 flex-col">
-        <ChatMessages messages={messages} isLoading={isLoading} />
+        <ChatMessages
+          messages={messages}
+          context={context}
+          isLoading={isLoading}
+        />
 
         {error && (
           <div className="border-t border-destructive/20 bg-destructive/10 px-4 py-2 text-sm text-destructive">

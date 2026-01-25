@@ -35,6 +35,8 @@ export interface UseSettingsStateReturn {
   setLmstudioBaseURL: (url: string) => void;
   openrouterExtraParams: string;
   setOpenrouterExtraParams: (params: string) => void;
+  includeOriginalPromptInChat: boolean;
+  setIncludeOriginalPromptInChat: (include: boolean) => void;
 
   // Hotkey settings
   fixSelection: string;
@@ -70,6 +72,8 @@ export function useSettingsState(): UseSettingsStateReturn {
     'http://localhost:1234/v1',
   );
   const [openrouterExtraParams, setOpenrouterExtraParams] = useState('');
+  const [includeOriginalPromptInChat, setIncludeOriginalPromptInChat] =
+    useState(true);
   const [fixSelection, setFixSelection] = useState<string>(
     DEFAULT_HOTKEYS.fixSelection,
   );
@@ -96,6 +100,9 @@ export function useSettingsState(): UseSettingsStateReturn {
         settings.ai.lmstudioBaseURL ?? 'http://localhost:1234/v1',
       );
       setOpenrouterExtraParams(settings.ai.openrouterExtraParams ?? '');
+      setIncludeOriginalPromptInChat(
+        settings.ai.includeOriginalPromptInChat ?? false,
+      );
       setFixSelection(settings.hotkeys.fixSelection);
       setTogglePopup(settings.hotkeys.togglePopup);
       setShowMainWindow(settings.hotkeys.showMainWindow);
@@ -145,6 +152,7 @@ export function useSettingsState(): UseSettingsStateReturn {
                   }
                 })()
               : undefined,
+          includeOriginalPromptInChat,
         },
         hotkeys: { fixSelection, togglePopup, showMainWindow },
         automation: { clipboardSyncDelayMs, selectionDelayMs },
@@ -183,6 +191,7 @@ export function useSettingsState(): UseSettingsStateReturn {
       textVerbosity,
       lmstudioBaseURL,
       openrouterExtraParams,
+      includeOriginalPromptInChat,
       fixSelection,
       togglePopup,
       showMainWindow,
@@ -206,6 +215,8 @@ export function useSettingsState(): UseSettingsStateReturn {
     setLmstudioBaseURL,
     openrouterExtraParams,
     setOpenrouterExtraParams,
+    includeOriginalPromptInChat,
+    setIncludeOriginalPromptInChat,
     fixSelection,
     setFixSelection,
     togglePopup,

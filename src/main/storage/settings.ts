@@ -16,6 +16,7 @@ export const store = new ElectronStore<AppSettings>({
       reasoningEffort: 'medium',
       textVerbosity: 'medium',
       lmstudioBaseURL: 'http://localhost:1234/v1',
+      includeOriginalPromptInChat: true,
     },
     automation: {
       clipboardSyncDelayMs: 200,

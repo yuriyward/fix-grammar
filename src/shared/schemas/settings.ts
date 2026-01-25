@@ -344,6 +344,7 @@ export const aiSettingsSchema = z
     textVerbosity: textVerbositySchema.optional(),
     lmstudioBaseURL: z.string().optional(),
     openrouterExtraParams: z.string().optional(),
+    includeOriginalPromptInChat: z.boolean().optional(),
   })
   .superRefine((data, ctx) => {
     // Provider-specific validations from registry

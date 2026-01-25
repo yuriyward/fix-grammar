@@ -7,6 +7,7 @@ import type { ModelMessage } from 'ai';
 import { streamText } from 'ai';
 import { createModelInstance } from '@/main/ai/client';
 import { parseAIError } from '@/main/ai/error-handler';
+import { buildPrompt } from '@/main/ai/prompts';
 import { getApiKey } from '@/main/storage/api-keys';
 import { getLastConversationId } from '@/main/storage/context';
 import {
@@ -133,6 +134,14 @@ export const sendMessage = os
     // Build messages for AI
     const modelMessages = convertToModelMessages(conversation.messages);
 
+    // Build system prompt with optional original context
+    const includeOriginalPrompt = store.get('ai.includeOriginalPromptInChat');
+    const { sourceText, sourceRole } = conversation;
+    const systemPrompt =
+      includeOriginalPrompt && sourceText && sourceRole
+        ? `${CHAT_SYSTEM_PROMPT}\n\n---\nOriginal correction context:\n${buildPrompt(sourceText, sourceRole)}`
+        : CHAT_SYSTEM_PROMPT;
+
     // Start streaming
     const modelInstance = createModelInstance(
       provider,
@@ -144,7 +153,7 @@ export const sendMessage = os
     try {
       const result = streamText({
         model: modelInstance,
-        system: CHAT_SYSTEM_PROMPT,
+        system: systemPrompt,
         messages: modelMessages,
         maxRetries: 2,
         abortSignal: AbortSignal.timeout(AI_STREAM_TIMEOUT_MS),

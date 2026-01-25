@@ -70,6 +70,9 @@ export default function SettingsForm() {
           textVerbosity={settingsState.textVerbosity}
           lmstudioBaseURL={settingsState.lmstudioBaseURL}
           openrouterExtraParams={settingsState.openrouterExtraParams}
+          includeOriginalPromptInChat={
+            settingsState.includeOriginalPromptInChat
+          }
           isSaving={settingsState.isSaving}
           onProviderChange={handleProviderChange}
           onModelChange={settingsState.setModel}
@@ -78,6 +81,9 @@ export default function SettingsForm() {
           onTextVerbosityChange={settingsState.setTextVerbosity}
           onLmstudioBaseURLChange={settingsState.setLmstudioBaseURL}
           onOpenrouterExtraParamsChange={settingsState.setOpenrouterExtraParams}
+          onIncludeOriginalPromptInChatChange={
+            settingsState.setIncludeOriginalPromptInChat
+          }
           apiKey={apiKeyState.apiKey}
           hasKey={apiKeyState.hasKey}
           isEncryptionAvailable={apiKeyState.isEncryptionAvailable}

@@ -2,7 +2,10 @@
  * Custom hook for chat - delegates to Zustand store
  */
 import { useEffect } from 'react';
-import { useChatStore } from '@/renderer/stores/chat-store';
+import {
+  type ConversationContext,
+  useChatStore,
+} from '@/renderer/stores/chat-store';
 import type { ChatMessage, ConversationSummary } from '@/shared/types/chat';
 
 interface UseChatOptions {
@@ -12,6 +15,7 @@ interface UseChatOptions {
 
 interface UseChatReturn {
   messages: ChatMessage[];
+  context: ConversationContext | null;
   isLoading: boolean;
   error: string | null;
   conversationId: string | null;
@@ -59,6 +63,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
 
   return {
     messages: store.messages,
+    context: store.context,
     isLoading: store.isLoading,
     error: store.error,
     conversationId: store.selectedConversationId,

@@ -11,16 +11,24 @@ import {
   sendMessage as sendMessageAction,
 } from '@/actions/chat';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
+import type { RewriteRole } from '@/shared/types/ai';
 import type {
   ChatMessage,
   ChatStreamChunk,
   ConversationSummary,
 } from '@/shared/types/chat';
 
+export interface ConversationContext {
+  sourceText: string;
+  sourceRole: RewriteRole;
+  sourceApp?: string;
+}
+
 interface ChatStore {
   conversations: ConversationSummary[];
   selectedConversationId: string | null;
   messages: ChatMessage[];
+  context: ConversationContext | null;
   isLoading: boolean;
   error: string | null;
   streamingContent: Map<string, string>;
@@ -47,6 +55,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   conversations: [],
   selectedConversationId: null,
   messages: [],
+  context: null,
   isLoading: false,
   error: null,
   streamingContent: new Map(),
@@ -58,7 +67,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
   selectConversation: async (id, options = { broadcast: true }) => {
     if (id === null) {
-      set({ selectedConversationId: null, messages: [], error: null });
+      set({
+        selectedConversationId: null,
+        messages: [],
+        context: null,
+        error: null,
+      });
       if (options.broadcast) {
         await broadcastSelection(null);
       }
@@ -67,9 +81,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
     const conv = await getConversation(id);
     if (conv) {
+      const context: ConversationContext | null =
+        conv.sourceText && conv.sourceRole
+          ? {
+              sourceText: conv.sourceText,
+              sourceRole: conv.sourceRole,
+              ...(conv.sourceApp && { sourceApp: conv.sourceApp }),
+            }
+          : null;
+
       set({
         selectedConversationId: conv.id,
         messages: conv.messages,
+        context,
         error: null,
       });
       if (options.broadcast) {

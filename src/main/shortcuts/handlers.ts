@@ -199,6 +199,7 @@ async function processFixAsync(
       originalText,
       sourceApp?.name,
       originalText,
+      role,
     );
     addMessageToConversation(conversation.id, 'user', originalText);
     addMessageToConversation(conversation.id, 'assistant', rewrittenText);

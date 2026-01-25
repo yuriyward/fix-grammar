@@ -4,6 +4,7 @@
 import { ai } from './ai/router';
 import { app } from './app/router';
 import { automation } from './automation/router';
+import { chat } from './chat/router';
 import { notifications } from './notifications/router';
 import { permissions } from './permissions/router';
 import { settings } from './settings/router';
@@ -20,6 +21,7 @@ export const router = {
   settings,
   automation,
   ai,
+  chat,
   shortcuts,
   notifications,
   permissions,

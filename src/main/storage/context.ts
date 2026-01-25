@@ -16,6 +16,7 @@ export interface EditContext {
   provider: AIProvider;
   model: AIModel;
   sourceApp?: AppContext;
+  conversationId?: string;
 }
 
 const MAX_CONTEXTS = 100;
@@ -53,6 +54,11 @@ export function getEditContext(id: string): EditContext | undefined {
 export function getLastEditContext(): EditContext | undefined {
   const entries = Array.from(contextMap.values());
   return entries[entries.length - 1];
+}
+
+export function getLastConversationId(): string | undefined {
+  const lastContext = getLastEditContext();
+  return lastContext?.conversationId;
 }
 
 export function clearEditContexts(): void {

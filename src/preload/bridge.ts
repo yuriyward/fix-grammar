@@ -9,6 +9,13 @@ import type {
 } from '@/shared/types/automation';
 import type { AppNotification } from '@/shared/types/notifications';
 
+interface ChatStreamChunk {
+  conversationId: string;
+  messageId: string;
+  type: 'delta' | 'complete' | 'error';
+  content: string;
+}
+
 /**
  * Setup the preload bridge for IPC communication.
  *
@@ -81,4 +88,34 @@ export function setupBridge() {
       ]);
     }
   });
+
+  // Chat stream listener
+  ipcRenderer.on(
+    IPC_CHANNELS.CHAT_STREAM,
+    (_event, payload: ChatStreamChunk) => {
+      window.dispatchEvent(
+        new CustomEvent<ChatStreamChunk>(IPC_CHANNELS.CHAT_STREAM, {
+          detail: payload,
+        }),
+      );
+    },
+  );
+
+  // Chat sync listeners
+  ipcRenderer.on(IPC_CHANNELS.CHAT_CONVERSATIONS_CHANGED, () => {
+    window.dispatchEvent(
+      new CustomEvent(IPC_CHANNELS.CHAT_CONVERSATIONS_CHANGED),
+    );
+  });
+
+  ipcRenderer.on(
+    IPC_CHANNELS.CHAT_CONVERSATION_SELECTED,
+    (_event, payload: { conversationId: string | null }) => {
+      window.dispatchEvent(
+        new CustomEvent(IPC_CHANNELS.CHAT_CONVERSATION_SELECTED, {
+          detail: payload,
+        }),
+      );
+    },
+  );
 }

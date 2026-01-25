@@ -62,4 +62,6 @@ export const DEFAULT_HOTKEYS = {
   fixSelection: 'CommandOrControl+Shift+D',
   /** Default shortcut for popup toggle */
   togglePopup: 'CommandOrControl+Shift+I',
+  /** Default shortcut for showing main window */
+  showMainWindow: 'CommandOrControl+Shift+M',
 } as const;

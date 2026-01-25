@@ -33,8 +33,18 @@ export function validateExternalUrl(input: string): ValidationResult {
     return { isValid: false, error: 'Invalid URL format' };
   }
 
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    return { isValid: false, error: 'URL must use http: or https: protocol' };
+  const ALLOWED_PROTOCOLS = ['http:', 'https:', 'x-apple.systempreferences:'];
+  if (!ALLOWED_PROTOCOLS.includes(url.protocol)) {
+    return {
+      isValid: false,
+      error:
+        'URL must use http:, https:, or x-apple.systempreferences: protocol',
+    };
+  }
+
+  // Skip hostname validation for macOS system preference URLs (they don't have traditional hostnames)
+  if (url.protocol === 'x-apple.systempreferences:') {
+    return { isValid: true };
   }
 
   if (isPrivateHost(url.hostname)) {

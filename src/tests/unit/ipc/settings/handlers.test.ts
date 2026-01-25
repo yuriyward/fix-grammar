@@ -28,6 +28,7 @@ const {
       hotkeys: {
         fixSelection: '',
         togglePopup: '',
+        showMainWindow: '',
       },
       ai: {
         provider: 'google',
@@ -79,6 +80,7 @@ describe('Settings IPC handlers', () => {
       hotkeys: {
         fixSelection: DEFAULT_HOTKEYS.fixSelection,
         togglePopup: DEFAULT_HOTKEYS.togglePopup,
+        showMainWindow: DEFAULT_HOTKEYS.showMainWindow,
       },
       ai: {
         provider: 'google',
@@ -107,6 +109,7 @@ describe('Settings IPC handlers', () => {
       hotkeys: {
         fixSelection: DEFAULT_HOTKEYS.fixSelection,
         togglePopup: DEFAULT_HOTKEYS.togglePopup,
+        showMainWindow: DEFAULT_HOTKEYS.showMainWindow,
       },
       ai: {
         provider: 'google',
@@ -134,6 +137,7 @@ describe('Settings IPC handlers', () => {
       hotkeys: {
         fixSelection: DEFAULT_HOTKEYS.fixSelection,
         togglePopup: DEFAULT_HOTKEYS.togglePopup,
+        showMainWindow: DEFAULT_HOTKEYS.showMainWindow,
       },
       ai: {
         provider: 'google',
@@ -161,6 +165,7 @@ describe('Settings IPC handlers', () => {
       hotkeys: {
         fixSelection: DEFAULT_HOTKEYS.fixSelection,
         togglePopup: 'Not A Hotkey',
+        showMainWindow: DEFAULT_HOTKEYS.showMainWindow,
       },
       ai: {
         provider: 'google',

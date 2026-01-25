@@ -86,6 +86,7 @@ const createMockSettings = (
   hotkeys: {
     fixSelection: DEFAULT_HOTKEYS.fixSelection,
     togglePopup: DEFAULT_HOTKEYS.togglePopup,
+    showMainWindow: DEFAULT_HOTKEYS.showMainWindow,
     ...overrides?.hotkeys,
   },
   automation: {
@@ -287,6 +288,7 @@ describe('useSettingsState', () => {
         hotkeys: {
           fixSelection: DEFAULT_HOTKEYS.fixSelection,
           togglePopup: DEFAULT_HOTKEYS.togglePopup,
+          showMainWindow: DEFAULT_HOTKEYS.showMainWindow,
         },
         automation: {
           clipboardSyncDelayMs: 200,

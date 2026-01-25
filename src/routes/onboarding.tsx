@@ -48,6 +48,13 @@ function OnboardingPage() {
     void refresh();
   }, [refresh]);
 
+  // Refresh permissions when window regains focus (user may have granted access in System Preferences)
+  useEffect(() => {
+    const handleFocus = () => void refresh();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [refresh]);
+
   const data = state.status === 'ready' ? state.data : null;
   const isMacOS = data?.platform === 'darwin';
 

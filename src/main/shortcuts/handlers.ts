@@ -323,3 +323,10 @@ export async function handleFixSelection(): Promise<void> {
 export function handleTogglePopup(): void {
   windowManager.createOrFocusPopupAtCursor();
 }
+
+/**
+ * Global shortcut handler that shows/focuses the main window.
+ */
+export function handleShowMainWindow(): void {
+  windowManager.showMainWindow();
+}

@@ -2,6 +2,8 @@
  * Settings form component
  * Orchestrates hooks and section components for settings management
  */
+import type React from 'react';
+import { useEffect } from 'react';
 import { Form } from '@/renderer/components/ui/form';
 
 import { useApiKey } from './hooks/use-api-key';
@@ -18,7 +20,11 @@ import { HotkeysSection } from './sections/hotkeys-section';
  * Settings form component that composes all settings sections.
  * Uses extracted hooks for state management and section components for UI.
  */
-export default function SettingsForm() {
+export default function SettingsForm({
+  onSaveRef,
+}: {
+  onSaveRef?: React.MutableRefObject<(() => void) | null>;
+}) {
   // Core settings state
   const settingsState = useSettingsState();
 
@@ -50,6 +56,22 @@ export default function SettingsForm() {
     openRouterModels.resetModels();
   };
 
+  // Expose save function to parent via ref
+  useEffect(() => {
+    if (onSaveRef) {
+      onSaveRef.current = () => {
+        settingsState.handleSaveSettings({
+          preventDefault: () => {},
+        } as React.FormEvent);
+      };
+    }
+    return () => {
+      if (onSaveRef) {
+        onSaveRef.current = null;
+      }
+    };
+  }, [onSaveRef, settingsState.handleSaveSettings]);
+
   return (
     <Form
       id="settings-form"
@@ -70,6 +92,9 @@ export default function SettingsForm() {
           textVerbosity={settingsState.textVerbosity}
           lmstudioBaseURL={settingsState.lmstudioBaseURL}
           openrouterExtraParams={settingsState.openrouterExtraParams}
+          includeOriginalPromptInChat={
+            settingsState.includeOriginalPromptInChat
+          }
           isSaving={settingsState.isSaving}
           onProviderChange={handleProviderChange}
           onModelChange={settingsState.setModel}
@@ -78,6 +103,9 @@ export default function SettingsForm() {
           onTextVerbosityChange={settingsState.setTextVerbosity}
           onLmstudioBaseURLChange={settingsState.setLmstudioBaseURL}
           onOpenrouterExtraParamsChange={settingsState.setOpenrouterExtraParams}
+          onIncludeOriginalPromptInChatChange={
+            settingsState.setIncludeOriginalPromptInChat
+          }
           apiKey={apiKeyState.apiKey}
           hasKey={apiKeyState.hasKey}
           isEncryptionAvailable={apiKeyState.isEncryptionAvailable}

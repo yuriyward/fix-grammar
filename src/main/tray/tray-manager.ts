@@ -112,12 +112,42 @@ export class TrayManager {
   }
 
   private createIdleIcon(size: number): Electron.NativeImage {
+    // 5×7 "G" glyph, scaled 2× → 10×14 centered in 16×16
+    // Top/bottom arcs match; right-side connection stays within arc boundary
+    const glyphRow = '.####';
+    const glyph = [
+      glyphRow,
+      '#...#',
+      '#....',
+      '#....',
+      '#.###',
+      '#...#',
+      '.####',
+    ];
+    const scale = 2;
+    const glyphW = glyphRow.length * scale;
+    const glyphH = glyph.length * scale;
+    const offsetX = Math.floor((size - glyphW) / 2);
+    const offsetY = Math.floor((size - glyphH) / 2);
+
     const buffer = Buffer.alloc(size * size * 4);
-    for (let i = 0; i < buffer.length; i += 4) {
-      buffer[i] = 0;
-      buffer[i + 1] = 0;
-      buffer[i + 2] = 0;
-      buffer[i + 3] = 255;
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const offset = (y * size + x) * 4;
+        buffer[offset] = 0;
+        buffer[offset + 1] = 0;
+        buffer[offset + 2] = 0;
+
+        const gx = Math.floor((x - offsetX) / scale);
+        const gy = Math.floor((y - offsetY) / scale);
+        const isGlyph =
+          gx >= 0 &&
+          gy >= 0 &&
+          gy < glyph.length &&
+          gx < (glyph[0]?.length ?? 0) &&
+          glyph[gy]?.[gx] === '#';
+        buffer[offset + 3] = isGlyph ? 0 : 255;
+      }
     }
 
     const icon = nativeImage.createFromBuffer(buffer, {

@@ -216,8 +216,8 @@ export class WindowManager {
     const workArea = display.workArea;
 
     // Calculate popup position near cursor, clamped to screen bounds
-    const popupWidth = 400;
-    const popupHeight = 300;
+    const popupWidth = 440;
+    const popupHeight = 620;
     const x = Math.max(
       workArea.x,
       Math.min(cursorPoint.x + 10, workArea.x + workArea.width - popupWidth),

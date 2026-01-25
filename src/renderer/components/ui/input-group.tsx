@@ -1,5 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority';
 import type * as React from 'react';
+import { Button, type ButtonProps } from '@/renderer/components/ui/button';
 import { Input, type InputProps } from '@/renderer/components/ui/input';
 import {
   Textarea,
@@ -98,9 +99,14 @@ function InputGroupTextarea({ className, ...props }: TextareaProps) {
   return <Textarea className={className} unstyled {...props} />;
 }
 
+function InputGroupButton({ className, ...props }: ButtonProps) {
+  return <Button className={cn('shrink-0', className)} {...props} />;
+}
+
 export {
   InputGroup,
   InputGroupAddon,
+  InputGroupButton,
   InputGroupText,
   InputGroupInput,
   InputGroupTextarea,

@@ -10,6 +10,7 @@ function Slider({
   value,
   min = 0,
   max = 100,
+  ref,
   ...props
 }: SliderPrimitive.Root.Props) {
   const _values = React.useMemo(() => {
@@ -28,6 +29,7 @@ function Slider({
       {...(defaultValue !== undefined && { defaultValue })}
       max={max}
       min={min}
+      {...(ref && { ref })}
       thumbAlignment="edge"
       {...(value !== undefined && { value })}
       {...props}

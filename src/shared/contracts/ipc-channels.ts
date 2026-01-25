@@ -15,4 +15,7 @@ export const IPC_CHANNELS = {
   AUTOMATION_CALIBRATION_FOCUS_REQUEST: 'automation:calibration-focus-request',
   AUTOMATION_CALIBRATION_FOCUS_RESPONSE:
     'automation:calibration-focus-response',
+  CHAT_STREAM: 'chat:stream',
+  CHAT_CONVERSATIONS_CHANGED: 'chat:conversations-changed',
+  CHAT_CONVERSATION_SELECTED: 'chat:conversation-selected',
 };

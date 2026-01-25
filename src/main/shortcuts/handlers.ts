@@ -14,6 +14,10 @@ import {
 import { pressCopyShortcut, simulatePaste } from '@/main/automation/keyboard';
 import { createClipboardSentinel } from '@/main/automation/sentinel';
 import { saveEditContext } from '@/main/storage/context';
+import {
+  addMessageToConversation,
+  createConversation,
+} from '@/main/storage/conversations';
 import { addNotification } from '@/main/storage/notifications';
 import { store } from '@/main/storage/settings';
 import { trayManager } from '@/main/tray/tray-manager';
@@ -190,7 +194,20 @@ async function processFixAsync(
       await result.text,
     );
 
-    // Save context
+    // Create conversation with the fix
+    const conversation = createConversation(
+      originalText,
+      sourceApp?.name,
+      originalText,
+      role,
+    );
+    addMessageToConversation(conversation.id, 'user', originalText);
+    addMessageToConversation(conversation.id, 'assistant', rewrittenText);
+
+    // Notify all windows about the new conversation
+    windowManager.broadcast(IPC_CHANNELS.CHAT_CONVERSATIONS_CHANGED);
+
+    // Save context with conversation ID
     const editContext = {
       originalText,
       rewrittenText,
@@ -198,6 +215,7 @@ async function processFixAsync(
       role,
       provider,
       model,
+      conversationId: conversation.id,
       ...(sourceApp && { sourceApp }),
     };
     saveEditContext(contextId, editContext);

@@ -1,11 +1,11 @@
 /**
  * Chat input component using AI SDK Elements
  */
+import { PromptInput } from '@/renderer/components/ai-elements/prompt-input';
 import {
-  PromptInput,
   PromptInputSubmit,
   PromptInputTextarea,
-} from '@/renderer/components/ai-elements/prompt-input';
+} from '@/renderer/components/ai-elements/prompt-input-parts';
 import { cn } from '@/renderer/lib/tailwind';
 
 interface ChatInputProps {

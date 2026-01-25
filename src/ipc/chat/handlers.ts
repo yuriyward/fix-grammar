@@ -14,6 +14,7 @@ import {
   addMessageToConversation,
   createConversation as createConv,
   deleteConversation as deleteConv,
+  deleteMessageFromConversation,
   editMessageAndTruncate,
   getConversation as getConv,
   listConversations as listConvs,
@@ -33,6 +34,7 @@ import {
   broadcastSelectionInputSchema,
   createConversationInputSchema,
   deleteConversationInputSchema,
+  deleteMessageInputSchema,
   editMessageInputSchema,
   getConversationInputSchema,
   sendMessageInputSchema,
@@ -222,6 +224,19 @@ export const sendMessage = os
     } catch (error) {
       broadcastError(conversationId, assistantMessage.id, error);
     }
+  });
+
+export const deleteMessage = os
+  .input(deleteMessageInputSchema)
+  .handler(({ input }) => {
+    const success = deleteMessageFromConversation(
+      input.conversationId,
+      input.messageId,
+    );
+    if (success) {
+      windowManager.broadcast(IPC_CHANNELS.CHAT_CONVERSATIONS_CHANGED);
+    }
+    return { success };
   });
 
 export const broadcastSelection = os

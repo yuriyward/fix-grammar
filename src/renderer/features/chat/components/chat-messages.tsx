@@ -1,7 +1,7 @@
 /**
  * Chat messages display component using AI SDK Elements
  */
-import { Bot, Check, ChevronRight, Copy, Pencil } from 'lucide-react';
+import { Bot, Check, ChevronRight, Copy, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
   Conversation,
@@ -87,6 +87,7 @@ interface ChatMessagesProps {
   className?: string;
   context?: ConversationContext | null;
   editingMessageId?: string | null;
+  onDeleteMessage?: (messageId: string) => void;
   onStartEdit?: (messageId: string) => void;
   onCancelEdit?: () => void;
   onSubmitEdit?: (content: string) => Promise<void>;
@@ -98,6 +99,7 @@ export function ChatMessages({
   className,
   context,
   editingMessageId,
+  onDeleteMessage,
   onStartEdit,
   onCancelEdit,
   onSubmitEdit,
@@ -176,6 +178,14 @@ export function ChatMessages({
                         <Copy className="size-3.5" />
                       )}
                     </MessageAction>
+                    {onDeleteMessage && (
+                      <MessageAction
+                        tooltip="Delete message"
+                        onClick={() => onDeleteMessage(message.id)}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </MessageAction>
+                    )}
                   </MessageActions>
                 )}
               </div>

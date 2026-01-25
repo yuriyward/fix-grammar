@@ -20,6 +20,7 @@ export function ChatLayout() {
     conversations,
     editingMessageId,
     send,
+    deleteMessage,
     loadConversation,
     clearConversation,
     refreshConversations,
@@ -70,6 +71,7 @@ export function ChatLayout() {
           context={context}
           isLoading={isLoading}
           editingMessageId={editingMessageId}
+          onDeleteMessage={deleteMessage}
           onStartEdit={startEdit}
           onCancelEdit={cancelEdit}
           onSubmitEdit={submitEdit}

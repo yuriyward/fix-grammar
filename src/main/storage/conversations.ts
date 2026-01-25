@@ -172,6 +172,28 @@ export function clearAllConversations(): void {
   store.set('order', []);
 }
 
+export function deleteMessageFromConversation(
+  conversationId: string,
+  messageId: string,
+): boolean {
+  const conversations = store.get('conversations');
+  const conversation = conversations[conversationId];
+
+  if (!conversation) return false;
+
+  const messageIndex = conversation.messages.findIndex(
+    (m) => m.id === messageId,
+  );
+  if (messageIndex === -1) return false;
+
+  conversation.messages.splice(messageIndex, 1);
+  conversation.updatedAt = Date.now();
+
+  store.set('conversations', conversations);
+
+  return true;
+}
+
 export function editMessageAndTruncate(
   conversationId: string,
   messageId: string,

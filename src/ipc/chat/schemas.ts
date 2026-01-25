@@ -26,6 +26,11 @@ export const broadcastSelectionInputSchema = z.object({
   conversationId: z.string().nullable(),
 });
 
+export const deleteMessageInputSchema = z.object({
+  conversationId: z.string().uuid(),
+  messageId: z.string().uuid(),
+});
+
 export const editMessageInputSchema = z.object({
   conversationId: z.string().uuid(),
   messageId: z.string().uuid(),

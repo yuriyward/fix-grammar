@@ -46,6 +46,13 @@ export async function broadcastSelection(
   return ipc.client.chat.broadcastSelection({ conversationId });
 }
 
+export async function deleteMessage(
+  conversationId: string,
+  messageId: string,
+): Promise<{ success: boolean }> {
+  return ipc.client.chat.deleteMessage({ conversationId, messageId });
+}
+
 export async function editMessage(
   conversationId: string,
   messageId: string,

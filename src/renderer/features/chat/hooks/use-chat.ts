@@ -30,6 +30,7 @@ interface UseChatReturn {
   }) => Promise<string>;
   clearConversation: () => void;
   refreshConversations: () => Promise<void>;
+  deleteMessage: (messageId: string) => Promise<void>;
   startEdit: (messageId: string) => void;
   cancelEdit: () => void;
   submitEdit: (content: string) => Promise<void>;
@@ -76,6 +77,7 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
     newConversation: store.createConversation,
     clearConversation,
     refreshConversations: store.fetchConversations,
+    deleteMessage: store.deleteMessage,
     startEdit: store.startEditMessage,
     cancelEdit: store.cancelEditMessage,
     submitEdit: store.submitEditMessage,

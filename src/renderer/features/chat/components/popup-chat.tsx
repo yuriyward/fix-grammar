@@ -35,6 +35,7 @@ export function PopupChat({
     error,
     editingMessageId,
     send,
+    deleteMessage,
     startEdit,
     cancelEdit,
     submitEdit,
@@ -54,6 +55,7 @@ export function PopupChat({
         isLoading={isLoading}
         className="flex-1"
         editingMessageId={editingMessageId}
+        onDeleteMessage={deleteMessage}
         onStartEdit={startEdit}
         onCancelEdit={cancelEdit}
         onSubmitEdit={submitEdit}

@@ -6,6 +6,7 @@ import {
   broadcastSelection,
   createConversation as createConversationAction,
   deleteConversation as deleteConversationAction,
+  deleteMessage as deleteMessageAction,
   editMessage as editMessageAction,
   getConversation,
   listConversations,
@@ -48,6 +49,7 @@ interface ChatStore {
   deleteConversation: (id: string) => Promise<void>;
   sendMessage: (content: string) => Promise<void>;
   handleStreamChunk: (chunk: ChatStreamChunk) => void;
+  deleteMessage: (messageId: string) => Promise<void>;
   startEditMessage: (messageId: string) => void;
   cancelEditMessage: () => void;
   submitEditMessage: (content: string) => Promise<void>;
@@ -209,6 +211,17 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       streamingContent.delete(chunk.messageId);
       set({ error: chunk.content, isLoading: false });
     }
+  },
+
+  deleteMessage: async (messageId) => {
+    const { selectedConversationId } = get();
+    if (!selectedConversationId) return;
+
+    set((s) => ({
+      messages: s.messages.filter((m) => m.id !== messageId),
+    }));
+
+    await deleteMessageAction(selectedConversationId, messageId);
   },
 
   startEditMessage: (messageId: string) => {

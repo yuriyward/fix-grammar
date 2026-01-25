@@ -5,9 +5,9 @@ import { app } from 'electron';
 import { ipcMain } from 'electron/main';
 import { UpdateSourceType, updateElectronApp } from 'update-electron-app';
 import { ipcContext } from '@/ipc/context';
-import { initializeSettingsStore } from '@/main/storage/settings';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
 import { shortcutManager } from './shortcuts/manager';
+import { store } from './storage/settings';
 import { trayManager } from './tray/tray-manager';
 import { windowManager } from './windows/window-manager';
 
@@ -41,16 +41,26 @@ function checkForUpdates() {
 
 async function setupORPC() {
   const { rpcHandler } = await import('@/ipc/handler');
+  const { BrowserWindow } = await import('electron');
 
   ipcMain.on(IPC_CHANNELS.START_ORPC_SERVER, (event) => {
     const [serverPort] = event.ports;
+    const senderWindow = BrowserWindow.fromWebContents(event.sender);
+
+    if (!serverPort) return;
 
     serverPort.start();
-    rpcHandler.upgrade(serverPort);
+    rpcHandler.upgrade(serverPort, {
+      context: {
+        senderWindow,
+      },
+    });
   });
 }
 
 async function initializeWindows() {
+  const isFirstRun = store.get('hasLaunchedBefore') !== true;
+
   // Create main window (hidden by default for tray-first app)
   const mainWindow = windowManager.createMainWindow();
   ipcContext.setMainWindow(mainWindow);
@@ -61,6 +71,12 @@ async function initializeWindows() {
 
   // Register global shortcuts
   shortcutManager.register();
+
+  // On first run, show main window for onboarding
+  if (isFirstRun) {
+    store.set('hasLaunchedBefore', true);
+    windowManager.showMainWindow();
+  }
 }
 
 /**
@@ -70,18 +86,19 @@ async function initializeWindows() {
 export function initializeApp() {
   // Hide dock icon on macOS for tray-only app
   if (process.platform === 'darwin') {
-    app.dock.hide();
+    app.dock?.hide();
   }
 
   app
     .whenReady()
-    .then(() => {
-      initializeSettingsStore();
-    })
     .then(initializeWindows)
     .then(setupORPC)
     .then(installExtensions)
-    .then(checkForUpdates);
+    .then(checkForUpdates)
+    .catch((error) => {
+      console.error('[app] Fatal error during initialization:', error);
+      app.quit();
+    });
 
   // Don't quit when all windows are closed - tray keeps app alive
   app.on('window-all-closed', () => {
@@ -91,7 +108,7 @@ export function initializeApp() {
   app.on('activate', () => {
     // macOS: Show main window and dock icon when activated
     if (process.platform === 'darwin') {
-      app.dock.show();
+      app.dock?.show();
     }
     windowManager.showMainWindow();
   });

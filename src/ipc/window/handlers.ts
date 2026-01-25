@@ -5,7 +5,7 @@ import { os } from '@orpc/server';
 import { ipcContext } from '../context';
 
 export const minimizeWindow = os
-  .use(ipcContext.mainWindowContext)
+  .use(ipcContext.senderWindowContext)
   .handler(({ context }) => {
     const { window } = context;
 
@@ -13,7 +13,7 @@ export const minimizeWindow = os
   });
 
 export const maximizeWindow = os
-  .use(ipcContext.mainWindowContext)
+  .use(ipcContext.senderWindowContext)
   .handler(({ context }) => {
     const { window } = context;
 
@@ -25,7 +25,7 @@ export const maximizeWindow = os
   });
 
 export const closeWindow = os
-  .use(ipcContext.mainWindowContext)
+  .use(ipcContext.senderWindowContext)
   .handler(({ context }) => {
     const { window } = context;
 

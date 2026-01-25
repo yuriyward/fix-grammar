@@ -3,11 +3,12 @@ import tailwindcss from '@tailwindcss/vite';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
+import type { PluginOption } from 'vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: (() => {
-    const plugins = [
+    const plugins: PluginOption[] = [
       tanstackRouter({
         target: 'react',
         autoCodeSplitting: true,
@@ -27,7 +28,7 @@ export default defineConfig({
           filename: './.vite/bundle-stats.html',
           open: process.env.BUNDLE_ANALYZE_OPEN === 'true',
           gzipSize: true,
-        }),
+        }) as PluginOption,
       );
     }
 

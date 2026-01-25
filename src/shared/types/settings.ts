@@ -6,15 +6,27 @@ import type { RewriteRole } from '@/shared/types/ai';
 
 export interface HotkeysSettings {
   fixSelection: string;
-  fixField: string;
   togglePopup: string;
-  openSettings: string;
+  showMainWindow: string;
 }
+
+export type ReasoningEffort =
+  | 'none'
+  | 'minimal'
+  | 'low'
+  | 'medium'
+  | 'high'
+  | 'xhigh';
+export type TextVerbosity = 'low' | 'medium' | 'high';
 
 export interface AISettings {
   provider: AIProvider;
-  model: AIModel;
+  model: AIModel | string;
   role: RewriteRole;
+  reasoningEffort?: ReasoningEffort;
+  textVerbosity?: TextVerbosity;
+  lmstudioBaseURL?: string;
+  openrouterExtraParams?: string;
 }
 
 export interface AutomationSettings {
@@ -22,8 +34,15 @@ export interface AutomationSettings {
   selectionDelayMs: number;
 }
 
+export interface OpenRouterModelsCache {
+  models: Array<{ id: string; name: string }>;
+  timestamp: number;
+}
+
 export interface AppSettings {
   hotkeys: HotkeysSettings;
   ai: AISettings;
   automation: AutomationSettings;
+  openrouterModelsCache?: OpenRouterModelsCache;
+  hasLaunchedBefore?: boolean;
 }

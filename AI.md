@@ -102,17 +102,22 @@ Always resolve any linting or type errors before completing a task.
 <!-- AUTO-GENERATED TREE START -->
 
 ```
-actions/ # 9 files
+actions/ # 11 files
   ├─ ai.ts # AI IPC wrappers for renderer
   ├─ app.ts # App info IPC wrappers for renderer
   ├─ automation.ts # Automation IPC wrappers for renderer
   ├─ language.ts # Language preference management for renderer
+  ├─ notifications.ts # Notifications IPC wrappers for renderer
+  ├─ permissions.ts # Permissions IPC wrappers for renderer
   ├─ settings.ts # Settings IPC wrappers for renderer
   ├─ shell.ts # Shell operations IPC wrapper for renderer
   ├─ shortcuts.ts # Shortcuts IPC wrappers for renderer
   ├─ theme.ts # Theme mode management for renderer
   └─ window.ts # Window control IPC wrappers for renderer
-ipc/ # 3 files, 8 directories
+build/ # 2 files
+  ├─ dependency-utils.ts # 1 export
+  └─ file-utils.ts # 2 exports
+ipc/ # 3 files, 10 directories
   ├─ ai/ # 3 files
   │ ├─ handlers.ts # AI IPC handlers
   │ ├─ router.ts # AI domain router
@@ -125,6 +130,14 @@ ipc/ # 3 files, 8 directories
   │ ├─ handlers.ts # Automation IPC handlers
   │ ├─ router.ts # Automation domain router
   │ └─ schemas.ts # Zod schemas for automation IPC
+  ├─ notifications/ # 3 files
+  │ ├─ handlers.ts # Notifications IPC handlers
+  │ ├─ router.ts # Notifications domain router
+  │ └─ schemas.ts # Zod schemas for notifications IPC
+  ├─ permissions/ # 3 files
+  │ ├─ handlers.ts # Permissions IPC handlers
+  │ ├─ router.ts # Permissions domain router
+  │ └─ schemas.ts # Zod schemas for permissions IPC
   ├─ settings/ # 3 files
   │ ├─ handlers.ts # Settings IPC handlers
   │ ├─ router.ts # Settings domain router
@@ -148,30 +161,36 @@ ipc/ # 3 files, 8 directories
   ├─ context.ts # IPC context with main window reference and window manager
   ├─ handler.ts # oRPC handler for main process
   └─ router.ts # Root oRPC router combining all domains
-main/ # 1 files, 6 directories
+main/ # 1 files, 7 directories
   ├─ ai/ # 3 files
-  │ ├─ client.ts # Google Gemini AI client
+  │ ├─ client.ts # Multi-provider AI client (Google Gemini, xAI Grok, OpenAI, LM Studio, OpenRouter)
   │ ├─ error-handler.ts # AI error handling utilities
   │ └─ prompts.ts # Role-based prompt templates
-  ├─ automation/ # 2 files
+  ├─ automation/ # 3 files
   │ ├─ clipboard.ts # Clipboard backup/restore utilities
-  │ └─ keyboard.ts # nut-js wrapper for keyboard automation
-  ├─ shortcuts/ # 2 files
-  │ ├─ handlers.ts # Fix selection/field orchestration handlers
+  │ ├─ keyboard.ts # nut-js wrapper for keyboard automation
+  │ └─ sentinel.ts # Clipboard sentinel value generation
+  ├─ shortcuts/ # 4 files
+  │ ├─ app-context.ts # macOS app context utilities for tracking frontmost application
+  │ ├─ fix-state.ts # State manager for grammar fix operations Prevents concurrent fix requests (one at a time)
+  │ ├─ handlers.ts # Fix selection orchestration handlers
   │ └─ manager.ts # Global shortcut registration manager
-  ├─ storage/ # 3 files
+  ├─ storage/ # 4 files
   │ ├─ api-keys.ts # safeStorage wrapper for API key encryption
   │ ├─ context.ts # In-memory edit context storage
+  │ ├─ notifications.ts # 5 exports
   │ └─ settings.ts # electron-store instance for persistent settings
   ├─ tray/ # 1 file
   │ └─ tray-manager.ts # System tray lifecycle management
+  ├─ utils/ # 1 file
+  │ └─ notifications.ts # Notification utilities for main process
   ├─ windows/ # 1 file
   │ └─ window-manager.ts # Centralized window lifecycle management
   └─ app.ts # Main process lifecycle and initialization
 preload/ # 1 file
   └─ bridge.ts # IPC bridge via contextBridge
 renderer/ # 1 files, 5 directories
-  ├─ components/ # 5 files, 1 directories
+  ├─ components/ # 6 files, 1 directories
   │ ├─ ui/ # 50 files
   │ │ ├─ accordion.tsx # 5 exports
   │ │ ├─ alert-dialog.tsx # 13 exports
@@ -227,38 +246,62 @@ renderer/ # 1 files, 5 directories
   │ ├─ error-boundary.tsx # React error boundary with recovery UI
   │ ├─ external-link.tsx # External link button using shell API
   │ ├─ lang-toggle.tsx # Language selection toggle group
+  │ ├─ notification-center.tsx # 1 export
   │ └─ toggle-theme.tsx # Theme toggle button component
   ├─ features/ # 1 directory
-  │ └─ settings/ # 1 file
-  │   └─ settings-form.tsx # Settings form component
-  ├─ hooks/ # 1 file
-  │ └─ use-mobile.ts # 1 export
+  │ └─ settings/ # 1 files, 2 directories
+  │   ├─ hooks/ # 5 files
+  │   │ ├─ use-api-key.ts # API key management hook
+  │   │ ├─ use-calibration.ts # Automation calibration hook
+  │   │ ├─ use-lmstudio-models.ts # LM Studio model discovery hook
+  │   │ ├─ use-openrouter-models.ts # OpenRouter model discovery hook
+  │   │ └─ use-settings-state.ts # Settings state management hook
+  │   ├─ sections/ # 4 files
+  │   │ ├─ ai-provider-section.tsx # AI Provider settings section Provider, model, role, and API key configuration UI
+  │   │ ├─ appearance-section.tsx # Appearance settings section Theme and language toggle UI
+  │   │ ├─ automation-section.tsx # Automation settings section Calibration and delay configuration UI
+  │   │ └─ hotkeys-section.tsx # Hotkeys settings section Global shortcuts configuration UI
+  │   └─ settings-form.tsx # Settings form component Orchestrates hooks and section components for settings management
+  ├─ hooks/ # 2 files
+  │ ├─ use-mobile.ts # 1 export
+  │ └─ use-notification-listener.ts # 1 export
   ├─ layouts/ # 1 file
   │ └─ base-layout.tsx # Base layout with title bar region
-  ├─ lib/ # 6 files
+  ├─ lib/ # 7 files
   │ ├─ i18n.ts # i18next configuration and translations
   │ ├─ ipc-manager.ts # IPC client manager for renderer process
   │ ├─ langs.ts # Supported language definitions
   │ ├─ language.ts # Language type definition
-  │ ├─ routes.ts # TanStack Router configuration
-  │ └─ tailwind.ts # Tailwind CSS class merging utility
+  │ ├─ routes.ts # TanStack Router configuration Uses hash history to support multiple Electron windows with independent routes. Each window can load with a different hash (e.g., #/popup, #/settings) and the router will initialize to that route automatically. Memory history would force all windows to start at the same initial route.
+  │ ├─ tailwind.ts # Tailwind CSS class merging utility
+  │ └─ validation.ts # Form validation helper utilities
   └─ app.tsx # React application root and mounting
-routes/ # 3 files
+routes/ # 4 files
   ├─ __root.tsx # Root route with base layout wrapper
   ├─ index.tsx # Dashboard page route component
+  ├─ onboarding.tsx # Onboarding / permissions page route component
   ├─ popup.tsx # Popup chat route component
   └─ settings.tsx # Settings page route component
-shared/ # 3 directories
-  ├─ config/ # 1 file
-  │ └─ ai-models.ts # Centralized AI model configuration This is the single source of truth for all available models
+shared/ # 5 directories
+  ├─ config/ # 4 files
+  │ ├─ ai-models.ts # Centralized AI model configuration This is the single source of truth for all available models
+  │ ├─ ai.ts # AI streaming timeout (5 minutes)
+  │ ├─ hotkeys.ts # Hotkey configuration constants
+  │ └─ native-deps.ts # 2 exports
   ├─ contracts/ # 1 file
   │ └─ ipc-channels.ts # IPC channel names and storage keys
-  └─ types/ # 5 files
-    ├─ ai.ts # AI types
-    ├─ automation.ts # Automation types
-    ├─ settings.ts # Settings schema types
-    ├─ shortcuts.ts # Hotkey types
-    └─ theme.ts # Theme mode type definition
+  ├─ schemas/ # 2 files
+  │ ├─ ai.ts # Shared AI-related Zod schemas
+  │ └─ settings.ts # Shared settings validation schemas
+  ├─ types/ # 6 files
+  │ ├─ ai.ts # AI types
+  │ ├─ automation.ts # Automation types
+  │ ├─ notifications.ts # 4 exports
+  │ ├─ settings.ts # Settings schema types
+  │ ├─ shortcuts.ts # Hotkey types
+  │ └─ theme.ts # Theme mode type definition
+  └─ utils/ # 1 file
+    └─ url-validation.ts # URL validation utilities for preventing SSRF attacks
 tests/ # 1 directory
   └─ unit/ # 1 file
     └─ setup.ts # Vitest setup with jest-dom matchers

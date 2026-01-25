@@ -61,7 +61,7 @@ function GroupText({
   return useRender({
     defaultTagName: 'div',
     props: mergeProps(defaultProps, props),
-    render,
+    ...(render !== undefined && { render }),
   });
 }
 

@@ -40,11 +40,13 @@ export function getApiKey(provider: string): string | null {
 }
 
 export function deleteApiKey(provider: string): void {
-  store.delete(`${API_KEY_PREFIX}.${provider}`);
+  // Use type assertion since apiKeys is a dynamic key path
+  store.delete(`${API_KEY_PREFIX}.${provider}` as keyof typeof store.store);
 }
 
 export function hasApiKey(provider: string): boolean {
-  return store.has(`${API_KEY_PREFIX}.${provider}`);
+  // Use type assertion since apiKeys is a dynamic key path
+  return store.has(`${API_KEY_PREFIX}.${provider}` as keyof typeof store.store);
 }
 
 export function getApiKeyPreview(provider: string): string | null {

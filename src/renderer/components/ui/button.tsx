@@ -63,7 +63,7 @@ function Button({ className, variant, size, render, ...props }: ButtonProps) {
   return useRender({
     defaultTagName: 'button',
     props: mergeProps<'button'>(defaultProps, props),
-    render,
+    ...(render !== undefined && { render }),
   });
 }
 

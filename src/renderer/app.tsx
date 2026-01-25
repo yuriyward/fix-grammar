@@ -9,6 +9,7 @@ import { updateAppLanguage } from '@/actions/language';
 import { syncWithLocalTheme } from '@/actions/theme';
 import { ErrorBoundary } from '@/renderer/components/error-boundary';
 import { ToastProvider } from '@/renderer/components/ui/toast';
+import { useNotificationListener } from '@/renderer/hooks/use-notification-listener';
 import { router } from '@/renderer/lib/routes';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
 import '@/renderer/lib/i18n';
@@ -18,6 +19,8 @@ import '@/renderer/lib/i18n';
  */
 export default function App() {
   const { i18n } = useTranslation();
+
+  useNotificationListener();
 
   useEffect(() => {
     syncWithLocalTheme();

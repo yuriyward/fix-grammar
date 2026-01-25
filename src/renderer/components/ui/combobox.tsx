@@ -1,5 +1,3 @@
-'use client';
-
 import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox';
 import { ChevronsUpDownIcon, XIcon } from 'lucide-react';
 import * as React from 'react';
@@ -122,7 +120,7 @@ function ComboboxTrigger({
 }: ComboboxPrimitive.Trigger.Props) {
   return (
     <ComboboxPrimitive.Trigger
-      className={className}
+      {...(className !== undefined && { className })}
       data-slot="combobox-trigger"
       {...props}
     />
@@ -256,7 +254,7 @@ function ComboboxEmpty({ className, ...props }: ComboboxPrimitive.Empty.Props) {
 function ComboboxRow({ className, ...props }: ComboboxPrimitive.Row.Props) {
   return (
     <ComboboxPrimitive.Row
-      className={className}
+      {...(className !== undefined && { className })}
       data-slot="combobox-row"
       {...props}
     />
@@ -285,7 +283,7 @@ function ComboboxList({ className, ...props }: ComboboxPrimitive.List.Props) {
 function ComboboxClear({ className, ...props }: ComboboxPrimitive.Clear.Props) {
   return (
     <ComboboxPrimitive.Clear
-      className={className}
+      {...(className !== undefined && { className })}
       data-slot="combobox-clear"
       {...props}
     />

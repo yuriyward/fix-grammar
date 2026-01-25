@@ -3,28 +3,28 @@
  */
 import { globalShortcut } from 'electron';
 import { store } from '@/main/storage/settings';
+import { DEFAULT_HOTKEYS } from '@/shared/config/hotkeys';
 import {
-  handleFixField,
   handleFixSelection,
-  handleOpenSettings,
+  handleShowMainWindow,
   handleTogglePopup,
 } from './handlers';
 
 export class ShortcutManager {
   register(): void {
-    const shortcuts = store.get('hotkeys');
+    // Merge with defaults to handle missing keys from older settings
+    const shortcuts = { ...DEFAULT_HOTKEYS, ...store.get('hotkeys') };
 
     globalShortcut.register(shortcuts.fixSelection, () => {
-      void handleFixSelection();
-    });
-    globalShortcut.register(shortcuts.fixField, () => {
-      void handleFixField();
+      void handleFixSelection().catch((error: unknown) => {
+        console.error('Global shortcut handler failed: fixSelection', error);
+      });
     });
     globalShortcut.register(shortcuts.togglePopup, () => {
       handleTogglePopup();
     });
-    globalShortcut.register(shortcuts.openSettings, () => {
-      handleOpenSettings();
+    globalShortcut.register(shortcuts.showMainWindow, () => {
+      handleShowMainWindow();
     });
   }
 

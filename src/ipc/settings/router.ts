@@ -3,10 +3,12 @@
  */
 import {
   deleteApiKeyHandler,
+  fetchOpenRouterModels,
   getSettings,
   hasApiKeyHandler,
   isEncryptionAvailableHandler,
   saveApiKeyHandler,
+  testLMStudioConnection,
   updateSettings,
 } from './handlers';
 
@@ -17,4 +19,6 @@ export const settings = {
   hasApiKey: hasApiKeyHandler,
   isEncryptionAvailable: isEncryptionAvailableHandler,
   deleteApiKey: deleteApiKeyHandler,
+  testLMStudioConnection,
+  fetchOpenRouterModels,
 };

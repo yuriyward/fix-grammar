@@ -37,3 +37,21 @@ export async function isEncryptionAvailable(): Promise<boolean> {
   const result = await ipc.client.settings.isEncryptionAvailable();
   return result.available;
 }
+
+export async function testLMStudioConnection(baseURL: string): Promise<{
+  success: boolean;
+  message?: string;
+  error?: string;
+  models?: string[];
+}> {
+  return ipc.client.settings.testLMStudioConnection({ baseURL });
+}
+
+export async function fetchOpenRouterModels(): Promise<{
+  success: boolean;
+  message?: string;
+  error?: string;
+  models?: Array<{ id: string; name: string }>;
+}> {
+  return ipc.client.settings.fetchOpenRouterModels();
+}

@@ -1,5 +1,3 @@
-'use client';
-
 import type { Toggle as TogglePrimitive } from '@base-ui/react/toggle';
 import { ToggleGroup as ToggleGroupPrimitive } from '@base-ui/react/toggle-group';
 import type { VariantProps } from 'class-variance-authority';
@@ -67,7 +65,7 @@ function Toggle({
 
   return (
     <ToggleComponent
-      className={className}
+      {...(className !== undefined && { className })}
       data-size={resolvedSize}
       data-variant={resolvedVariant}
       size={resolvedSize}
@@ -87,7 +85,11 @@ function ToggleGroupSeparator({
   className?: string;
 } & React.ComponentProps<typeof Separator>) {
   return (
-    <Separator className={className} orientation={orientation} {...props} />
+    <Separator
+      {...(className !== undefined && { className })}
+      orientation={orientation}
+      {...props}
+    />
   );
 }
 

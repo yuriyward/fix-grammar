@@ -17,23 +17,33 @@ function SettingsPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex-shrink-0 border-b p-6 pb-4">
-        <Button
-          variant="ghost"
-          onClick={() => navigate({ to: '/' })}
-          className="mb-4"
-        >
-          ← Back to Dashboard
-        </Button>
-        <h1 className="text-2xl font-bold">Settings</h1>
+      <div className="flex-shrink-0 border-b px-6 py-3">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <Button variant="ghost" onClick={() => navigate({ to: '/' })}>
+            ← Back to Dashboard
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => navigate({ to: '/onboarding' })}
+          >
+            Permissions
+          </Button>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="text-2xl font-bold">Settings</h1>
+          <Button form="settings-form" type="submit">
+            Save Settings
+          </Button>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 pt-4">
+      <div className="flex-1 overflow-y-auto px-6 py-4">
         <SettingsForm />
       </div>
 
-      <footer className="text-muted-foreground flex-shrink-0 border-t p-6 text-sm">
-        Version: v{appVersion}
+      <footer className="text-muted-foreground flex-shrink-0 border-t px-6 py-3 text-right text-xs opacity-60">
+        v{appVersion}
       </footer>
     </div>
   );

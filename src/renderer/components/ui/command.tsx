@@ -1,5 +1,3 @@
-'use client';
-
 import { Dialog as CommandDialogPrimitive } from '@base-ui/react/dialog';
 import { SearchIcon } from 'lucide-react';
 import * as React from 'react';
@@ -177,7 +175,7 @@ function CommandGroup({
 }: React.ComponentProps<typeof AutocompleteGroup>) {
   return (
     <AutocompleteGroup
-      className={className}
+      {...(className !== undefined && { className })}
       data-slot="command-group"
       {...props}
     />
@@ -190,7 +188,7 @@ function CommandGroupLabel({
 }: React.ComponentProps<typeof AutocompleteGroupLabel>) {
   return (
     <AutocompleteGroupLabel
-      className={className}
+      {...(className !== undefined && { className })}
       data-slot="command-group-label"
       {...props}
     />

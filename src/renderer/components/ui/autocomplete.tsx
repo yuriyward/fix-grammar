@@ -1,5 +1,3 @@
-'use client';
-
 import { Autocomplete as AutocompletePrimitive } from '@base-ui/react/autocomplete';
 import { ChevronsUpDownIcon, XIcon } from 'lucide-react';
 import { Input } from '@/renderer/components/ui/input';
@@ -189,7 +187,7 @@ function AutocompleteRow({
 }: AutocompletePrimitive.Row.Props) {
   return (
     <AutocompletePrimitive.Row
-      className={className}
+      {...(className !== undefined && { className })}
       data-slot="autocomplete-row"
       {...props}
     />
@@ -271,7 +269,7 @@ function AutocompleteTrigger({
 }: AutocompletePrimitive.Trigger.Props) {
   return (
     <AutocompletePrimitive.Trigger
-      className={className}
+      {...(className !== undefined && { className })}
       data-slot="autocomplete-trigger"
       {...props}
     />

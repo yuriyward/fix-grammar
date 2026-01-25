@@ -1,5 +1,3 @@
-'use client';
-
 import { cva, type VariantProps } from 'class-variance-authority';
 import type * as React from 'react';
 import { Input, type InputProps } from '@/renderer/components/ui/input';
@@ -87,7 +85,13 @@ function InputGroupText({ className, ...props }: React.ComponentProps<'span'>) {
 }
 
 function InputGroupInput({ className, ...props }: InputProps) {
-  return <Input className={className} unstyled {...props} />;
+  return (
+    <Input
+      {...(className !== undefined && { className })}
+      unstyled
+      {...props}
+    />
+  );
 }
 
 function InputGroupTextarea({ className, ...props }: TextareaProps) {

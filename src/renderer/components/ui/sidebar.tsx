@@ -1,5 +1,3 @@
-'use client';
-
 import { mergeProps } from '@base-ui/react/merge-props';
 import { useRender } from '@base-ui/react/use-render';
 import { cva, type VariantProps } from 'class-variance-authority';
@@ -431,7 +429,7 @@ function SidebarGroupLabel({
   return useRender({
     defaultTagName: 'div',
     props: mergeProps(defaultProps, props),
-    render,
+    ...(render !== undefined && { render }),
   });
 }
 
@@ -455,7 +453,7 @@ function SidebarGroupAction({
   return useRender({
     defaultTagName: 'button',
     props: mergeProps(defaultProps, props),
-    render,
+    ...(render !== undefined && { render }),
   });
 }
 
@@ -544,7 +542,7 @@ function SidebarMenuButton({
   const buttonElement = useRender({
     defaultTagName: 'button',
     props: buttonProps,
-    render,
+    ...(render !== undefined && { render }),
   });
 
   if (!tooltip) {
@@ -600,7 +598,7 @@ function SidebarMenuAction({
   return useRender({
     defaultTagName: 'button',
     props: mergeProps<'button'>(defaultProps, props),
-    render,
+    ...(render !== undefined && { render }),
   });
 }
 
@@ -721,7 +719,7 @@ function SidebarMenuSubButton({
   return useRender({
     defaultTagName: 'a',
     props: mergeProps<'a'>(defaultProps, props),
-    render,
+    ...(render !== undefined && { render }),
   });
 }
 

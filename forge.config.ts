@@ -7,6 +7,8 @@ import { AutoUnpackNativesPlugin } from '@electron-forge/plugin-auto-unpack-nati
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 import type { ForgeConfig } from '@electron-forge/shared-types';
+import { copyNativeModules } from './src/build/dependency-utils';
+import { signMacOSBundle } from './src/build/file-utils';
 
 const config: ForgeConfig = {
   packagerConfig: {
@@ -17,6 +19,12 @@ const config: ForgeConfig = {
   rebuildConfig: {
     // Force rebuild of native modules
     force: true,
+  },
+  hooks: {
+    // Custom native module packaging required for @nut-tree-fork
+    // See: https://github.com/nut-tree/nut.js/issues/356
+    packageAfterCopy: copyNativeModules,
+    postPackage: signMacOSBundle,
   },
   makers: [
     new MakerSquirrel({}),

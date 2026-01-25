@@ -2,8 +2,7 @@
  * Zod schemas for AI IPC
  */
 import { z } from 'zod';
-
-export const rewriteRoleSchema = z.enum(['grammar', 'grammar-tone']);
+import { rewriteRoleSchema } from '@/shared/schemas/ai';
 
 const MAX_REWRITE_TEXT_LENGTH = 10_000;
 

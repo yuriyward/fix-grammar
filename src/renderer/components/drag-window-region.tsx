@@ -4,6 +4,8 @@
 import { type ReactNode, useEffect, useState } from 'react';
 import { getPlatform } from '@/actions/app';
 import { closeWindow, maximizeWindow, minimizeWindow } from '@/actions/window';
+import { NotificationCenterButton } from '@/renderer/components/notification-center';
+import { cn } from '@/renderer/lib/tailwind';
 
 interface DragWindowRegionProps {
   title?: ReactNode;
@@ -35,18 +37,21 @@ export default function DragWindowRegion({ title }: DragWindowRegionProps) {
   const isMacOS = platform === 'darwin';
 
   return (
-    <div className="flex w-screen items-stretch justify-between">
-      <div className="draglayer w-full">
-        {title && !isMacOS && (
-          <div className="flex flex-1 p-2 text-xs whitespace-nowrap text-gray-400 select-none">
-            {title}
-          </div>
-        )}
-        {isMacOS && (
-          <div className="flex flex-1 p-2">
-            {/* Maintain the same height but do not display content */}
-          </div>
-        )}
+    <div className="flex w-full items-stretch justify-between">
+      <div className="draglayer flex flex-1 items-center justify-between">
+        <div className={cn('flex flex-1 py-1', isMacOS ? 'pl-20' : 'pl-4')}>
+          {title && !isMacOS && (
+            <div className="text-xs whitespace-nowrap text-gray-400 select-none">
+              {title}
+            </div>
+          )}
+        </div>
+        <div
+          className="pr-4 pl-2 py-1"
+          style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+        >
+          <NotificationCenterButton />
+        </div>
       </div>
       {!isMacOS && <WindowButtons />}
     </div>

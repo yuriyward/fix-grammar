@@ -69,13 +69,18 @@ export class TrayManager {
     this.tray.setToolTip(tooltip);
     this.updateMenu();
     this.busyFrameIndex = 0;
-    this.tray.setImage(this.busyIcons[0]);
+    const firstIcon = this.busyIcons[0];
+    if (firstIcon) {
+      this.tray.setImage(firstIcon);
+    }
     this.busyFrameIndex = 1;
     this.busyTimer = setInterval(() => {
       if (!this.tray) return;
       const icon = this.busyIcons[this.busyFrameIndex % this.busyIcons.length];
       this.busyFrameIndex += 1;
-      this.tray.setImage(icon);
+      if (icon) {
+        this.tray.setImage(icon);
+      }
     }, 240);
   }
 

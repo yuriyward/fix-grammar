@@ -51,7 +51,7 @@ function Badge({ className, variant, size, render, ...props }: BadgeProps) {
   return useRender({
     defaultTagName: 'span',
     props: mergeProps<'span'>(defaultProps, props),
-    render,
+    ...(render !== undefined && { render }),
   });
 }
 

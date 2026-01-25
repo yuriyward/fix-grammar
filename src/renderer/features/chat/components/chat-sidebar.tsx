@@ -47,7 +47,10 @@ export function ChatSidebar({
       )}
     >
       <div className="flex items-center justify-between border-b p-3">
-        <h2 className="text-sm font-semibold">Conversations</h2>
+        <h2 className="flex items-center gap-2 text-sm font-semibold">
+          <MessageSquare className="size-4" />
+          Conversations
+        </h2>
         <Button onClick={onNew} size="icon-xs" variant="ghost">
           <Plus className="size-4" />
         </Button>
@@ -78,7 +81,6 @@ export function ChatSidebar({
                   }
                 }}
               >
-                <MessageSquare className="size-4 shrink-0 text-muted-foreground" />
                 <div className="flex-1 overflow-hidden">
                   <p className="truncate text-sm font-medium">{conv.title}</p>
                   <p className="text-xs text-muted-foreground">

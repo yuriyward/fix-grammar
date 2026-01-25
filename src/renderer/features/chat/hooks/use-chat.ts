@@ -39,17 +39,15 @@ export function useChat(options: UseChatOptions = {}): UseChatReturn {
   const store = useChatStore();
 
   useEffect(() => {
+    const { selectedConversationId, selectConversation } =
+      useChatStore.getState();
     if (
       options.conversationId &&
-      options.conversationId !== store.selectedConversationId
+      options.conversationId !== selectedConversationId
     ) {
-      store.selectConversation(options.conversationId);
+      selectConversation(options.conversationId);
     }
-  }, [
-    options.conversationId,
-    store.selectedConversationId,
-    store.selectConversation,
-  ]);
+  }, [options.conversationId]);
 
   useEffect(() => {
     if (options.onError && store.error) {

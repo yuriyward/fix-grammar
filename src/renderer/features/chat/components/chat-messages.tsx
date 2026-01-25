@@ -138,9 +138,9 @@ export function ChatMessages({
         {messages.map((message) => (
           <Message from={message.role} key={message.id}>
             {message.role === 'user' &&
-              editingMessageId === message.id &&
-              onSubmitEdit &&
-              onCancelEdit ? (
+            editingMessageId === message.id &&
+            onSubmitEdit &&
+            onCancelEdit ? (
               <MessageEditForm
                 initialContent={message.content}
                 onSubmit={onSubmitEdit}

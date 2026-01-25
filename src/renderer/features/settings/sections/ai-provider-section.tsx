@@ -164,30 +164,30 @@ export function AIProviderSection({
     value: RewriteRole;
     label: string;
   }> = [
-      { value: 'grammar', label: 'Grammar Only' },
-      { value: 'grammar-tone', label: 'Grammar + Tone' },
-    ];
+    { value: 'grammar', label: 'Grammar Only' },
+    { value: 'grammar-tone', label: 'Grammar + Tone' },
+  ];
 
   const reasoningEffortSelectItems: ReadonlyArray<{
     value: ReasoningEffort;
     label: string;
   }> = [
-      { value: 'none', label: 'None' },
-      { value: 'minimal', label: 'Minimal' },
-      { value: 'low', label: 'Low' },
-      { value: 'medium', label: 'Medium (Default)' },
-      { value: 'high', label: 'High' },
-      { value: 'xhigh', label: 'Extra High' },
-    ];
+    { value: 'none', label: 'None' },
+    { value: 'minimal', label: 'Minimal' },
+    { value: 'low', label: 'Low' },
+    { value: 'medium', label: 'Medium (Default)' },
+    { value: 'high', label: 'High' },
+    { value: 'xhigh', label: 'Extra High' },
+  ];
 
   const textVerbositySelectItems: ReadonlyArray<{
     value: TextVerbosity;
     label: string;
   }> = [
-      { value: 'low', label: 'Low (Concise)' },
-      { value: 'medium', label: 'Medium (Balanced)' },
-      { value: 'high', label: 'High (Verbose)' },
-    ];
+    { value: 'low', label: 'Low (Concise)' },
+    { value: 'medium', label: 'Medium (Balanced)' },
+    { value: 'high', label: 'High (Verbose)' },
+  ];
 
   return (
     <div className="space-y-4">
@@ -385,9 +385,12 @@ export function AIProviderSection({
       {/* Include Original Context in Chat */}
       <div className="flex items-center justify-between rounded-lg border px-4 py-3">
         <div className="space-y-0.5">
-          <div className="text-sm font-medium">Include system prompt in follow-up messages</div>
+          <div className="text-sm font-medium">
+            Include system prompt in follow-up messages
+          </div>
           <div className="text-xs text-muted-foreground">
-            Send the original prompt with all follow-up messages - all messages will follow original rules.
+            Send the original prompt with all follow-up messages - all messages
+            will follow original rules.
           </div>
         </div>
         <Switch

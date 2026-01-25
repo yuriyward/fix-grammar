@@ -3,6 +3,7 @@
  */
 import { useEffect, useState } from 'react';
 import { getLastConversationId } from '@/actions/chat';
+import { useChatStore } from '@/renderer/stores/chat-store';
 import { useChat } from '../hooks/use-chat';
 import { ChatInput } from './chat-input';
 import { ChatMessages } from './chat-messages';
@@ -34,18 +35,16 @@ export function PopupChat({
     error,
     editingMessageId,
     send,
-    loadConversation,
     startEdit,
     cancelEdit,
     submitEdit,
   } = useChat(conversationId ? { conversationId } : {});
 
-  // Load conversation when ID changes
   useEffect(() => {
     if (conversationId) {
-      loadConversation(conversationId);
+      useChatStore.getState().selectConversation(conversationId);
     }
-  }, [conversationId, loadConversation]);
+  }, [conversationId]);
 
   return (
     <div className="flex h-full flex-col">

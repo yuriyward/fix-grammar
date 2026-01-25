@@ -18,7 +18,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/renderer/components/ui/popover';
-import { ScrollArea } from '@/renderer/components/ui/scroll-area';
+
 import i18n from '@/renderer/lib/i18n';
 import { cn } from '@/renderer/lib/tailwind';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
@@ -182,7 +182,7 @@ export function NotificationCenterButton() {
             No notifications.
           </div>
         ) : (
-          <ScrollArea className="max-h-[min(60vh,520px)]">
+          <div className="max-h-[min(60vh,520px)] overflow-y-auto">
             <div className="flex flex-col">
               {notifications.map((item) => (
                 <div
@@ -242,7 +242,7 @@ export function NotificationCenterButton() {
                 </div>
               ))}
             </div>
-          </ScrollArea>
+          </div>
         )}
       </PopoverContent>
     </Popover>

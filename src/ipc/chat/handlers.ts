@@ -54,173 +54,15 @@ function convertToModelMessages(messages: ChatMessage[]): ModelMessage[] {
   }));
 }
 
-export const createConversation = os
-  .input(createConversationInputSchema)
-  .handler(({ input }) => {
-    const conversation = createConv(
-      input.firstMessage,
-      input.sourceApp,
-      input.sourceText,
-    );
-    windowManager.broadcast(IPC_CHANNELS.CHAT_CONVERSATIONS_CHANGED);
-    return conversation;
-  });
+function buildSystemPrompt(conversation: Conversation): string {
+  const includeOriginalPrompt = store.get('ai.includeOriginalPromptInChat');
+  const { sourceText, sourceRole } = conversation;
 
-export const getConversation = os
-  .input(getConversationInputSchema)
-  .handler(({ input }): Conversation | null => {
-    return getConv(input.id);
-  });
-
-export const listConversationsHandler = os.handler(() => {
-  return listConvs();
-});
-
-export const getLastConversationIdHandler = os.handler(() => {
-  return { conversationId: getLastConversationId() ?? null };
-});
-
-export const deleteConversation = os
-  .input(deleteConversationInputSchema)
-  .handler(({ input }) => {
-    const success = deleteConv(input.id);
-    if (success) {
-      windowManager.broadcast(IPC_CHANNELS.CHAT_CONVERSATIONS_CHANGED);
-    }
-    return { success };
-  });
-
-export const sendMessage = os
-  .input(sendMessageInputSchema)
-  .handler(async ({ input }) => {
-    const { conversationId, content } = input;
-
-    // Add user message
-    const userMessage = addMessageToConversation(
-      conversationId,
-      'user',
-      content,
-    );
-    if (!userMessage) {
-      throw new Error('Conversation not found');
-    }
-
-    // Get conversation for context
-    const conversation = getConv(conversationId);
-    if (!conversation) {
-      throw new Error('Conversation not found');
-    }
-
-    // Get AI settings
-    const provider = store.get('ai.provider') as AIProvider;
-    const model = store.get('ai.model') as string;
-    const lmstudioBaseURL = store.get('ai.lmstudioBaseURL') as
-      | string
-      | undefined;
-
-    const apiKey = getApiKey(provider) || '';
-    if (!apiKey && provider !== 'lmstudio') {
-      throw new Error(`API key not found for provider: ${provider}`);
-    }
-
-    // Create placeholder assistant message
-    const assistantMessage = addMessageToConversation(
-      conversationId,
-      'assistant',
-      '',
-    );
-    if (!assistantMessage) {
-      throw new Error('Failed to create assistant message');
-    }
-
-    // Build messages for AI
-    const modelMessages = convertToModelMessages(conversation.messages);
-
-    // Build system prompt with optional original context
-    const includeOriginalPrompt = store.get('ai.includeOriginalPromptInChat');
-    const { sourceText, sourceRole } = conversation;
-    const systemPrompt =
-      includeOriginalPrompt && sourceText && sourceRole
-        ? `${CHAT_SYSTEM_PROMPT}\n\n---\nOriginal correction context:\n${buildPrompt(sourceText, sourceRole)}`
-        : CHAT_SYSTEM_PROMPT;
-
-    // Start streaming
-    const modelInstance = createModelInstance(
-      provider,
-      apiKey,
-      model,
-      lmstudioBaseURL,
-    );
-
-    try {
-      const result = streamText({
-        model: modelInstance,
-        system: systemPrompt,
-        messages: modelMessages,
-        maxRetries: 2,
-        abortSignal: AbortSignal.timeout(AI_STREAM_TIMEOUT_MS),
-      });
-
-      let fullContent = '';
-
-      // Stream chunks via IPC
-      const stream = (await result).textStream;
-      for await (const chunk of stream) {
-        fullContent += chunk;
-
-        const streamChunk: ChatStreamChunk = {
-          conversationId,
-          messageId: assistantMessage.id,
-          type: 'delta',
-          content: chunk,
-        };
-
-        windowManager.broadcast(IPC_CHANNELS.CHAT_STREAM, streamChunk);
-      }
-
-      // Update message with full content
-      updateMessageContent(conversationId, assistantMessage.id, fullContent);
-
-      // Send completion
-      const completeChunk: ChatStreamChunk = {
-        conversationId,
-        messageId: assistantMessage.id,
-        type: 'complete',
-        content: fullContent,
-      };
-      windowManager.broadcast(IPC_CHANNELS.CHAT_STREAM, completeChunk);
-
-      // Notify all windows that conversations changed (updatedAt timestamp)
-      windowManager.broadcast(IPC_CHANNELS.CHAT_CONVERSATIONS_CHANGED);
-
-      return {
-        userMessageId: userMessage.id,
-        assistantMessageId: assistantMessage.id,
-      };
-    } catch (error) {
-      const errorDetails = parseAIError(error);
-
-      // Send error chunk
-      const errorChunk: ChatStreamChunk = {
-        conversationId,
-        messageId: assistantMessage.id,
-        type: 'error',
-        content: errorDetails.message,
-      };
-      windowManager.broadcast(IPC_CHANNELS.CHAT_STREAM, errorChunk);
-
-      throw new Error(errorDetails.message);
-    }
-  });
-
-export const broadcastSelection = os
-  .input(broadcastSelectionInputSchema)
-  .handler(({ input }) => {
-    windowManager.broadcast(IPC_CHANNELS.CHAT_CONVERSATION_SELECTED, {
-      conversationId: input.conversationId,
-    });
-    return { success: true };
-  });
+  if (includeOriginalPrompt && sourceText && sourceRole) {
+    return `${CHAT_SYSTEM_PROMPT}\n\n---\nOriginal correction context:\n${buildPrompt(sourceText, sourceRole)}`;
+  }
+  return CHAT_SYSTEM_PROMPT;
+}
 
 async function streamAIResponse(
   conversationId: string,
@@ -280,6 +122,117 @@ async function streamAIResponse(
   windowManager.broadcast(IPC_CHANNELS.CHAT_CONVERSATIONS_CHANGED);
 }
 
+function broadcastError(
+  conversationId: string,
+  messageId: string,
+  error: unknown,
+): never {
+  const errorDetails = parseAIError(error);
+
+  const errorChunk: ChatStreamChunk = {
+    conversationId,
+    messageId,
+    type: 'error',
+    content: errorDetails.message,
+  };
+  windowManager.broadcast(IPC_CHANNELS.CHAT_STREAM, errorChunk);
+
+  throw new Error(errorDetails.message);
+}
+
+export const createConversation = os
+  .input(createConversationInputSchema)
+  .handler(({ input }) => {
+    const conversation = createConv(
+      input.firstMessage,
+      input.sourceApp,
+      input.sourceText,
+    );
+    windowManager.broadcast(IPC_CHANNELS.CHAT_CONVERSATIONS_CHANGED);
+    return conversation;
+  });
+
+export const getConversation = os
+  .input(getConversationInputSchema)
+  .handler(({ input }): Conversation | null => {
+    return getConv(input.id);
+  });
+
+export const listConversationsHandler = os.handler(() => {
+  return listConvs();
+});
+
+export const getLastConversationIdHandler = os.handler(() => {
+  return { conversationId: getLastConversationId() ?? null };
+});
+
+export const deleteConversation = os
+  .input(deleteConversationInputSchema)
+  .handler(({ input }) => {
+    const success = deleteConv(input.id);
+    if (success) {
+      windowManager.broadcast(IPC_CHANNELS.CHAT_CONVERSATIONS_CHANGED);
+    }
+    return { success };
+  });
+
+export const sendMessage = os
+  .input(sendMessageInputSchema)
+  .handler(async ({ input }) => {
+    const { conversationId, content } = input;
+
+    const userMessage = addMessageToConversation(
+      conversationId,
+      'user',
+      content,
+    );
+    if (!userMessage) {
+      throw new Error('Conversation not found');
+    }
+
+    const conversation = getConv(conversationId);
+    if (!conversation) {
+      throw new Error('Conversation not found');
+    }
+
+    const assistantMessage = addMessageToConversation(
+      conversationId,
+      'assistant',
+      '',
+    );
+    if (!assistantMessage) {
+      throw new Error('Failed to create assistant message');
+    }
+
+    const modelMessages = convertToModelMessages(conversation.messages);
+    const systemPrompt = buildSystemPrompt(conversation);
+
+    try {
+      await streamAIResponse(
+        conversationId,
+        assistantMessage.id,
+        modelMessages,
+        systemPrompt,
+      );
+
+      return {
+        userMessageId: userMessage.id,
+        assistantMessageId: assistantMessage.id,
+      };
+    } catch (error) {
+      broadcastError(conversationId, assistantMessage.id, error);
+    }
+  });
+
+export const broadcastSelection = os
+  .input(broadcastSelectionInputSchema)
+  .handler(({ input }) => {
+    windowManager.broadcast(IPC_CHANNELS.CHAT_CONVERSATION_SELECTED, {
+      conversationId: input.conversationId,
+    });
+    return { success: true };
+  });
+
 export const editMessage = os
   .input(editMessageInputSchema)
   .handler(async ({ input }) => {
@@ -307,13 +260,7 @@ export const editMessage = os
     }
 
     const modelMessages = convertToModelMessages(conversation.messages);
-
-    const includeOriginalPrompt = store.get('ai.includeOriginalPromptInChat');
-    const { sourceText, sourceRole } = conversation;
-    const systemPrompt =
-      includeOriginalPrompt && sourceText && sourceRole
-        ? `${CHAT_SYSTEM_PROMPT}\n\n---\nOriginal correction context:\n${buildPrompt(sourceText, sourceRole)}`
-        : CHAT_SYSTEM_PROMPT;
+    const systemPrompt = buildSystemPrompt(conversation);
 
     try {
       await streamAIResponse(
@@ -329,16 +276,6 @@ export const editMessage = os
         truncatedCount: result.truncatedCount,
       };
     } catch (error) {
-      const errorDetails = parseAIError(error);
-
-      const errorChunk: ChatStreamChunk = {
-        conversationId,
-        messageId: assistantMessage.id,
-        type: 'error',
-        content: errorDetails.message,
-      };
-      windowManager.broadcast(IPC_CHANNELS.CHAT_STREAM, errorChunk);
-
-      throw new Error(errorDetails.message);
+      broadcastError(conversationId, assistantMessage.id, error);
     }
   });

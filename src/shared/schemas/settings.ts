@@ -81,11 +81,13 @@ function normalizeHotkeyAcceleratorForUniqueness(accelerator: string): string {
 type HotkeySettingsData = {
   fixSelection: string;
   togglePopup: string;
+  showMainWindow: string;
 };
 
 const HOTKEY_FIELD_LABELS: Record<string, string> = {
   fixSelection: 'Fix Selection',
   togglePopup: 'Toggle Popup',
+  showMainWindow: 'Show Main Window',
 };
 
 // Helper to get human-readable field label
@@ -316,6 +318,7 @@ export const hotkeysSettingsSchema = z
   .object({
     fixSelection: hotkeyAcceleratorSchema,
     togglePopup: hotkeyAcceleratorSchema,
+    showMainWindow: hotkeyAcceleratorSchema,
   })
   .superRefine((data, ctx) => {
     validateHotkeyFormats(data, ctx);
@@ -368,4 +371,5 @@ export const appSettingsSchema = z.object({
   ai: aiSettingsSchema,
   automation: automationSettingsSchema,
   openrouterModelsCache: openrouterModelsCacheSchema.optional(),
+  hasLaunchedBefore: z.boolean().optional(),
 });

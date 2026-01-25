@@ -41,6 +41,8 @@ export interface UseSettingsStateReturn {
   setFixSelection: (hotkey: string) => void;
   togglePopup: string;
   setTogglePopup: (hotkey: string) => void;
+  showMainWindow: string;
+  setShowMainWindow: (hotkey: string) => void;
 
   // Automation settings
   clipboardSyncDelayMs: number;
@@ -74,6 +76,9 @@ export function useSettingsState(): UseSettingsStateReturn {
   const [togglePopup, setTogglePopup] = useState<string>(
     DEFAULT_HOTKEYS.togglePopup,
   );
+  const [showMainWindow, setShowMainWindow] = useState<string>(
+    DEFAULT_HOTKEYS.showMainWindow,
+  );
   const [clipboardSyncDelayMs, setClipboardSyncDelayMs] = useState(200);
   const [selectionDelayMs, setSelectionDelayMs] = useState(100);
   const [isSaving, setIsSaving] = useState(false);
@@ -93,6 +98,7 @@ export function useSettingsState(): UseSettingsStateReturn {
       setOpenrouterExtraParams(settings.ai.openrouterExtraParams ?? '');
       setFixSelection(settings.hotkeys.fixSelection);
       setTogglePopup(settings.hotkeys.togglePopup);
+      setShowMainWindow(settings.hotkeys.showMainWindow);
       setClipboardSyncDelayMs(settings.automation.clipboardSyncDelayMs);
       setSelectionDelayMs(settings.automation.selectionDelayMs);
     } catch (error) {
@@ -140,7 +146,7 @@ export function useSettingsState(): UseSettingsStateReturn {
                 })()
               : undefined,
         },
-        hotkeys: { fixSelection, togglePopup },
+        hotkeys: { fixSelection, togglePopup, showMainWindow },
         automation: { clipboardSyncDelayMs, selectionDelayMs },
       };
 
@@ -179,6 +185,7 @@ export function useSettingsState(): UseSettingsStateReturn {
       openrouterExtraParams,
       fixSelection,
       togglePopup,
+      showMainWindow,
       clipboardSyncDelayMs,
       selectionDelayMs,
     ],
@@ -203,6 +210,8 @@ export function useSettingsState(): UseSettingsStateReturn {
     setFixSelection,
     togglePopup,
     setTogglePopup,
+    showMainWindow,
+    setShowMainWindow,
     clipboardSyncDelayMs,
     setClipboardSyncDelayMs,
     selectionDelayMs,

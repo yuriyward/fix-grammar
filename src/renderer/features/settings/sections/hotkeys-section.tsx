@@ -8,12 +8,14 @@ import { Input } from '@/renderer/components/ui/input';
 export interface HotkeysSectionProps {
   fixSelection: string;
   togglePopup: string;
+  showMainWindow: string;
   onFixSelectionChange: (value: string) => void;
   onTogglePopupChange: (value: string) => void;
+  onShowMainWindowChange: (value: string) => void;
 }
 
 interface HotkeyFieldConfig {
-  id: 'fixSelection' | 'togglePopup';
+  id: 'fixSelection' | 'togglePopup' | 'showMainWindow';
   label: string;
   value: string;
   setValue: (value: string) => void;
@@ -27,8 +29,10 @@ interface HotkeyFieldConfig {
 export function HotkeysSection({
   fixSelection,
   togglePopup,
+  showMainWindow,
   onFixSelectionChange,
   onTogglePopupChange,
+  onShowMainWindowChange,
 }: HotkeysSectionProps) {
   const hotkeyFields: HotkeyFieldConfig[] = [
     {
@@ -44,6 +48,13 @@ export function HotkeysSection({
       value: togglePopup,
       setValue: onTogglePopupChange,
       placeholder: 'CommandOrControl+Shift+P',
+    },
+    {
+      id: 'showMainWindow',
+      label: 'Show Main Window',
+      value: showMainWindow,
+      setValue: onShowMainWindowChange,
+      placeholder: 'CommandOrControl+Shift+M',
     },
   ];
 

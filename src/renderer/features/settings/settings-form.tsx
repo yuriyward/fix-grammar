@@ -100,8 +100,10 @@ export default function SettingsForm() {
         <HotkeysSection
           fixSelection={settingsState.fixSelection}
           togglePopup={settingsState.togglePopup}
+          showMainWindow={settingsState.showMainWindow}
           onFixSelectionChange={settingsState.setFixSelection}
           onTogglePopupChange={settingsState.setTogglePopup}
+          onShowMainWindowChange={settingsState.setShowMainWindow}
         />
 
         {/* Automation Section */}

@@ -7,6 +7,7 @@ import type { RewriteRole } from '@/shared/types/ai';
 export interface HotkeysSettings {
   fixSelection: string;
   togglePopup: string;
+  showMainWindow: string;
 }
 
 export type ReasoningEffort =
@@ -43,4 +44,5 @@ export interface AppSettings {
   ai: AISettings;
   automation: AutomationSettings;
   openrouterModelsCache?: OpenRouterModelsCache;
+  hasLaunchedBefore?: boolean;
 }

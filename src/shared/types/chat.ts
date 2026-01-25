@@ -25,3 +25,10 @@ export interface ConversationSummary {
   messageCount: number;
   updatedAt: number;
 }
+
+export interface ChatStreamChunk {
+  conversationId: string;
+  messageId: string;
+  type: 'delta' | 'complete' | 'error';
+  content: string;
+}

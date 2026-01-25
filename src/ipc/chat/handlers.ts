@@ -2,13 +2,10 @@
  * Chat IPC handlers
  */
 
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { createOpenAI } from '@ai-sdk/openai';
-import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
-import { createXai } from '@ai-sdk/xai';
 import { os } from '@orpc/server';
-import type { LanguageModel, ModelMessage } from 'ai';
+import type { ModelMessage } from 'ai';
 import { streamText } from 'ai';
+import { createModelInstance } from '@/main/ai/client';
 import { parseAIError } from '@/main/ai/error-handler';
 import { getApiKey } from '@/main/storage/api-keys';
 import { getLastConversationId } from '@/main/storage/context';
@@ -25,9 +22,11 @@ import { windowManager } from '@/main/windows/window-manager';
 import { AI_STREAM_TIMEOUT_MS } from '@/shared/config/ai';
 import type { AIProvider } from '@/shared/config/ai-models';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
-import type { ChatMessage, Conversation } from '@/shared/types/chat';
-import { sanitizeLMStudioURL } from '@/shared/utils/url-validation';
-import type { ChatStreamChunk } from './schemas';
+import type {
+  ChatMessage,
+  ChatStreamChunk,
+  Conversation,
+} from '@/shared/types/chat';
 import {
   broadcastSelectionInputSchema,
   createConversationInputSchema,
@@ -44,43 +43,6 @@ When correcting text:
 - Maintain the user's voice and intent
 
 When asked general questions, provide clear and helpful responses.`;
-
-function buildModelInstance(
-  provider: AIProvider,
-  apiKey: string,
-  model: string,
-  lmstudioBaseURL?: string,
-): LanguageModel {
-  const providerFactories: Record<
-    AIProvider,
-    (apiKey: string, model: string, baseURL?: string) => LanguageModel
-  > = {
-    google: (apiKey, model) => createGoogleGenerativeAI({ apiKey })(model),
-    xai: (apiKey, model) => createXai({ apiKey })(model),
-    openai: (apiKey, model) => createOpenAI({ apiKey })(model),
-    lmstudio: (apiKey, model, baseURL) => {
-      const sanitizedURL = baseURL
-        ? sanitizeLMStudioURL(baseURL)
-        : 'http://localhost:1234/v1';
-      return createOpenAICompatible({
-        name: 'lmstudio',
-        baseURL: sanitizedURL,
-        apiKey: apiKey || 'not-needed',
-      })(model);
-    },
-    openrouter: (apiKey, model) =>
-      createOpenAI({
-        baseURL: 'https://openrouter.ai/api/v1',
-        apiKey,
-        headers: {
-          'HTTP-Referer': 'https://github.com/ward/automations/fix-grammar',
-          'X-Title': 'Fix Grammar App',
-        },
-      })(model),
-  };
-
-  return providerFactories[provider](apiKey, model, lmstudioBaseURL);
-}
 
 function convertToModelMessages(messages: ChatMessage[]): ModelMessage[] {
   return messages.map((m) => ({
@@ -172,7 +134,7 @@ export const sendMessage = os
     const modelMessages = convertToModelMessages(conversation.messages);
 
     // Start streaming
-    const modelInstance = buildModelInstance(
+    const modelInstance = createModelInstance(
       provider,
       apiKey,
       model,

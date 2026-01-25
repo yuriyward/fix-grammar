@@ -30,6 +30,46 @@ type JSONValue =
 type JSONObject = { [key: string]: JSONValue | undefined };
 
 /**
+ * Creates a language model instance for the given provider.
+ */
+export function createModelInstance(
+  provider: AIProvider,
+  apiKey: string,
+  model: string,
+  lmstudioBaseURL?: string,
+): LanguageModel {
+  const providerFactories: Record<
+    AIProvider,
+    (apiKey: string, model: string, baseURL?: string) => LanguageModel
+  > = {
+    google: (apiKey, model) => createGoogleGenerativeAI({ apiKey })(model),
+    xai: (apiKey, model) => createXai({ apiKey })(model),
+    openai: (apiKey, model) => createOpenAI({ apiKey })(model),
+    lmstudio: (apiKey, model, baseURL) => {
+      const sanitizedURL = baseURL
+        ? sanitizeLMStudioURL(baseURL)
+        : 'http://localhost:1234/v1';
+      return createOpenAICompatible({
+        name: 'lmstudio',
+        baseURL: sanitizedURL,
+        apiKey: apiKey || 'not-needed',
+      })(model);
+    },
+    openrouter: (apiKey, model) =>
+      createOpenAI({
+        baseURL: 'https://openrouter.ai/api/v1',
+        apiKey,
+        headers: {
+          'HTTP-Referer': 'https://github.com/ward/automations/fix-grammar',
+          'X-Title': 'Fix Grammar App',
+        },
+      })(model),
+  };
+
+  return providerFactories[provider](apiKey, model, lmstudioBaseURL);
+}
+
+/**
  * Streams a rewritten version of the given text using the configured AI provider and model.
  *
  * @param text - The source text to rewrite.
@@ -56,38 +96,8 @@ export async function rewriteText(
 ): Promise<StreamTextResult<Record<string, never>, never>> {
   const prompt = buildPrompt(text, role);
 
-  // Provider factory map following Open/Closed Principle
-  const providerFactories: Record<
-    AIProvider,
-    (apiKey: string, model: string, baseURL?: string) => LanguageModel
-  > = {
-    google: (apiKey, model) => createGoogleGenerativeAI({ apiKey })(model),
-    xai: (apiKey, model) => createXai({ apiKey })(model),
-    // openai() defaults to Responses API in AI SDK 5+
-    openai: (apiKey, model) => createOpenAI({ apiKey })(model),
-    lmstudio: (apiKey, model, baseURL) => {
-      const sanitizedURL = baseURL
-        ? sanitizeLMStudioURL(baseURL)
-        : 'http://localhost:1234/v1';
-
-      return createOpenAICompatible({
-        name: 'lmstudio',
-        baseURL: sanitizedURL,
-        apiKey: apiKey || 'not-needed',
-      })(model);
-    },
-    openrouter: (apiKey, model) =>
-      createOpenAI({
-        baseURL: 'https://openrouter.ai/api/v1',
-        apiKey,
-        headers: {
-          'HTTP-Referer': 'https://github.com/ward/automations/fix-grammar',
-          'X-Title': 'Fix Grammar App',
-        },
-      })(model),
-  };
-
-  const modelInstance = providerFactories[provider](
+  const modelInstance = createModelInstance(
+    provider,
     apiKey,
     model,
     lmstudioBaseURL,

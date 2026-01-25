@@ -11,14 +11,11 @@ import {
   sendMessage as sendMessageAction,
 } from '@/actions/chat';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
-import type { ChatMessage, ConversationSummary } from '@/shared/types/chat';
-
-interface ChatStreamChunk {
-  conversationId: string;
-  messageId: string;
-  type: 'delta' | 'complete' | 'error';
-  content: string;
-}
+import type {
+  ChatMessage,
+  ChatStreamChunk,
+  ConversationSummary,
+} from '@/shared/types/chat';
 
 interface ChatStore {
   conversations: ConversationSummary[];

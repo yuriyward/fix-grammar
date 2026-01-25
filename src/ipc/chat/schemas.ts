@@ -22,15 +22,6 @@ export const sendMessageInputSchema = z.object({
   content: z.string().min(1),
 });
 
-export const chatStreamChunkSchema = z.object({
-  conversationId: z.string(),
-  messageId: z.string(),
-  type: z.enum(['delta', 'complete', 'error']),
-  content: z.string(),
-});
-
-export type ChatStreamChunk = z.infer<typeof chatStreamChunkSchema>;
-
 export const broadcastSelectionInputSchema = z.object({
   conversationId: z.string().nullable(),
 });

@@ -7,14 +7,8 @@ import type {
   AutomationCalibrationFocusRequest,
   AutomationCalibrationFocusResponse,
 } from '@/shared/types/automation';
+import type { ChatStreamChunk } from '@/shared/types/chat';
 import type { AppNotification } from '@/shared/types/notifications';
-
-interface ChatStreamChunk {
-  conversationId: string;
-  messageId: string;
-  type: 'delta' | 'complete' | 'error';
-  content: string;
-}
 
 /**
  * Setup the preload bridge for IPC communication.

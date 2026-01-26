@@ -40,10 +40,15 @@ export interface OpenRouterModelsCache {
   timestamp: number;
 }
 
+export interface LangfuseSettings {
+  enabled: boolean;
+}
+
 export interface AppSettings {
   hotkeys: HotkeysSettings;
   ai: AISettings;
   automation: AutomationSettings;
+  langfuse: LangfuseSettings;
   openrouterModelsCache?: OpenRouterModelsCache;
   hasLaunchedBefore?: boolean;
 }

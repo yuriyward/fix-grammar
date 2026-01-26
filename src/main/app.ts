@@ -5,6 +5,7 @@ import { app } from 'electron';
 import { ipcMain } from 'electron/main';
 import { UpdateSourceType, updateElectronApp } from 'update-electron-app';
 import { ipcContext } from '@/ipc/context';
+import { shutdownLangfuse } from '@/main/ai/langfuse';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
 import { shortcutManager } from './shortcuts/manager';
 import { store } from './storage/settings';
@@ -12,6 +13,7 @@ import { trayManager } from './tray/tray-manager';
 import { windowManager } from './windows/window-manager';
 
 const inDevelopment = process.env.NODE_ENV === 'development';
+const quitState = { flushing: false };
 
 async function installExtensions() {
   if (!inDevelopment) return;
@@ -113,12 +115,23 @@ export function initializeApp() {
     windowManager.showMainWindow();
   });
 
-  app.on('before-quit', () => {
+  app.on('before-quit', (event) => {
     // Allow the app to quit by removing close handler
     if (windowManager.mainWindow) {
       windowManager.mainWindow.removeAllListeners('close');
     }
     shortcutManager.unregisterAll();
     trayManager.destroy();
+
+    // Flush Langfuse traces before quitting (one-time, with timeout)
+    event.preventDefault();
+    if (quitState.flushing) return;
+    quitState.flushing = true;
+    const flushTimeout = new Promise<void>((resolve) =>
+      setTimeout(resolve, 3000),
+    );
+    Promise.race([shutdownLangfuse(), flushTimeout]).finally(() => {
+      app.exit(0);
+    });
   });
 }

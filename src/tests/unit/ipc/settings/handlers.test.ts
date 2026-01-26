@@ -23,6 +23,7 @@ const {
   const mockStore: {
     store: AppSettings;
     set: (value: AppSettings) => void;
+    get: (key: string) => unknown;
   } = {
     store: {
       hotkeys: {
@@ -39,8 +40,12 @@ const {
         clipboardSyncDelayMs: 200,
         selectionDelayMs: 100,
       },
+      langfuse: {
+        enabled: false,
+      },
     },
     set: () => {},
+    get: () => undefined,
   };
 
   const mockStoreSet = vi.fn((value: AppSettings) => {
@@ -50,7 +55,17 @@ const {
     };
   });
 
+  const mockStoreGet = vi.fn((key: string) => {
+    const parts = key.split('.');
+    let value: unknown = mockStore.store;
+    for (const part of parts) {
+      value = (value as Record<string, unknown>)?.[part];
+    }
+    return value;
+  });
+
   mockStore.set = mockStoreSet;
+  mockStore.get = mockStoreGet;
 
   return {
     mockDeleteApiKey,
@@ -61,6 +76,10 @@ const {
     mockStoreSet,
   };
 });
+
+vi.mock('@/main/ai/langfuse', () => ({
+  resetLangfuseClient: vi.fn(),
+}));
 
 vi.mock('@/main/storage/api-keys', () => ({
   deleteApiKey: mockDeleteApiKey,
@@ -91,6 +110,9 @@ describe('Settings IPC handlers', () => {
         clipboardSyncDelayMs: 200,
         selectionDelayMs: 100,
       },
+      langfuse: {
+        enabled: false,
+      },
     };
   });
 
@@ -120,6 +142,9 @@ describe('Settings IPC handlers', () => {
         clipboardSyncDelayMs: 250,
         selectionDelayMs: 150,
       },
+      langfuse: {
+        enabled: false,
+      },
     };
 
     await expect(callUpdateSettings(next)).resolves.toEqual({
@@ -148,6 +173,9 @@ describe('Settings IPC handlers', () => {
         clipboardSyncDelayMs: 200,
         selectionDelayMs: 100,
       },
+      langfuse: {
+        enabled: false,
+      },
     };
 
     await expect(callUpdateSettings(customModel)).resolves.toEqual({
@@ -175,6 +203,9 @@ describe('Settings IPC handlers', () => {
       automation: {
         clipboardSyncDelayMs: 200,
         selectionDelayMs: 100,
+      },
+      langfuse: {
+        enabled: false,
       },
     };
 

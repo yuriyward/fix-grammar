@@ -55,3 +55,22 @@ export async function fetchOpenRouterModels(): Promise<{
 }> {
   return ipc.client.settings.fetchOpenRouterModels();
 }
+
+export async function saveLangfuseKeys(
+  publicKey: string,
+  secretKey: string,
+): Promise<{ success: boolean }> {
+  return ipc.client.settings.saveLangfuseKeys({ publicKey, secretKey });
+}
+
+export async function hasLangfuseKeys(): Promise<{
+  hasKeys: boolean;
+  publicKeyPreview: string | null;
+  secretKeyPreview: string | null;
+}> {
+  return ipc.client.settings.hasLangfuseKeys();
+}
+
+export async function deleteLangfuseKeys(): Promise<{ success: boolean }> {
+  return ipc.client.settings.deleteLangfuseKeys();
+}

@@ -7,6 +7,7 @@ import type { ModelMessage } from 'ai';
 import { streamText } from 'ai';
 import { createModelInstance } from '@/main/ai/client';
 import { parseAIError } from '@/main/ai/error-handler';
+import { extractTokenUsage, traceChat } from '@/main/ai/langfuse';
 import { buildPrompt } from '@/main/ai/prompts';
 import { getApiKey } from '@/main/storage/api-keys';
 import { getLastConversationId } from '@/main/storage/context';
@@ -97,9 +98,9 @@ async function streamAIResponse(
   });
 
   let fullContent = '';
-  const stream = (await result).textStream;
+  const resolvedResult = await result;
 
-  for await (const chunk of stream) {
+  for await (const chunk of resolvedResult.textStream) {
     fullContent += chunk;
 
     const streamChunk: ChatStreamChunk = {
@@ -113,6 +114,21 @@ async function streamAIResponse(
   }
 
   updateMessageContent(conversationId, assistantMessageId, fullContent);
+
+  const usage = extractTokenUsage(await resolvedResult.usage);
+
+  traceChat({
+    messages: modelMessages.map((m) => ({
+      role: m.role,
+      content: String(m.content),
+    })),
+    systemPrompt,
+    output: fullContent,
+    model,
+    provider,
+    conversationId,
+    ...(usage && { usage }),
+  });
 
   const completeChunk: ChatStreamChunk = {
     conversationId,
@@ -130,6 +146,11 @@ function broadcastError(
   error: unknown,
 ): never {
   const errorDetails = parseAIError(error);
+
+  // Delete empty assistant message from storage before broadcasting error.
+  // The error chunk still references messageId so the renderer can identify
+  // which pending message failed, even though it's no longer persisted.
+  deleteMessageFromConversation(conversationId, messageId);
 
   const errorChunk: ChatStreamChunk = {
     conversationId,

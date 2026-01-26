@@ -24,6 +24,11 @@ export const deleteApiKeyInputSchema = z.object({
 
 export const isEncryptionAvailableInputSchema = z.void();
 
+export const saveLangfuseKeysInputSchema = z.object({
+  publicKey: z.string().min(1).trim(),
+  secretKey: z.string().min(1).trim(),
+});
+
 export const testLMStudioConnectionInputSchema = z.object({
   baseURL: z
     .string()

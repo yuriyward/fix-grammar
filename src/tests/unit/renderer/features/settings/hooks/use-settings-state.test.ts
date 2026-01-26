@@ -72,6 +72,7 @@ const createMockSettings = (
     ai: Partial<AppSettings['ai']>;
     hotkeys: Partial<AppSettings['hotkeys']>;
     automation: Partial<AppSettings['automation']>;
+    langfuse: Partial<AppSettings['langfuse']>;
   }>,
 ): AppSettings => ({
   ai: {
@@ -93,6 +94,10 @@ const createMockSettings = (
     clipboardSyncDelayMs: 200,
     selectionDelayMs: 100,
     ...overrides?.automation,
+  },
+  langfuse: {
+    enabled: false,
+    ...overrides?.langfuse,
   },
 });
 

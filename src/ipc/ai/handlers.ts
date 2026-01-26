@@ -5,7 +5,12 @@
 import { os } from '@orpc/server';
 import { rewriteTextWithSettings } from '@/main/ai/client';
 import { parseAIError } from '@/main/ai/error-handler';
+import { extractTokenUsage, traceRewrite } from '@/main/ai/langfuse';
+import { buildPrompt } from '@/main/ai/prompts';
+import { store } from '@/main/storage/settings';
 import { showNotification } from '@/main/utils/notifications';
+import type { AIProvider } from '@/shared/config/ai-models';
+import type { RewriteRole } from '@/shared/types/ai';
 import { rewriteInputSchema } from './schemas';
 
 export const rewriteTextHandler = os
@@ -46,6 +51,21 @@ export const rewriteTextHandler = os
         `AI rewrite failed: ${errorDetails.message}${partialInfo}`,
       );
     }
+
+    const usage = extractTokenUsage(await result.usage);
+
+    const provider = store.get('ai.provider') as AIProvider;
+    const model = store.get('ai.model') as string;
+    const role = input.role as RewriteRole;
+    traceRewrite({
+      input: input.text,
+      output: fullText,
+      prompt: buildPrompt(input.text, role),
+      model,
+      provider,
+      role,
+      ...(usage && { usage }),
+    });
 
     return { content: fullText };
   });

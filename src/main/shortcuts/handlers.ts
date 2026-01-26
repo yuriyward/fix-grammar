@@ -5,6 +5,8 @@ import { randomUUID } from 'node:crypto';
 import { Notification } from 'electron';
 import { rewriteTextWithSettings } from '@/main/ai/client';
 import { parseAIError } from '@/main/ai/error-handler';
+import { extractTokenUsage, traceRewrite } from '@/main/ai/langfuse';
+import { buildPrompt } from '@/main/ai/prompts';
 import {
   readClipboard,
   SAFE_RESTORE_WINDOW_MS,
@@ -193,6 +195,18 @@ async function processFixAsync(
       originalText,
       await result.text,
     );
+
+    const usage = extractTokenUsage(await result.usage);
+
+    traceRewrite({
+      input: originalText,
+      output: rewrittenText,
+      prompt: buildPrompt(originalText, role),
+      model,
+      provider,
+      role,
+      ...(usage && { usage }),
+    });
 
     // Create conversation with the fix
     const conversation = createConversation(

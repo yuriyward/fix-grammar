@@ -2,6 +2,7 @@
  * Settings IPC handlers
  */
 import { os } from '@orpc/server';
+import { resetLangfuseClient } from '@/main/ai/langfuse';
 import {
   deleteApiKey,
   getApiKeyPreview,
@@ -17,6 +18,7 @@ import {
   hasApiKeyInputSchema,
   isEncryptionAvailableInputSchema,
   saveApiKeyInputSchema,
+  saveLangfuseKeysInputSchema,
   testLMStudioConnectionInputSchema,
 } from './schemas';
 
@@ -148,4 +150,30 @@ export const fetchOpenRouterModels = os.handler(async () => {
       error: getErrorMessage(error),
     };
   }
+});
+
+export const saveLangfuseKeysHandler = os
+  .input(saveLangfuseKeysInputSchema)
+  .handler(({ input }) => {
+    saveApiKey('langfuse-public', input.publicKey);
+    saveApiKey('langfuse-secret', input.secretKey);
+    resetLangfuseClient();
+    return { success: true };
+  });
+
+export const hasLangfuseKeysHandler = os.handler(() => {
+  const hasPublic = hasApiKey('langfuse-public');
+  const hasSecret = hasApiKey('langfuse-secret');
+  return {
+    hasKeys: hasPublic && hasSecret,
+    publicKeyPreview: hasPublic ? getApiKeyPreview('langfuse-public') : null,
+    secretKeyPreview: hasSecret ? getApiKeyPreview('langfuse-secret') : null,
+  };
+});
+
+export const deleteLangfuseKeysHandler = os.handler(() => {
+  deleteApiKey('langfuse-public');
+  deleteApiKey('langfuse-secret');
+  resetLangfuseClient();
+  return { success: true };
 });

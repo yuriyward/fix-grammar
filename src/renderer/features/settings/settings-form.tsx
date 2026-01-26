@@ -8,6 +8,7 @@ import { Form } from '@/renderer/components/ui/form';
 
 import { useApiKey } from './hooks/use-api-key';
 import { useCalibration } from './hooks/use-calibration';
+import { useLangfuseKeys } from './hooks/use-langfuse-keys';
 import { useLMStudioModels } from './hooks/use-lmstudio-models';
 import { useOpenRouterModels } from './hooks/use-openrouter-models';
 import { useSettingsState } from './hooks/use-settings-state';
@@ -15,6 +16,7 @@ import { AIProviderSection } from './sections/ai-provider-section';
 import { AppearanceSection } from './sections/appearance-section';
 import { AutomationSection } from './sections/automation-section';
 import { HotkeysSection } from './sections/hotkeys-section';
+import { LangfuseSection } from './sections/langfuse-section';
 
 /**
  * Settings form component that composes all settings sections.
@@ -39,6 +41,9 @@ export default function SettingsForm({
 
   // OpenRouter model discovery
   const openRouterModels = useOpenRouterModels(settingsState.provider);
+
+  // Langfuse key management
+  const langfuseKeysState = useLangfuseKeys();
 
   // Calibration logic
   const calibrationState = useCalibration(
@@ -148,6 +153,14 @@ export default function SettingsForm({
           calibrationFieldRef={calibrationState.calibrationFieldRef}
           onCalibrationTextChange={calibrationState.setCalibrationText}
           onCalibrate={calibrationState.handleCalibrate}
+        />
+
+        {/* Langfuse Section */}
+        <LangfuseSection
+          enabled={settingsState.langfuseEnabled}
+          onEnabledChange={settingsState.setLangfuseEnabled}
+          isSaving={settingsState.isSaving}
+          keys={langfuseKeysState}
         />
       </div>
     </Form>

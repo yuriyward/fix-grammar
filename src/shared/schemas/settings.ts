@@ -367,10 +367,15 @@ export const openrouterModelsCacheSchema = z.object({
   timestamp: z.number(),
 });
 
+export const langfuseSettingsSchema = z.object({
+  enabled: z.boolean(),
+});
+
 export const appSettingsSchema = z.object({
   hotkeys: hotkeysSettingsSchema,
   ai: aiSettingsSchema,
   automation: automationSettingsSchema,
+  langfuse: langfuseSettingsSchema,
   openrouterModelsCache: openrouterModelsCacheSchema.optional(),
   hasLaunchedBefore: z.boolean().optional(),
 });

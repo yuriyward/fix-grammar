@@ -22,5 +22,8 @@ export const store = new ElectronStore<AppSettings>({
       clipboardSyncDelayMs: 200,
       selectionDelayMs: 100,
     },
+    langfuse: {
+      enabled: false,
+    },
   },
 });

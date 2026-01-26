@@ -52,6 +52,10 @@ export interface UseSettingsStateReturn {
   selectionDelayMs: number;
   setSelectionDelayMs: (ms: number) => void;
 
+  // Langfuse settings
+  langfuseEnabled: boolean;
+  setLangfuseEnabled: (enabled: boolean) => void;
+
   // Form state
   isSaving: boolean;
   fieldErrors: Record<string, string>;
@@ -85,6 +89,7 @@ export function useSettingsState(): UseSettingsStateReturn {
   );
   const [clipboardSyncDelayMs, setClipboardSyncDelayMs] = useState(200);
   const [selectionDelayMs, setSelectionDelayMs] = useState(100);
+  const [langfuseEnabled, setLangfuseEnabled] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
@@ -108,6 +113,7 @@ export function useSettingsState(): UseSettingsStateReturn {
       setShowMainWindow(settings.hotkeys.showMainWindow);
       setClipboardSyncDelayMs(settings.automation.clipboardSyncDelayMs);
       setSelectionDelayMs(settings.automation.selectionDelayMs);
+      setLangfuseEnabled(settings.langfuse?.enabled ?? false);
     } catch (error) {
       console.error('Failed to load settings:', error);
     }
@@ -156,6 +162,7 @@ export function useSettingsState(): UseSettingsStateReturn {
         },
         hotkeys: { fixSelection, togglePopup, showMainWindow },
         automation: { clipboardSyncDelayMs, selectionDelayMs },
+        langfuse: { enabled: langfuseEnabled },
       };
 
       const result = appSettingsSchema.safeParse(candidateSettings);
@@ -197,6 +204,7 @@ export function useSettingsState(): UseSettingsStateReturn {
       showMainWindow,
       clipboardSyncDelayMs,
       selectionDelayMs,
+      langfuseEnabled,
     ],
   );
 
@@ -227,6 +235,8 @@ export function useSettingsState(): UseSettingsStateReturn {
     setClipboardSyncDelayMs,
     selectionDelayMs,
     setSelectionDelayMs,
+    langfuseEnabled,
+    setLangfuseEnabled,
     isSaving,
     fieldErrors,
     handleProviderChange,

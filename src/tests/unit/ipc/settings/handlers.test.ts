@@ -39,6 +39,9 @@ const {
         clipboardSyncDelayMs: 200,
         selectionDelayMs: 100,
       },
+      langfuse: {
+        enabled: false,
+      },
     },
     set: () => {},
   };
@@ -61,6 +64,10 @@ const {
     mockStoreSet,
   };
 });
+
+vi.mock('@/main/ai/langfuse', () => ({
+  resetLangfuseClient: vi.fn(),
+}));
 
 vi.mock('@/main/storage/api-keys', () => ({
   deleteApiKey: mockDeleteApiKey,
@@ -91,6 +98,9 @@ describe('Settings IPC handlers', () => {
         clipboardSyncDelayMs: 200,
         selectionDelayMs: 100,
       },
+      langfuse: {
+        enabled: false,
+      },
     };
   });
 
@@ -120,6 +130,9 @@ describe('Settings IPC handlers', () => {
         clipboardSyncDelayMs: 250,
         selectionDelayMs: 150,
       },
+      langfuse: {
+        enabled: false,
+      },
     };
 
     await expect(callUpdateSettings(next)).resolves.toEqual({
@@ -148,6 +161,9 @@ describe('Settings IPC handlers', () => {
         clipboardSyncDelayMs: 200,
         selectionDelayMs: 100,
       },
+      langfuse: {
+        enabled: false,
+      },
     };
 
     await expect(callUpdateSettings(customModel)).resolves.toEqual({
@@ -175,6 +191,9 @@ describe('Settings IPC handlers', () => {
       automation: {
         clipboardSyncDelayMs: 200,
         selectionDelayMs: 100,
+      },
+      langfuse: {
+        enabled: false,
       },
     };
 

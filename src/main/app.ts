@@ -5,6 +5,7 @@ import { app } from 'electron';
 import { ipcMain } from 'electron/main';
 import { UpdateSourceType, updateElectronApp } from 'update-electron-app';
 import { ipcContext } from '@/ipc/context';
+import { shutdownLangfuse } from '@/main/ai/langfuse';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
 import { shortcutManager } from './shortcuts/manager';
 import { store } from './storage/settings';
@@ -120,5 +121,6 @@ export function initializeApp() {
     }
     shortcutManager.unregisterAll();
     trayManager.destroy();
+    shutdownLangfuse();
   });
 }

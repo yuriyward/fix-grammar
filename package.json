@@ -101,6 +101,7 @@
     "electron-squirrel-startup": "^1.0.1",
     "electron-store": "^11.0.2",
     "i18next": "^25.8.0",
+    "langfuse": "^3.38.6",
     "lucide-react": "^0.563.0",
     "nanoid": "^5.1.6",
     "react": "^19.2.3",

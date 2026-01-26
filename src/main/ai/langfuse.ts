@@ -1,6 +1,7 @@
 /**
  * Langfuse observability client for AI tracing
  */
+import { app } from 'electron';
 import { Langfuse } from 'langfuse';
 import { getApiKey } from '@/main/storage/api-keys';
 import { store } from '@/main/storage/settings';
@@ -32,7 +33,9 @@ function getClient(): Langfuse | null {
 
 export function resetLangfuseClient(): void {
   if (client) {
-    client.flushAsync().catch(() => {});
+    client.flushAsync().catch((err) => {
+      console.warn('[Langfuse] Flush failed during reset:', err);
+    });
     client = null;
   }
 }
@@ -43,7 +46,9 @@ export function resetLangfuseClient(): void {
  */
 export async function shutdownLangfuse(): Promise<void> {
   if (client) {
-    await client.flushAsync().catch(() => {});
+    await client.flushAsync().catch((err) => {
+      console.warn('[Langfuse] Flush failed during shutdown:', err);
+    });
     client = null;
   }
 }
@@ -102,6 +107,7 @@ export function traceRewrite(params: TraceRewriteParams): void {
         provider: params.provider,
         model: params.model,
         role: params.role,
+        appVersion: app.getVersion(),
       },
     });
 
@@ -144,6 +150,7 @@ export function traceChat(params: TraceChatParams): void {
       metadata: {
         provider: params.provider,
         model: params.model,
+        appVersion: app.getVersion(),
       },
     });
 

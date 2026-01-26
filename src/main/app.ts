@@ -13,6 +13,7 @@ import { trayManager } from './tray/tray-manager';
 import { windowManager } from './windows/window-manager';
 
 const inDevelopment = process.env.NODE_ENV === 'development';
+const quitState = { flushing: false };
 
 async function installExtensions() {
   if (!inDevelopment) return;
@@ -122,9 +123,14 @@ export function initializeApp() {
     shortcutManager.unregisterAll();
     trayManager.destroy();
 
-    // Flush Langfuse traces before quitting
+    // Flush Langfuse traces before quitting (one-time, with timeout)
     event.preventDefault();
-    shutdownLangfuse().finally(() => {
+    if (quitState.flushing) return;
+    quitState.flushing = true;
+    const flushTimeout = new Promise<void>((resolve) =>
+      setTimeout(resolve, 3000),
+    );
+    Promise.race([shutdownLangfuse(), flushTimeout]).finally(() => {
       app.exit(0);
     });
   });

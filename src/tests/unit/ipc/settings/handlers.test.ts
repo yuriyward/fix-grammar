@@ -23,6 +23,7 @@ const {
   const mockStore: {
     store: AppSettings;
     set: (value: AppSettings) => void;
+    get: (key: string) => unknown;
   } = {
     store: {
       hotkeys: {
@@ -44,6 +45,7 @@ const {
       },
     },
     set: () => {},
+    get: () => undefined,
   };
 
   const mockStoreSet = vi.fn((value: AppSettings) => {
@@ -53,7 +55,17 @@ const {
     };
   });
 
+  const mockStoreGet = vi.fn((key: string) => {
+    const parts = key.split('.');
+    let value: unknown = mockStore.store;
+    for (const part of parts) {
+      value = (value as Record<string, unknown>)?.[part];
+    }
+    return value;
+  });
+
   mockStore.set = mockStoreSet;
+  mockStore.get = mockStoreGet;
 
   return {
     mockDeleteApiKey,

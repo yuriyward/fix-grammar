@@ -36,7 +36,14 @@ export const getSettings = os.handler(() => {
 export const updateSettings = os
   .input(appSettingsSchema)
   .handler(({ input }) => {
+    const previousLangfuseEnabled = store.get('langfuse.enabled');
     store.set(input as AppSettings);
+
+    // Reset Langfuse client if enabled state changed
+    if (input.langfuse?.enabled !== previousLangfuseEnabled) {
+      resetLangfuseClient();
+    }
+
     return store.store;
   });
 

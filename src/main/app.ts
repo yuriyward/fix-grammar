@@ -114,13 +114,18 @@ export function initializeApp() {
     windowManager.showMainWindow();
   });
 
-  app.on('before-quit', () => {
+  app.on('before-quit', (event) => {
     // Allow the app to quit by removing close handler
     if (windowManager.mainWindow) {
       windowManager.mainWindow.removeAllListeners('close');
     }
     shortcutManager.unregisterAll();
     trayManager.destroy();
-    shutdownLangfuse();
+
+    // Flush Langfuse traces before quitting
+    event.preventDefault();
+    shutdownLangfuse().finally(() => {
+      app.exit(0);
+    });
   });
 }

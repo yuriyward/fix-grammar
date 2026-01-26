@@ -57,7 +57,12 @@ export function LangfuseSection({
       </Field>
 
       <Field>
-        <FieldLabel>Secret Key</FieldLabel>
+        <FieldLabel>
+          Secret Key{' '}
+          {keys.hasKeys && (
+            <span className="text-muted-foreground">(saved)</span>
+          )}
+        </FieldLabel>
         <Input
           type="password"
           value={keys.secretKey}

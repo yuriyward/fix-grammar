@@ -147,6 +147,9 @@ function broadcastError(
 ): never {
   const errorDetails = parseAIError(error);
 
+  // Delete empty assistant message from storage before broadcasting error.
+  // The error chunk still references messageId so the renderer can identify
+  // which pending message failed, even though it's no longer persisted.
   deleteMessageFromConversation(conversationId, messageId);
 
   const errorChunk: ChatStreamChunk = {

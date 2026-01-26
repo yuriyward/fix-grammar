@@ -37,9 +37,13 @@ export function resetLangfuseClient(): void {
   }
 }
 
-export function shutdownLangfuse(): void {
+/**
+ * Shutdown Langfuse client, returning a promise that resolves when flush completes.
+ * Use this for graceful shutdown to ensure pending traces are sent.
+ */
+export async function shutdownLangfuse(): Promise<void> {
   if (client) {
-    client.flushAsync().catch(() => {});
+    await client.flushAsync().catch(() => {});
     client = null;
   }
 }
@@ -63,22 +67,16 @@ export function extractTokenUsage(
       }
     | undefined,
 ): TokenUsage | undefined {
-  if (!rawUsage) {
-    console.log('[Langfuse] No usage data from AI SDK');
-    return undefined;
-  }
+  if (!rawUsage) return undefined;
 
   const { inputTokens, outputTokens, totalTokens } = rawUsage;
   if (!Number.isFinite(inputTokens) || !Number.isFinite(outputTokens)) {
-    console.log('[Langfuse] Invalid token values:', JSON.stringify(rawUsage));
     return undefined;
   }
 
   const input = inputTokens as number;
   const output = outputTokens as number;
-  const usage = { input, output, total: totalTokens ?? input + output };
-  console.log('[Langfuse] Token usage:', JSON.stringify(usage));
-  return usage;
+  return { input, output, total: totalTokens ?? input + output };
 }
 
 interface TraceRewriteParams {

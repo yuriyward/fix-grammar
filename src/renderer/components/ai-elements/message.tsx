@@ -7,7 +7,14 @@ import { mermaid } from '@streamdown/mermaid';
 import type { UIMessage } from 'ai';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import type { ComponentProps, HTMLAttributes, ReactElement } from 'react';
-import { createContext, memo, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  memo,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { Streamdown } from 'streamdown';
 import { Button } from '@/renderer/components/ui/button';
 import {
@@ -187,14 +194,17 @@ export const MessageBranchContent = ({
   ...props
 }: MessageBranchContentProps) => {
   const { currentBranch, setBranches, branches } = useMessageBranch();
-  const childrenArray = Array.isArray(children) ? children : [children];
+  const childrenArray = useMemo(
+    () => (Array.isArray(children) ? children : [children]),
+    [children],
+  );
 
-  // Use useEffect to update branches when they change
+  // Update branches when children change
   useEffect(() => {
     if (branches.length !== childrenArray.length) {
       setBranches(childrenArray);
     }
-  }, [childrenArray, branches, setBranches]);
+  }, [childrenArray, branches.length, setBranches]);
 
   return childrenArray.map((branch, index) => (
     <div

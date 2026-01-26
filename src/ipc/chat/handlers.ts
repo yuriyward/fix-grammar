@@ -147,6 +147,8 @@ function broadcastError(
 ): never {
   const errorDetails = parseAIError(error);
 
+  deleteMessageFromConversation(conversationId, messageId);
+
   const errorChunk: ChatStreamChunk = {
     conversationId,
     messageId,

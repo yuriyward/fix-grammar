@@ -49,6 +49,19 @@ export function parseSkillMarkdown(markdown: string): ParsedSkillMarkdown {
   };
 }
 
+function parseYamlValue(raw: string): string {
+  const trimmed = raw.trim();
+  if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+    return trimmed
+      .slice(1, -1)
+      .replace(/\\r/g, '\r')
+      .replace(/\\n/g, '\n')
+      .replace(/\\"/g, '"')
+      .replace(/\\\\/g, '\\');
+  }
+  return trimmed;
+}
+
 function parseFrontmatter(block: string): SkillFrontmatter {
   const fields: Record<string, string> = {};
 
@@ -57,7 +70,7 @@ function parseFrontmatter(block: string): SkillFrontmatter {
     if (colonIndex === -1) continue;
 
     const key = line.slice(0, colonIndex).trim();
-    const value = line.slice(colonIndex + 1).trim();
+    const value = parseYamlValue(line.slice(colonIndex + 1));
     fields[key] = value;
   }
 
@@ -71,6 +84,13 @@ function parseFrontmatter(block: string): SkillFrontmatter {
   };
 }
 
+function yamlValue(value: string): string {
+  if (/[\n\r]/.test(value)) {
+    return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r')}"`;
+  }
+  return value;
+}
+
 export function serializeSkillMarkdown(
   name: string,
   description: string,
@@ -78,8 +98,8 @@ export function serializeSkillMarkdown(
 ): string {
   const lines = [
     FRONTMATTER_DELIMITER,
-    `name: ${name}`,
-    `description: ${description}`,
+    `name: ${yamlValue(name)}`,
+    `description: ${yamlValue(description)}`,
     FRONTMATTER_DELIMITER,
     '',
     prompt,

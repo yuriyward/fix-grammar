@@ -9,7 +9,7 @@ import type { SkillSummary } from '@/shared/types/skill';
 
 interface SkillsListProps {
   skills: SkillSummary[];
-  selectedId?: string;
+  selectedId?: string | undefined;
   onSelect: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;

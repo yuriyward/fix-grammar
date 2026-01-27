@@ -114,7 +114,7 @@ function SkillsPage() {
         <div className="w-72">
           <SkillsList
             skills={skills}
-            {...(selectedSkill ? { selectedId: selectedSkill.id } : {})}
+            selectedId={selectedSkill?.id}
             onSelect={handleSelect}
             onNew={handleNew}
             onDelete={handleDelete}

@@ -40,13 +40,13 @@ export function SkillSelector({
 
   return (
     <Select
-      {...(name ? { name } : {})}
+      {...(name && { name })}
       value={value}
       items={items}
-      {...(disabled ? { disabled } : {})}
+      {...(disabled && { disabled })}
       onValueChange={(v) => v && onValueChange(v)}
     >
-      <SelectTrigger {...(size ? { size } : {})}>
+      <SelectTrigger {...(size && { size })}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

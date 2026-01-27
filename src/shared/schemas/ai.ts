@@ -3,8 +3,6 @@
  */
 import { z } from 'zod';
 
-export const rewriteRoleSchema = z.enum(['grammar', 'grammar-tone']);
-
 /**
  * Schema for OpenRouter extra parameters.
  * Validates that the input is a plain object (not an array or primitive).

@@ -2,12 +2,11 @@
  * AI IPC wrappers for renderer
  */
 import { ipc } from '@/renderer/lib/ipc-manager';
-import type { RewriteRole } from '@/shared/types/ai';
 
 export async function rewriteText(
   text: string,
-  role: RewriteRole,
+  skillId: string,
 ): Promise<string> {
-  const result = await ipc.client.ai.rewriteText({ text, role });
+  const result = await ipc.client.ai.rewriteText({ text, skillId });
   return result.content;
 }

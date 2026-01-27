@@ -49,7 +49,12 @@ function Root() {
   useEffect(() => {
     if (accessibilityTrusted !== false) return;
 
-    const allowedPaths = new Set(['/onboarding', '/settings', '/popup']);
+    const allowedPaths = new Set([
+      '/onboarding',
+      '/settings',
+      '/popup',
+      '/skills',
+    ]);
     if (allowedPaths.has(pathname)) return;
 
     void navigate({ to: '/onboarding', replace: true });

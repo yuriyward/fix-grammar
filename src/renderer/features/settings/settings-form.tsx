@@ -92,7 +92,7 @@ export default function SettingsForm({
         <AIProviderSection
           provider={settingsState.provider}
           model={settingsState.model}
-          role={settingsState.role}
+          defaultSkillId={settingsState.defaultSkillId}
           reasoningEffort={settingsState.reasoningEffort}
           textVerbosity={settingsState.textVerbosity}
           lmstudioBaseURL={settingsState.lmstudioBaseURL}
@@ -103,7 +103,7 @@ export default function SettingsForm({
           isSaving={settingsState.isSaving}
           onProviderChange={handleProviderChange}
           onModelChange={settingsState.setModel}
-          onRoleChange={settingsState.setRole}
+          onDefaultSkillIdChange={settingsState.setDefaultSkillId}
           onReasoningEffortChange={settingsState.setReasoningEffort}
           onTextVerbosityChange={settingsState.setTextVerbosity}
           onLmstudioBaseURLChange={settingsState.setLmstudioBaseURL}

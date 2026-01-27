@@ -8,16 +8,16 @@ import { parseAIError } from '@/main/ai/error-handler';
 import { extractTokenUsage, traceRewrite } from '@/main/ai/langfuse';
 import { buildPrompt } from '@/main/ai/prompts';
 import { store } from '@/main/storage/settings';
+import { getSkill } from '@/main/storage/skills';
 import { showNotification } from '@/main/utils/notifications';
 import type { AIProvider } from '@/shared/config/ai-models';
-import type { RewriteRole } from '@/shared/types/ai';
 import { rewriteInputSchema } from './schemas';
 
 export const rewriteTextHandler = os
   .input(rewriteInputSchema)
   .handler(async ({ input }) => {
     // Rewrite text using unified function (collecting all chunks)
-    const result = await rewriteTextWithSettings(input.text, input.role);
+    const result = await rewriteTextWithSettings(input.text, input.skillId);
 
     let fullText = '';
     let streamError: Error | null = null;
@@ -56,14 +56,16 @@ export const rewriteTextHandler = os
 
     const provider = store.get('ai.provider') as AIProvider;
     const model = store.get('ai.model') as string;
-    const role = input.role as RewriteRole;
+    const skill = getSkill(input.skillId);
+
     traceRewrite({
       input: input.text,
       output: fullText,
-      prompt: buildPrompt(input.text, role),
+      prompt: buildPrompt(input.text, skill?.prompt ?? ''),
       model,
       provider,
-      role,
+      skillId: input.skillId,
+      skillName: skill?.name ?? 'unknown',
       ...(usage && { usage }),
     });
 

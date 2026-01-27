@@ -12,7 +12,7 @@ export const store = new ElectronStore<AppSettings>({
     ai: {
       provider: 'google',
       model: getDefaultModel('google'),
-      role: 'grammar',
+      defaultSkillId: 'grammar',
       reasoningEffort: 'medium',
       textVerbosity: 'medium',
       lmstudioBaseURL: 'http://localhost:1234/v1',

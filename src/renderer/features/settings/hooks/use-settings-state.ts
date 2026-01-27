@@ -12,7 +12,6 @@ import {
 import { type AIProvider, getDefaultModel } from '@/shared/config/ai-models';
 import { DEFAULT_HOTKEYS } from '@/shared/config/hotkeys';
 import { appSettingsSchema } from '@/shared/schemas/settings';
-import type { RewriteRole } from '@/shared/types/ai';
 import type {
   AppSettings,
   ReasoningEffort,
@@ -25,8 +24,8 @@ export interface UseSettingsStateReturn {
   setProvider: (provider: AIProvider) => void;
   model: string;
   setModel: (model: string) => void;
-  role: RewriteRole;
-  setRole: (role: RewriteRole) => void;
+  defaultSkillId: string;
+  setDefaultSkillId: (id: string) => void;
   reasoningEffort: ReasoningEffort;
   setReasoningEffort: (effort: ReasoningEffort) => void;
   textVerbosity: TextVerbosity;
@@ -68,7 +67,7 @@ export interface UseSettingsStateReturn {
 export function useSettingsState(): UseSettingsStateReturn {
   const [provider, setProvider] = useState<AIProvider>('google');
   const [model, setModel] = useState<string>(getDefaultModel('google'));
-  const [role, setRole] = useState<RewriteRole>('grammar');
+  const [defaultSkillId, setDefaultSkillId] = useState<string>('');
   const [reasoningEffort, setReasoningEffort] =
     useState<ReasoningEffort>('medium');
   const [textVerbosity, setTextVerbosity] = useState<TextVerbosity>('medium');
@@ -98,7 +97,7 @@ export function useSettingsState(): UseSettingsStateReturn {
       const settings = await getSettings();
       setProvider(settings.ai.provider);
       setModel(settings.ai.model);
-      setRole(settings.ai.role);
+      setDefaultSkillId(settings.ai.defaultSkillId);
       setReasoningEffort(settings.ai.reasoningEffort ?? 'medium');
       setTextVerbosity(settings.ai.textVerbosity ?? 'medium');
       setLmstudioBaseURL(
@@ -142,7 +141,7 @@ export function useSettingsState(): UseSettingsStateReturn {
         ai: {
           provider,
           model,
-          role,
+          defaultSkillId,
           reasoningEffort,
           textVerbosity,
           lmstudioBaseURL:
@@ -193,7 +192,7 @@ export function useSettingsState(): UseSettingsStateReturn {
       isSaving,
       provider,
       model,
-      role,
+      defaultSkillId,
       reasoningEffort,
       textVerbosity,
       lmstudioBaseURL,
@@ -213,8 +212,8 @@ export function useSettingsState(): UseSettingsStateReturn {
     setProvider,
     model,
     setModel,
-    role,
-    setRole,
+    defaultSkillId,
+    setDefaultSkillId,
     reasoningEffort,
     setReasoningEffort,
     textVerbosity,

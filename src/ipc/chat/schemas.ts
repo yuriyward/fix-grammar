@@ -7,6 +7,9 @@ export const createConversationInputSchema = z.object({
   firstMessage: z.string().optional(),
   sourceApp: z.string().optional(),
   sourceText: z.string().optional(),
+  sourceSkillId: z.string().optional(),
+  sourceSkillName: z.string().optional(),
+  sourceSkillPrompt: z.string().optional(),
 });
 
 export const getConversationInputSchema = z.object({

@@ -5,7 +5,6 @@ import { z } from 'zod';
 import type { AIModel, AIProvider } from '@/shared/config/ai-models';
 import { AI_PROVIDERS } from '@/shared/config/ai-models';
 import { HOTKEY_MODIFIERS, HOTKEY_NAMED_KEYS } from '@/shared/config/hotkeys';
-import { rewriteRoleSchema } from './ai';
 
 // ============================================================================
 // Hotkey validation utilities
@@ -339,7 +338,7 @@ export const aiSettingsSchema = z
   .object({
     provider: aiProviderSchema,
     model: z.string(),
-    role: rewriteRoleSchema,
+    defaultSkillId: z.string().min(1),
     reasoningEffort: reasoningEffortSchema.optional(),
     textVerbosity: textVerbositySchema.optional(),
     lmstudioBaseURL: z.string().optional(),

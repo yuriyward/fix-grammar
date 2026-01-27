@@ -51,12 +51,12 @@ describe('Conversation storage', () => {
         'Fix this text',
         'TextEdit',
         'Original text here',
-        'grammar',
+        '00000000-0000-4000-8000-000000000001',
       );
 
       expect(conv.sourceApp).toBe('TextEdit');
       expect(conv.sourceText).toBe('Original text here');
-      expect(conv.sourceRole).toBe('grammar');
+      expect(conv.sourceSkillId).toBe('00000000-0000-4000-8000-000000000001');
     });
 
     it('enforces maximum conversation limit', () => {

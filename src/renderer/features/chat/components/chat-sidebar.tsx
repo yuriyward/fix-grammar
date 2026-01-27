@@ -1,7 +1,7 @@
 /**
  * Chat sidebar with conversation list
  */
-import { MessageSquare, Plus, Settings, Trash2 } from 'lucide-react';
+import { MessageSquare, Plus, Settings, Sparkles, Trash2 } from 'lucide-react';
 import { Button } from '@/renderer/components/ui/button';
 import { ScrollArea } from '@/renderer/components/ui/scroll-area';
 import { cn } from '@/renderer/lib/tailwind';
@@ -14,6 +14,7 @@ interface ChatSidebarProps {
   onNew: () => void;
   onDelete: (id: string) => void;
   onSettings: () => void;
+  onSkills: () => void;
   className?: string;
 }
 
@@ -37,6 +38,7 @@ export function ChatSidebar({
   onNew,
   onDelete,
   onSettings,
+  onSkills,
   className,
 }: ChatSidebarProps) {
   return (
@@ -105,6 +107,15 @@ export function ChatSidebar({
       </ScrollArea>
 
       <div className="border-t p-2">
+        <Button
+          onClick={onSkills}
+          variant="ghost"
+          className="w-full justify-start gap-2"
+          size="sm"
+        >
+          <Sparkles className="size-4" />
+          Skills
+        </Button>
         <Button
           onClick={onSettings}
           variant="ghost"

@@ -8,10 +8,10 @@ import { createXai } from '@ai-sdk/xai';
 import { type LanguageModel, type StreamTextResult, streamText } from 'ai';
 import { getApiKey } from '@/main/storage/api-keys';
 import { store } from '@/main/storage/settings';
+import { getSkill } from '@/main/storage/skills';
 import { AI_STREAM_TIMEOUT_MS } from '@/shared/config/ai';
 import type { AIProvider } from '@/shared/config/ai-models';
 import { openrouterExtraParamsSchema } from '@/shared/schemas/ai';
-import type { RewriteRole } from '@/shared/types/ai';
 import type { ReasoningEffort, TextVerbosity } from '@/shared/types/settings';
 import { sanitizeLMStudioURL } from '@/shared/utils/url-validation';
 import { buildPrompt } from './prompts';
@@ -73,7 +73,7 @@ export function createModelInstance(
  * Streams a rewritten version of the given text using the configured AI provider and model.
  *
  * @param text - The source text to rewrite.
- * @param role - The rewrite mode/preset (used to build the prompt).
+ * @param skillPrompt - The skill prompt template to prepend to the text.
  * @param apiKey - Provider API key used to authenticate the request.
  * @param model - Provider model id (e.g. `gemini-2.5-flash`, `grok-4-1-fast-reasoning`, `gpt-5.1`).
  * @param provider - The AI provider to use ('google', 'xai', 'openai', 'lmstudio', or 'openrouter').
@@ -85,7 +85,7 @@ export function createModelInstance(
  */
 export async function rewriteText(
   text: string,
-  role: RewriteRole,
+  skillPrompt: string,
   apiKey: string,
   model: string,
   provider: AIProvider,
@@ -94,7 +94,7 @@ export async function rewriteText(
   lmstudioBaseURL?: string,
   openrouterExtraParams?: string,
 ): Promise<StreamTextResult<Record<string, never>, never>> {
-  const prompt = buildPrompt(text, role);
+  const prompt = buildPrompt(text, skillPrompt);
 
   const modelInstance = createModelInstance(
     provider,
@@ -158,14 +158,21 @@ export async function rewriteText(
  * This ensures consistency across IPC handlers and keyboard shortcuts.
  *
  * @param text - The source text to rewrite.
- * @param role - The rewrite mode/preset (used to build the prompt).
+ * @param skillId - The skill ID to look up for the prompt template.
  * @returns An AI SDK streaming result; await `result.text` for the full rewrite.
  * @throws Error if API key is not found for the configured provider (except LM Studio).
+ * @throws Error if skill is not found.
  */
 export async function rewriteTextWithSettings(
   text: string,
-  role: RewriteRole,
+  skillId: string,
 ): Promise<StreamTextResult<Record<string, never>, never>> {
+  // Look up the skill prompt
+  const skill = getSkill(skillId);
+  if (!skill) {
+    throw new Error(`Skill not found: ${skillId}`);
+  }
+
   // Get all settings from the store
   const provider = store.get('ai.provider') as AIProvider;
   const model = store.get('ai.model') as string;
@@ -190,7 +197,7 @@ export async function rewriteTextWithSettings(
   // Call rewriteText with all parameters
   return rewriteText(
     text,
-    role,
+    skill.prompt,
     apiKey,
     model,
     provider,

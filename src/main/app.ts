@@ -9,6 +9,7 @@ import { shutdownLangfuse } from '@/main/ai/langfuse';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
 import { shortcutManager } from './shortcuts/manager';
 import { store } from './storage/settings';
+import { initializeSkillsStore } from './storage/skills';
 import { trayManager } from './tray/tray-manager';
 import { windowManager } from './windows/window-manager';
 
@@ -61,6 +62,9 @@ async function setupORPC() {
 }
 
 async function initializeWindows() {
+  // Seed built-in skills and migrate old role settings
+  initializeSkillsStore();
+
   const isFirstRun = store.get('hasLaunchedBefore') !== true;
 
   // Create main window (hidden by default for tray-first app)

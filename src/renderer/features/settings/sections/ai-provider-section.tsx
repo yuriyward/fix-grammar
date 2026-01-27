@@ -1,14 +1,16 @@
 /**
  * AI Provider settings section
- * Provider, model, role, and API key configuration UI
+ * Provider, model, skill, and API key configuration UI
  */
 
+import { useNavigate } from '@tanstack/react-router';
 import { useMemo } from 'react';
 import {
   ModelCombobox,
   type ModelGroup,
   type ModelItem,
 } from '@/renderer/components/model-combobox';
+import { SkillSelector } from '@/renderer/components/skill-selector';
 import {
   Alert,
   AlertDescription,
@@ -39,7 +41,6 @@ import {
   getProviderName,
   type ModelConfig,
 } from '@/shared/config/ai-models';
-import type { RewriteRole } from '@/shared/types/ai';
 import type { ReasoningEffort, TextVerbosity } from '@/shared/types/settings';
 import type { LMStudioModelGroup } from '../hooks/use-lmstudio-models';
 import type { ModelGroup as OpenRouterModelGroup } from '../hooks/use-openrouter-models';
@@ -48,7 +49,7 @@ export interface AIProviderSectionProps {
   // From useSettingsState
   provider: AIProvider;
   model: string;
-  role: RewriteRole;
+  defaultSkillId: string;
   reasoningEffort: ReasoningEffort;
   textVerbosity: TextVerbosity;
   lmstudioBaseURL: string;
@@ -57,7 +58,7 @@ export interface AIProviderSectionProps {
   isSaving: boolean;
   onProviderChange: (provider: AIProvider) => void;
   onModelChange: (model: string) => void;
-  onRoleChange: (role: RewriteRole) => void;
+  onDefaultSkillIdChange: (id: string) => void;
   onReasoningEffortChange: (effort: ReasoningEffort) => void;
   onTextVerbosityChange: (verbosity: TextVerbosity) => void;
   onLmstudioBaseURLChange: (url: string) => void;
@@ -94,7 +95,7 @@ export interface AIProviderSectionProps {
 export function AIProviderSection({
   provider,
   model,
-  role,
+  defaultSkillId,
   reasoningEffort,
   textVerbosity,
   lmstudioBaseURL,
@@ -103,7 +104,7 @@ export function AIProviderSection({
   isSaving,
   onProviderChange,
   onModelChange,
-  onRoleChange,
+  onDefaultSkillIdChange,
   onReasoningEffortChange,
   onTextVerbosityChange,
   onLmstudioBaseURLChange,
@@ -126,6 +127,7 @@ export function AIProviderSection({
   openrouterAllModels,
   onFetchOpenRouterModels,
 }: AIProviderSectionProps) {
+  const navigate = useNavigate();
   const providerOptions = Object.keys(AI_PROVIDERS) as AIProvider[];
 
   const providerSelectItems = providerOptions.map((p) => ({
@@ -159,14 +161,6 @@ export function AIProviderSection({
       items: group.items.map((item) => ({ id: item.id, name: item.name })),
     }));
   }, [openrouterGroupedModels]);
-
-  const rewriteModeSelectItems: ReadonlyArray<{
-    value: RewriteRole;
-    label: string;
-  }> = [
-    { value: 'grammar', label: 'Grammar Only' },
-    { value: 'grammar-tone', label: 'Grammar + Tone' },
-  ];
 
   const reasoningEffortSelectItems: ReadonlyArray<{
     value: ReasoningEffort;
@@ -359,26 +353,30 @@ export function AIProviderSection({
         </Field>
       )}
 
-      {/* Role Selection */}
-      <Field name="ai.role">
-        <FieldLabel>Rewrite Mode</FieldLabel>
-        <Select
-          name="ai.role"
-          value={role}
-          items={rewriteModeSelectItems}
-          onValueChange={(value) => onRoleChange(value as RewriteRole)}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {rewriteModeSelectItems.map(({ value, label }) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* Skill Selection (replaces old Rewrite Mode dropdown) */}
+      <Field name="ai.defaultSkillId">
+        <FieldLabel>Default Skill</FieldLabel>
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <SkillSelector
+              name="ai.defaultSkillId"
+              value={defaultSkillId}
+              onValueChange={onDefaultSkillIdChange}
+              disabled={isSaving}
+            />
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => navigate({ to: '/skills' })}
+          >
+            Manage Skills
+          </Button>
+        </div>
+        <FieldDescription>
+          The prompt template used when rewriting text via keyboard shortcut
+        </FieldDescription>
         <FieldError />
       </Field>
 

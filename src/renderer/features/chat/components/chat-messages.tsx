@@ -26,7 +26,6 @@ import {
 import { Textarea } from '@/renderer/components/ui/textarea';
 import { cn } from '@/renderer/lib/tailwind';
 import type { ConversationContext } from '@/renderer/stores/chat-store';
-import { ROLE_PROMPTS } from '@/shared/config/prompts';
 import type { ChatMessage } from '@/shared/types/chat';
 
 interface MessageEditFormProps {
@@ -126,13 +125,13 @@ export function ChatMessages({
             <CollapsibleTrigger className="flex w-full items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
               <ChevronRight className="size-3 transition-transform [[data-open]_&]:rotate-90" />
               <span>
-                Context
-                {context.sourceApp ? ` (${context.sourceApp})` : ''}
+                {context.sourceSkillName ?? 'Skill'}
+                {context.sourceApp ? ` · ${context.sourceApp}` : ''}
               </span>
             </CollapsibleTrigger>
             <CollapsiblePanel>
               <div className="mt-2 max-h-32 overflow-y-auto whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-xs">
-                {ROLE_PROMPTS[context.sourceRole]}
+                {context.sourceSkillPrompt}
               </div>
             </CollapsiblePanel>
           </Collapsible>

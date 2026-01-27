@@ -6,7 +6,6 @@ import { Langfuse } from 'langfuse';
 import { getApiKey } from '@/main/storage/api-keys';
 import { store } from '@/main/storage/settings';
 import type { AIProvider } from '@/shared/config/ai-models';
-import type { RewriteRole } from '@/shared/types/ai';
 
 const LANGFUSE_BASE_URL = 'https://cloud.langfuse.com';
 
@@ -90,7 +89,8 @@ interface TraceRewriteParams {
   prompt: string;
   model: string;
   provider: AIProvider;
-  role: RewriteRole;
+  skillId: string;
+  skillName: string;
   usage?: TokenUsage;
 }
 
@@ -106,7 +106,8 @@ export function traceRewrite(params: TraceRewriteParams): void {
       metadata: {
         provider: params.provider,
         model: params.model,
-        role: params.role,
+        skillId: params.skillId,
+        skillName: params.skillName,
         appVersion: app.getVersion(),
       },
     });
@@ -118,7 +119,8 @@ export function traceRewrite(params: TraceRewriteParams): void {
       output: params.output,
       metadata: {
         provider: params.provider,
-        role: params.role,
+        skillId: params.skillId,
+        skillName: params.skillName,
       },
       ...(params.usage && { usage: params.usage }),
     });

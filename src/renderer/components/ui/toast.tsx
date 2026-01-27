@@ -5,6 +5,7 @@ import {
   InfoIcon,
   LoaderCircleIcon,
   TriangleAlertIcon,
+  XIcon,
 } from 'lucide-react';
 import { buttonVariants } from '@/renderer/components/ui/button';
 import { cn } from '@/renderer/lib/tailwind';
@@ -146,14 +147,22 @@ function Toasts({ position = 'bottom-right' }: { position: ToastPosition }) {
                     />
                   </div>
                 </div>
-                {toast.actionProps && (
-                  <Toast.Action
-                    className={buttonVariants({ size: 'xs' })}
-                    data-slot="toast-action"
+                <div className="flex items-center gap-1">
+                  {toast.actionProps && (
+                    <Toast.Action
+                      className={buttonVariants({ size: 'xs' })}
+                      data-slot="toast-action"
+                    >
+                      {toast.actionProps.children}
+                    </Toast.Action>
+                  )}
+                  <Toast.Close
+                    className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    data-slot="toast-close"
                   >
-                    {toast.actionProps.children}
-                  </Toast.Action>
-                )}
+                    <XIcon className="size-4" />
+                  </Toast.Close>
+                </div>
               </Toast.Content>
             </Toast.Root>
           );
@@ -238,14 +247,22 @@ function AnchoredToasts() {
                         />
                       </div>
                     </div>
-                    {toast.actionProps && (
-                      <Toast.Action
-                        className={buttonVariants({ size: 'xs' })}
-                        data-slot="toast-action"
+                    <div className="flex items-center gap-1">
+                      {toast.actionProps && (
+                        <Toast.Action
+                          className={buttonVariants({ size: 'xs' })}
+                          data-slot="toast-action"
+                        >
+                          {toast.actionProps.children}
+                        </Toast.Action>
+                      )}
+                      <Toast.Close
+                        className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        data-slot="toast-close"
                       >
-                        {toast.actionProps.children}
-                      </Toast.Action>
-                    )}
+                        <XIcon className="size-4" />
+                      </Toast.Close>
+                    </div>
                   </Toast.Content>
                 )}
               </Toast.Root>

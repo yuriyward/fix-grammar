@@ -63,6 +63,7 @@ export function ChatLayout() {
         onNew={clearConversation}
         onDelete={handleDelete}
         onSettings={() => navigate({ to: '/settings' })}
+        onSkills={() => navigate({ to: '/skills' })}
       />
 
       <div className="flex flex-1 flex-col">

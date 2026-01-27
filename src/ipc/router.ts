@@ -10,6 +10,7 @@ import { permissions } from './permissions/router';
 import { settings } from './settings/router';
 import { shell } from './shell/router';
 import { shortcuts } from './shortcuts/router';
+import { skills } from './skills/router';
 import { theme } from './theme/router';
 import { window } from './window/router';
 
@@ -25,4 +26,5 @@ export const router = {
   shortcuts,
   notifications,
   permissions,
+  skills,
 };

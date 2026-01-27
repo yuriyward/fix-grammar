@@ -2,10 +2,24 @@
  * Centralized window lifecycle management
  */
 import path from 'node:path';
-import { app, BrowserWindow, type Session, screen } from 'electron';
+import { app, BrowserWindow, type Session, screen, shell } from 'electron';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
 
 const inDevelopment = process.env.NODE_ENV === 'development';
+
+/** Allowed origins for navigation (dev server + file protocol) */
+function isAllowedOrigin(url: string): boolean {
+  if (url.startsWith('file://')) return true;
+  if (inDevelopment && MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    const devOrigin = new URL(MAIN_WINDOW_VITE_DEV_SERVER_URL).origin;
+    try {
+      return new URL(url).origin === devOrigin;
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
 
 export class WindowManager {
   public mainWindow: BrowserWindow | null = null;
@@ -29,6 +43,23 @@ export class WindowManager {
     ];
 
     return `${directives.join('; ')};`;
+  }
+
+  /** Block navigation to external URLs and prevent new window creation */
+  private setupNavigationProtection(window: BrowserWindow): void {
+    window.webContents.on('will-navigate', (event, url) => {
+      if (!isAllowedOrigin(url)) {
+        event.preventDefault();
+        shell.openExternal(url);
+      }
+    });
+
+    window.webContents.setWindowOpenHandler(({ url }) => {
+      if (url && url !== 'about:blank') {
+        shell.openExternal(url);
+      }
+      return { action: 'deny' };
+    });
   }
 
   private ensureCsp(session: Session): void {
@@ -155,6 +186,7 @@ export class WindowManager {
     this.mainWindow = new BrowserWindow(windowOptions);
 
     this.ensureCsp(this.mainWindow.webContents.session);
+    this.setupNavigationProtection(this.mainWindow);
 
     // Prevent window from showing automatically
     this.mainWindow.once('ready-to-show', () => {
@@ -257,6 +289,7 @@ export class WindowManager {
     });
 
     this.ensureCsp(this.popupWindow.webContents.session);
+    this.setupNavigationProtection(this.popupWindow);
 
     // Load the popup route
     if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {

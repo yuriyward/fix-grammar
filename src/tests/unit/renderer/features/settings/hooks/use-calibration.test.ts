@@ -59,7 +59,7 @@ const createDefaultSettings = () => ({
   ai: {
     provider: 'google' as const,
     model: 'gemini-3-flash-preview' as const,
-    role: 'grammar' as const,
+    defaultSkillId: '00000000-0000-4000-8000-000000000001',
   },
   automation: {
     clipboardSyncDelayMs: 200,

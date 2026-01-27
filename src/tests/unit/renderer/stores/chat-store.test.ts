@@ -13,6 +13,12 @@ const mockSendMessage = vi.fn();
 const mockEditMessage = vi.fn();
 const mockBroadcastSelection = vi.fn();
 
+const mockGetSkill = vi.fn();
+
+vi.mock('@/actions/skills', () => ({
+  getSkill: (id: string) => mockGetSkill(id),
+}));
+
 vi.mock('@/actions/chat', () => ({
   listConversations: () => mockListConversations(),
   getConversation: (id: string) => mockGetConversation(id),
@@ -44,6 +50,15 @@ describe('Chat store', () => {
       truncatedCount: 1,
     });
     mockBroadcastSelection.mockResolvedValue({ success: true });
+    mockGetSkill.mockResolvedValue({
+      id: '00000000-0000-4000-8000-000000000001',
+      name: 'Grammar Fix',
+      description: 'Fix grammar errors',
+      prompt: 'Fix grammar errors',
+      builtIn: true,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
   });
 
   async function getStore() {
@@ -100,7 +115,8 @@ describe('Chat store', () => {
         createdAt: Date.now(),
         updatedAt: Date.now(),
         sourceText: 'Original',
-        sourceRole: 'grammar',
+        sourceSkillId: '00000000-0000-4000-8000-000000000001',
+        sourceSkillPrompt: 'Fix grammar errors',
         sourceApp: 'TestApp',
       };
       mockGetConversation.mockResolvedValue(mockConv);
@@ -116,8 +132,10 @@ describe('Chat store', () => {
       expect(state.messages).toEqual(mockConv.messages);
       expect(state.context).toEqual({
         sourceText: 'Original',
-        sourceRole: 'grammar',
         sourceApp: 'TestApp',
+        sourceSkillId: '00000000-0000-4000-8000-000000000001',
+        sourceSkillName: 'Grammar Fix',
+        sourceSkillPrompt: 'Fix grammar errors',
       });
       expect(mockBroadcastSelection).toHaveBeenCalledWith('conv-1');
     });

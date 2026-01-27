@@ -59,11 +59,12 @@ function convertToModelMessages(messages: ChatMessage[]): ModelMessage[] {
 
 function buildSystemPrompt(conversation: Conversation): string {
   const includeOriginalPrompt = store.get('ai.includeOriginalPromptInChat');
-  const { sourceText, sourceRole } = conversation;
+  const { sourceText, sourceSkillPrompt } = conversation;
 
-  if (includeOriginalPrompt && sourceText && sourceRole) {
-    return `${CHAT_SYSTEM_PROMPT}\n\n---\nOriginal correction context:\n${buildPrompt(sourceText, sourceRole)}`;
+  if (includeOriginalPrompt && sourceText && sourceSkillPrompt) {
+    return `${CHAT_SYSTEM_PROMPT}\n\n---\nOriginal correction context:\n${buildPrompt(sourceText, sourceSkillPrompt)}`;
   }
+
   return CHAT_SYSTEM_PROMPT;
 }
 
@@ -170,6 +171,9 @@ export const createConversation = os
       input.firstMessage,
       input.sourceApp,
       input.sourceText,
+      input.sourceSkillId,
+      input.sourceSkillName,
+      input.sourceSkillPrompt,
     );
     windowManager.broadcast(IPC_CHANNELS.CHAT_CONVERSATIONS_CHANGED);
     return conversation;

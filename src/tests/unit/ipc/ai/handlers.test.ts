@@ -24,6 +24,27 @@ vi.mock('@/main/ai/error-handler', () => ({
   parseAIError: () => ({ title: 'Test Error', message: 'Test message' }),
 }));
 
+vi.mock('@/main/ai/langfuse', () => ({
+  extractTokenUsage: vi.fn(() => undefined),
+  traceRewrite: vi.fn(),
+}));
+
+vi.mock('@/main/ai/prompts', () => ({
+  buildPrompt: vi.fn(() => 'mocked-prompt'),
+}));
+
+vi.mock('@/main/storage/settings', () => ({
+  store: { get: vi.fn(() => 'google') },
+}));
+
+vi.mock('@/main/storage/skills', () => ({
+  getSkill: vi.fn(() => ({
+    id: 'test-id',
+    name: 'Grammar',
+    prompt: 'Fix grammar',
+  })),
+}));
+
 async function* textStream(
   chunks: string[],
   throwAfterChunks?: number,
@@ -57,7 +78,10 @@ describe('AI IPC handlers', () => {
     const callRewrite = createProcedureClient(rewriteTextHandler);
 
     await expect(
-      callRewrite({ text: 'Hello', role: 'grammar' }),
+      callRewrite({
+        text: 'Hello',
+        skillId: '00000000-0000-4000-8000-000000000001',
+      }),
     ).rejects.toThrow('API key not found for provider: google');
   });
 
@@ -70,13 +94,16 @@ describe('AI IPC handlers', () => {
     const callRewrite = createProcedureClient(rewriteTextHandler);
 
     await expect(
-      callRewrite({ text: 'Hello', role: 'grammar-tone' }),
+      callRewrite({
+        text: 'Hello',
+        skillId: '00000000-0000-4000-8000-000000000002',
+      }),
     ).resolves.toEqual({
       content: 'ABC',
     });
     expect(mockRewriteTextWithSettings).toHaveBeenCalledWith(
       'Hello',
-      'grammar-tone',
+      '00000000-0000-4000-8000-000000000002',
     );
   });
 
@@ -89,7 +116,10 @@ describe('AI IPC handlers', () => {
     const callRewrite = createProcedureClient(rewriteTextHandler);
 
     await expect(
-      callRewrite({ text: 'Original', role: 'grammar' }),
+      callRewrite({
+        text: 'Original',
+        skillId: '00000000-0000-4000-8000-000000000001',
+      }),
     ).rejects.toThrow('AI rewrite failed: Test message');
 
     expect(mockShowNotification).toHaveBeenCalledWith({
@@ -108,7 +138,10 @@ describe('AI IPC handlers', () => {
     const callRewrite = createProcedureClient(rewriteTextHandler);
 
     await expect(
-      callRewrite({ text: 'Original', role: 'grammar' }),
+      callRewrite({
+        text: 'Original',
+        skillId: '00000000-0000-4000-8000-000000000001',
+      }),
     ).rejects.toThrow(
       'AI rewrite failed: Test message (7 chars received before failure)',
     );
@@ -129,7 +162,10 @@ describe('AI IPC handlers', () => {
     const callRewrite = createProcedureClient(rewriteTextHandler);
 
     await expect(
-      callRewrite({ text: 'Test input', role: 'grammar' }),
+      callRewrite({
+        text: 'Test input',
+        skillId: '00000000-0000-4000-8000-000000000001',
+      }),
     ).resolves.toEqual({
       content: 'Hello World',
     });
@@ -142,7 +178,10 @@ describe('AI IPC handlers', () => {
     const callRewrite = createProcedureClient(rewriteTextHandler);
 
     await expect(
-      callRewrite({ text: '', role: 'grammar' }),
+      callRewrite({
+        text: '',
+        skillId: '00000000-0000-4000-8000-000000000001',
+      }),
     ).rejects.toBeInstanceOf(Error);
     expect(mockRewriteTextWithSettings).not.toHaveBeenCalled();
   });

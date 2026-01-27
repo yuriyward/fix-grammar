@@ -12,8 +12,8 @@ import {
   listConversations,
   sendMessage as sendMessageAction,
 } from '@/actions/chat';
+import { getSkill } from '@/actions/skills';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
-import type { RewriteRole } from '@/shared/types/ai';
 import type {
   ChatMessage,
   ChatStreamChunk,
@@ -22,8 +22,10 @@ import type {
 
 export interface ConversationContext {
   sourceText: string;
-  sourceRole: RewriteRole;
   sourceApp?: string;
+  sourceSkillId?: string;
+  sourceSkillName?: string;
+  sourceSkillPrompt?: string;
 }
 
 interface ChatStore {
@@ -89,14 +91,23 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
     const conv = await getConversation(id);
     if (conv) {
-      const context: ConversationContext | null =
-        conv.sourceText && conv.sourceRole
-          ? {
-              sourceText: conv.sourceText,
-              sourceRole: conv.sourceRole,
-              ...(conv.sourceApp && { sourceApp: conv.sourceApp }),
-            }
-          : null;
+      const hasContext = conv.sourceText && conv.sourceSkillPrompt;
+      let skillName = conv.sourceSkillName;
+      if (!skillName && conv.sourceSkillId) {
+        const skill = await getSkill(conv.sourceSkillId);
+        if (skill) skillName = skill.name;
+      }
+      const context: ConversationContext | null = hasContext
+        ? {
+            sourceText: conv.sourceText as string,
+            ...(conv.sourceApp && { sourceApp: conv.sourceApp }),
+            ...(conv.sourceSkillId && { sourceSkillId: conv.sourceSkillId }),
+            ...(skillName && { sourceSkillName: skillName }),
+            ...(conv.sourceSkillPrompt && {
+              sourceSkillPrompt: conv.sourceSkillPrompt,
+            }),
+          }
+        : null;
 
       set({
         selectedConversationId: conv.id,

@@ -1,7 +1,6 @@
 /**
  * Chat and conversation types
  */
-import type { RewriteRole } from '@/shared/types/ai';
 
 export interface ChatMessage {
   id: string;
@@ -18,7 +17,9 @@ export interface Conversation {
   updatedAt: number;
   sourceApp?: string;
   sourceText?: string;
-  sourceRole?: RewriteRole;
+  sourceSkillId?: string;
+  sourceSkillName?: string;
+  sourceSkillPrompt?: string;
 }
 
 export interface ConversationSummary {

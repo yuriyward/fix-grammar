@@ -12,7 +12,7 @@ export interface EditContext {
   originalText: string;
   rewrittenText: string;
   startedAt: number;
-  role: string;
+  skillId: string;
   provider: AIProvider;
   model: AIModel;
   sourceApp?: AppContext;

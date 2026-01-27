@@ -34,7 +34,7 @@ const {
       ai: {
         provider: 'google',
         model: 'gemini-3-flash-preview',
-        role: 'grammar',
+        defaultSkillId: '00000000-0000-4000-8000-000000000001',
       },
       automation: {
         clipboardSyncDelayMs: 200,
@@ -104,7 +104,7 @@ describe('Settings IPC handlers', () => {
       ai: {
         provider: 'google',
         model: 'gemini-3-flash-preview',
-        role: 'grammar',
+        defaultSkillId: '00000000-0000-4000-8000-000000000001',
       },
       automation: {
         clipboardSyncDelayMs: 200,
@@ -136,7 +136,7 @@ describe('Settings IPC handlers', () => {
       ai: {
         provider: 'google',
         model: 'gemini-3-flash-preview',
-        role: 'grammar-tone',
+        defaultSkillId: '00000000-0000-4000-8000-000000000002',
       },
       automation: {
         clipboardSyncDelayMs: 250,
@@ -167,7 +167,7 @@ describe('Settings IPC handlers', () => {
       ai: {
         provider: 'google',
         model: 'grok-beta' as AppSettings['ai']['model'],
-        role: 'grammar',
+        defaultSkillId: '00000000-0000-4000-8000-000000000001',
       },
       automation: {
         clipboardSyncDelayMs: 200,
@@ -198,7 +198,7 @@ describe('Settings IPC handlers', () => {
       ai: {
         provider: 'google',
         model: 'gemini-3-flash-preview',
-        role: 'grammar',
+        defaultSkillId: '00000000-0000-4000-8000-000000000001',
       },
       automation: {
         clipboardSyncDelayMs: 200,

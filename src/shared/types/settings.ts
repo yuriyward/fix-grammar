@@ -2,7 +2,6 @@
  * Settings schema types
  */
 import type { AIModel, AIProvider } from '@/shared/config/ai-models';
-import type { RewriteRole } from '@/shared/types/ai';
 
 export interface HotkeysSettings {
   fixSelection: string;
@@ -22,7 +21,7 @@ export type TextVerbosity = 'low' | 'medium' | 'high';
 export interface AISettings {
   provider: AIProvider;
   model: AIModel | string;
-  role: RewriteRole;
+  defaultSkillId: string;
   reasoningEffort?: ReasoningEffort;
   textVerbosity?: TextVerbosity;
   lmstudioBaseURL?: string;

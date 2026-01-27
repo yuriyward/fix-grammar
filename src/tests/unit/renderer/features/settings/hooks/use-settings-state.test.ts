@@ -78,7 +78,7 @@ const createMockSettings = (
   ai: {
     provider: 'google',
     model: 'gemini-3-flash-preview',
-    role: 'grammar',
+    defaultSkillId: '00000000-0000-4000-8000-000000000001',
     reasoningEffort: 'medium',
     textVerbosity: 'medium',
     lmstudioBaseURL: 'http://localhost:1234/v1',
@@ -153,14 +153,14 @@ describe('useSettingsState', () => {
       expect(result.current.model).toBe('gemini-3-flash-preview');
     });
 
-    it('should initialize with default role=grammar', async () => {
+    it('should initialize with default defaultSkillId', async () => {
       const { result } = renderHook(() => useSettingsState());
 
-      await waitFor(() => {
-        expect(mockGetSettings).toHaveBeenCalled();
-      });
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
-      expect(result.current.role).toBe('grammar');
+      expect(result.current.defaultSkillId).toBe(
+        '00000000-0000-4000-8000-000000000001',
+      );
     });
 
     it('should initialize with default reasoningEffort=medium', async () => {
@@ -250,7 +250,7 @@ describe('useSettingsState', () => {
         ai: {
           provider: 'openai',
           model: 'gpt-5.1',
-          role: 'grammar-tone',
+          defaultSkillId: '00000000-0000-4000-8000-000000000002',
           reasoningEffort: 'high',
           textVerbosity: 'low',
           lmstudioBaseURL: 'http://custom:5000/v1',
@@ -271,7 +271,9 @@ describe('useSettingsState', () => {
       await waitFor(() => {
         expect(result.current.provider).toBe('openai');
         expect(result.current.model).toBe('gpt-5.1');
-        expect(result.current.role).toBe('grammar-tone');
+        expect(result.current.defaultSkillId).toBe(
+          '00000000-0000-4000-8000-000000000002',
+        );
         expect(result.current.reasoningEffort).toBe('high');
         expect(result.current.textVerbosity).toBe('low');
         expect(result.current.lmstudioBaseURL).toBe('http://custom:5000/v1');
@@ -287,7 +289,7 @@ describe('useSettingsState', () => {
         ai: {
           provider: 'google' as const,
           model: 'gemini-3-flash-preview',
-          role: 'grammar' as const,
+          defaultSkillId: '00000000-0000-4000-8000-000000000001',
           // reasoningEffort, textVerbosity, lmstudioBaseURL are missing
         },
         hotkeys: {
@@ -435,7 +437,7 @@ describe('useSettingsState', () => {
       );
 
       const { result } = renderHook(() => useSettingsState());
-      await waitFor(() => expect(mockGetSettings).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
       const event1 = createMockFormEvent();
       const event2 = createMockFormEvent();
@@ -471,7 +473,7 @@ describe('useSettingsState', () => {
       );
 
       const { result } = renderHook(() => useSettingsState());
-      await waitFor(() => expect(mockGetSettings).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
       const event = createMockFormEvent();
 
@@ -490,7 +492,7 @@ describe('useSettingsState', () => {
     it('should validate settings against appSettingsSchema', async () => {
       // Set invalid hotkey to trigger validation failure
       const { result } = renderHook(() => useSettingsState());
-      await waitFor(() => expect(mockGetSettings).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
       act(() => {
         result.current.setFixSelection('invalid'); // Invalid hotkey format
@@ -512,7 +514,7 @@ describe('useSettingsState', () => {
 
     it('should set fieldErrors on validation failure', async () => {
       const { result } = renderHook(() => useSettingsState());
-      await waitFor(() => expect(mockGetSettings).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
       act(() => {
         result.current.setFixSelection('invalid');
@@ -532,7 +534,7 @@ describe('useSettingsState', () => {
 
     it('should call focusFirstInvalidField on validation failure', async () => {
       const { result } = renderHook(() => useSettingsState());
-      await waitFor(() => expect(mockGetSettings).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
       act(() => {
         result.current.setFixSelection('invalid');
@@ -552,7 +554,7 @@ describe('useSettingsState', () => {
 
     it('should set isSaving=false after validation failure', async () => {
       const { result } = renderHook(() => useSettingsState());
-      await waitFor(() => expect(mockGetSettings).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
       act(() => {
         result.current.setFixSelection('invalid');
@@ -573,7 +575,7 @@ describe('useSettingsState', () => {
 
     it('should clear fieldErrors before validation', async () => {
       const { result } = renderHook(() => useSettingsState());
-      await waitFor(() => expect(mockGetSettings).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
       // First, set some errors
       act(() => {
@@ -614,7 +616,7 @@ describe('useSettingsState', () => {
   describe('handleSaveSettings - Success Flow', () => {
     it('should call updateSettings with validated data', async () => {
       const { result } = renderHook(() => useSettingsState());
-      await waitFor(() => expect(mockGetSettings).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
       const event = createMockFormEvent();
 
@@ -628,7 +630,7 @@ describe('useSettingsState', () => {
           ai: expect.objectContaining({
             provider: 'google',
             model: expect.any(String),
-            role: 'grammar',
+            defaultSkillId: '00000000-0000-4000-8000-000000000001',
           }),
           hotkeys: expect.objectContaining({
             fixSelection: expect.any(String),
@@ -644,7 +646,7 @@ describe('useSettingsState', () => {
 
     it('should call reregisterShortcuts after updateSettings', async () => {
       const { result } = renderHook(() => useSettingsState());
-      await waitFor(() => expect(mockGetSettings).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
       const event = createMockFormEvent();
 
@@ -666,7 +668,7 @@ describe('useSettingsState', () => {
 
     it('should show success toast on completion', async () => {
       const { result } = renderHook(() => useSettingsState());
-      await waitFor(() => expect(mockGetSettings).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
       const event = createMockFormEvent();
 
@@ -682,7 +684,7 @@ describe('useSettingsState', () => {
 
     it('should set isSaving=false after success', async () => {
       const { result } = renderHook(() => useSettingsState());
-      await waitFor(() => expect(mockGetSettings).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
       const event = createMockFormEvent();
 
@@ -695,7 +697,7 @@ describe('useSettingsState', () => {
 
     it('should only include lmstudioBaseURL when provider=lmstudio', async () => {
       const { result } = renderHook(() => useSettingsState());
-      await waitFor(() => expect(mockGetSettings).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
       // With google provider, lmstudioBaseURL should be undefined
       const event1 = createMockFormEvent();
@@ -738,7 +740,7 @@ describe('useSettingsState', () => {
       mockUpdateSettings.mockRejectedValue(new Error('Update failed'));
 
       const { result } = renderHook(() => useSettingsState());
-      await waitFor(() => expect(mockGetSettings).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
       const event = createMockFormEvent();
 
@@ -759,7 +761,7 @@ describe('useSettingsState', () => {
       );
 
       const { result } = renderHook(() => useSettingsState());
-      await waitFor(() => expect(mockGetSettings).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
       const event = createMockFormEvent();
 
@@ -778,7 +780,7 @@ describe('useSettingsState', () => {
       mockUpdateSettings.mockRejectedValue(new Error('Update failed'));
 
       const { result } = renderHook(() => useSettingsState());
-      await waitFor(() => expect(mockGetSettings).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
       const event = createMockFormEvent();
 
@@ -794,7 +796,7 @@ describe('useSettingsState', () => {
       mockUpdateSettings.mockRejectedValue(new Error(errorMessage));
 
       const { result } = renderHook(() => useSettingsState());
-      await waitFor(() => expect(mockGetSettings).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
       const event = createMockFormEvent();
 
@@ -813,7 +815,7 @@ describe('useSettingsState', () => {
       mockUpdateSettings.mockRejectedValue('String error');
 
       const { result } = renderHook(() => useSettingsState());
-      await waitFor(() => expect(mockGetSettings).toHaveBeenCalled());
+      await waitFor(() => expect(result.current.defaultSkillId).toBeTruthy());
 
       const event = createMockFormEvent();
 
@@ -858,7 +860,7 @@ describe('useSettingsState', () => {
       expect(result.current.model).toBe('custom-model');
     });
 
-    it('should update role via setRole', async () => {
+    it('should update defaultSkillId via setDefaultSkillId', async () => {
       const { result } = renderHook(() => useSettingsState());
 
       await waitFor(() => {
@@ -866,10 +868,14 @@ describe('useSettingsState', () => {
       });
 
       act(() => {
-        result.current.setRole('grammar-tone');
+        result.current.setDefaultSkillId(
+          '00000000-0000-4000-8000-000000000002',
+        );
       });
 
-      expect(result.current.role).toBe('grammar-tone');
+      expect(result.current.defaultSkillId).toBe(
+        '00000000-0000-4000-8000-000000000002',
+      );
     });
 
     it('should update reasoningEffort via setReasoningEffort', async () => {

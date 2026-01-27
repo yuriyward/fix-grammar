@@ -22,13 +22,13 @@ import {
 } from '@/main/storage/conversations';
 import { addNotification } from '@/main/storage/notifications';
 import { store } from '@/main/storage/settings';
+import { getSkill } from '@/main/storage/skills';
 import { trayManager } from '@/main/tray/tray-manager';
 import { showNotification } from '@/main/utils/notifications';
 import { windowManager } from '@/main/windows/window-manager';
 import type { AIModel, AIProvider } from '@/shared/config/ai-models';
 import { getModelLabel } from '@/shared/config/ai-models';
 import { IPC_CHANNELS } from '@/shared/contracts/ipc-channels';
-import type { RewriteRole } from '@/shared/types/ai';
 import type { AppNotification } from '@/shared/types/notifications';
 import { type AppContext, getFrontmostApp, isSameApp } from './app-context';
 import { fixStateManager } from './fix-state';
@@ -185,12 +185,17 @@ async function processFixAsync(
   try {
     // Get AI configuration for metadata
     const provider = store.get('ai.provider') as AIProvider;
-    const role = store.get('ai.role') as RewriteRole;
+    const skillId = store.get('ai.defaultSkillId') as string;
     const model = store.get('ai.model') as AIModel;
     const modelLabel = getModelLabel(provider, model);
 
+    const skill = getSkill(skillId);
+    if (!skill) {
+      throw new Error(`Default skill not found: ${skillId}`);
+    }
+
     // AI rewriting using unified function
-    const result = await rewriteTextWithSettings(originalText, role);
+    const result = await rewriteTextWithSettings(originalText, skillId);
     const rewrittenText = preserveTrailingNewlines(
       originalText,
       await result.text,
@@ -201,10 +206,11 @@ async function processFixAsync(
     traceRewrite({
       input: originalText,
       output: rewrittenText,
-      prompt: buildPrompt(originalText, role),
+      prompt: buildPrompt(originalText, skill.prompt),
       model,
       provider,
-      role,
+      skillId,
+      skillName: skill.name,
       ...(usage && { usage }),
     });
 
@@ -213,7 +219,9 @@ async function processFixAsync(
       originalText,
       sourceApp?.name,
       originalText,
-      role,
+      skillId,
+      skill.name,
+      skill.prompt,
     );
     addMessageToConversation(conversation.id, 'user', originalText);
     addMessageToConversation(conversation.id, 'assistant', rewrittenText);
@@ -226,7 +234,7 @@ async function processFixAsync(
       originalText,
       rewrittenText,
       startedAt: fixStartedAt,
-      role,
+      skillId,
       provider,
       model,
       conversationId: conversation.id,

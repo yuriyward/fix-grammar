@@ -62,7 +62,7 @@
     "electron-devtools-installer": "^4.0.0",
     "electron-playwright-helpers": "^2.1.0",
     "jsdom": "^27.4.0",
-    "rollup-plugin-visualizer": "^6.0.5",
+    "rollup-plugin-visualizer": "^7.0.0",
     "tailwindcss": "^4.1.18",
     "ts-node": "^10.9.2",
     "typedoc": "^0.28.16",
